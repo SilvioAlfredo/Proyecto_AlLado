@@ -1,0 +1,46 @@
+@startuml
+skinparam style strictuml
+skinparam packageStyle frame
+
+package "Web Layer (Controllers)" #F3E5F5 {
+    class TareaController <<Controller>> {
+        + crearTarea(CreateTareaDTO) : ResponseEntity<TareaDTO>
+        + postularse(PostulacionDTO) : ResponseEntity<MessageDTO>
+    }
+}
+
+package "Data Transfer Objects (DTOs)" #FFFDE7 {
+    class CreateTareaDTO <<DTO>> {
+        + String descripcion
+        + List<String> etiquetas
+    }
+    class TareaDTO <<DTO>> {
+        + Long id
+        + String estado
+    }
+}
+
+package "Service Layer" #E8F5E9 {
+    interface ITareaService <<Interface>>
+    class TareaServiceImpl <<Service>> {
+        - ModelMapper mapper
+        + registrar(CreateTareaDTO)
+    }
+}
+
+package "Domain Layer (Entities)" #E3F2FD {
+    class Tarea <<Entity>> {
+        - Long id
+        - String descripcion
+        - EstadoTarea estado
+    }
+}
+
+' Flujo de datos
+CreateTareaDTO ..> TareaController : "input"
+TareaController ..> ITareaService : "invoca"
+TareaServiceImpl ..> Tarea : "persiste"
+Tarea ..> TareaDTO : "mapea a"
+TareaDTO ..> TareaController : "output"
+
+@enduml

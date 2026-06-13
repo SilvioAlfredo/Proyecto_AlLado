@@ -1,0 +1,32 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+|Trabajador|
+start
+:Finalizar Tarea;
+:Informar Trabajo Completado;
+
+|Sistema|
+:Notificar al Empleador;
+
+|Empleador / Vecino|
+:Confirmar Recepción;
+if (¿Trabajo satisfactorio?) then (sí)
+  :Asignar Estrellas (1-5);
+  :Escribir Reseña;
+else (no)
+  fork
+    :Asignar Puntuación Baja;
+  fork again
+    :Reportar Incumplimiento (Opcional);
+  end fork
+endif
+
+|Sistema|
+:Actualizar Historial de Contratos;
+:Recalcular Nivel de Recomendación;
+:Actualizar Panel de Estadísticas;
+
+stop
+@endum

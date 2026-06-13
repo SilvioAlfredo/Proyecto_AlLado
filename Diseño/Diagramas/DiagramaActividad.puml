@@ -1,0 +1,44 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+partition "Empleador / Vecino" {
+  (*) --> "Publicar Necesidad"
+  --> "Seleccionar Etiquetas (Tags)"
+  --> "Definir Zona Geográfica"
+  -right-> "Confirmar Publicación"
+}
+
+partition "Sistema AlLado" {
+  "Confirmar Publicación" --> "Indexar Tarea en DB"
+  --> "Filtrar Trabajadores por Zona y Tag"
+  if "Existen trabajadores disponibles?" then
+    -->[sí] "Generar Notificaciones Push/WA"
+  else
+    -->[no] "Notificar: Sin profesionales cerca"
+    --> (*)
+  endif
+}
+
+partition "Trabajador" {
+  "Generar Notificaciones Push/WA" --> "Recibir Alerta"
+  if "Interesado en la tarea?" then
+    -->[sí] "Enviar Postulación"
+  else
+    -->[no] "Ignorar Alerta"
+    --> (*)
+  endif
+}
+
+partition "Empleador / Vecino" {
+  "Enviar Postulación" --> "Revisar Perfil del Postulante"
+  if "Cumple expectativas?" then
+    -->[sí] "Aceptar Trabajador"
+    --> "Contactar vía WhatsApp/Tel"
+    --> (*)
+  else
+    -->[no] "Rechazar / Seguir Buscando"
+    --> "Revisar Perfil del Postulante"
+  endif
+}
+@endum

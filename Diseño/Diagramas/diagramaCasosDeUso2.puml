@@ -1,0 +1,22 @@
+@startuml
+left to right direction
+
+actor "Trabajador" as T
+actor "Usuario (Cualquiera)" as U
+actor "Administrador" as A
+
+rectangle "Sistema AlLado - Gestión" {
+    usecase "Reportar Comportamiento Inapropiado" as UC8
+    usecase "Visualizar Estadísticas de Ingresos" as UC9
+    usecase "Realizar Donación\n(Tip de Gratitud)" as UC10
+    usecase "Modificar Horarios y Disponibilidad" as UC11
+    usecase "Moderar Contenido y Bloqueos" as UC12
+}
+
+U --> UC8
+T --> UC9
+T --> UC11
+U --> UC10
+A --> UC12
+UC8 ..> UC12 : <<include>>
+@enduml

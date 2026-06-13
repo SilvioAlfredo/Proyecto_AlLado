@@ -1,0 +1,69 @@
+@startuml
+skinparam style strictuml
+skinparam roundcorner 5
+
+' Configuración de colores para distinguir a simple vista
+skinparam class {
+    BackgroundColor<<Entity>> #E3F2FD
+    BackgroundColor<<Interface>> #F1F8E9
+    BackgroundColor<<Enum>> #FFF3E0
+    BackgroundColor<<Service>> #F3E5F5
+    BorderColor black
+}
+
+package "Core Domain (Entities)" {
+    class Usuario <<Entity>> {
+        - Long id
+        - String nombreCompleto
+        - String email
+    }
+
+    class Trabajador <<Entity>> {
+        - List<String> etiquetas
+        - Boolean identidadValidada
+        - Double promedioValoracion
+    }
+
+    class Publicacion <<Entity>> {
+        - Long id
+        - String descripcion
+        - Boolean esUrgente
+    }
+}
+
+package "Persistence (Spring Data JPA)" {
+    interface PublicacionRepository <<Interface>> {
+        + findByEtiquetasIn()
+        + findByUbicacion()
+    }
+}
+
+package "Business Logic (Spring Services)" {
+    interface INotificacionService <<Interface>> {
+        + alertarTrabajadoresCercanos()
+    }
+    
+    class NotificacionServiceImpl <<Service>> {
+        + alertarTrabajadoresCercanos()
+    }
+}
+
+package "Constants (Enums)" {
+    enum NivelSuscripcion <<Enum>> {
+        BASICO
+        PRO
+    }
+    
+    enum Rol <<Enum>> {
+        EMPLEADOR
+        TRABAJADOR
+    }
+}
+
+' Relaciones principales
+Usuario <|-- Trabajador
+Trabajador o-- NivelSuscripcion
+NotificacionServiceImpl ..|> INotificacionService
+PublicacionRepository ..> Publicacion : "gestiona"
+
+@enduml
