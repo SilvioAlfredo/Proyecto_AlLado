@@ -1,10 +1,8 @@
 package com.al_lado.al_lado_project.controller;
 
 import com.al_lado.al_lado_project.dto.OportunidadLaboralDTO;
-import com.al_lado.al_lado_project.entity.OportunidadLaboral;
 import com.al_lado.al_lado_project.service.OportunidadLaboralService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,38 +11,41 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/oportunidades")
+@RequiredArgsConstructor
 public class OportunidadLaboralController {
 
-    @Autowired
+
     private OportunidadLaboralService service;
 
     @GetMapping
-    public ResponseEntity<List<OportunidadLaboral>> obtenerTodas() {
-        List<OportunidadLaboral> lista = service.obtenerTodas();
-        return new ResponseEntity<>(lista, HttpStatus.OK);
+    public ResponseEntity<List<OportunidadLaboralDTO>> obtenerTodas() {
+        return ResponseEntity.ok(service.obtenerTodas());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OportunidadLaboral> obtenerPorId(@PathVariable Long id) {
-        OportunidadLaboral oportunidad = service.obtenerPorId(id);
-        return new ResponseEntity<>(oportunidad, HttpStatus.OK);
+    public ResponseEntity<OportunidadLaboralDTO> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(service.obtenerPorId(id));
     }
 
     @PostMapping
-    public ResponseEntity<OportunidadLaboral> guardar(@RequestBody OportunidadLaboral oportunidad) {
-        OportunidadLaboral nuevaOportunidad = service.guardar(oportunidad);
-        return new ResponseEntity<>(nuevaOportunidad, HttpStatus.CREATED);
+    public ResponseEntity<OportunidadLaboralDTO> guardar(@RequestBody OportunidadLaboralDTO oportunidadDTO) {
+        return new ResponseEntity<>(service.guardar(oportunidadDTO), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<OportunidadLaboralDTO> actualizar(@PathVariable Long id, @RequestParam OportunidadLaboralDTO oportunidadDTO) {
+        oportunidadDTO.setId(id);
+        return ResponseEntity.ok(service.guardar(oportunidadDTO));
     }
 
     @PutMapping("/cerrar/{id}")
-    public ResponseEntity<OportunidadLaboral> cerrarOportunidad(@PathVariable Long id) {
-        OportunidadLaboral oportunidadCerrada = service.cerrarOportunidad(id);
-        return new ResponseEntity<>(oportunidadCerrada, HttpStatus.OK);
+    public ResponseEntity<OportunidadLaboralDTO> cerrarOportunidad(@PathVariable Long id) {
+        return ResponseEntity.ok(service.cerrarOportunidad(id));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.eliminar(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ResponseEntity.noContent().build();
     }
 }

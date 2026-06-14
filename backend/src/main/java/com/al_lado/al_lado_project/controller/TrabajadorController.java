@@ -1,8 +1,10 @@
 package com.al_lado.al_lado_project.controller;
 
-import com.al_lado.al_lado_project.entity.Trabajador;
+import com.al_lado.al_lado_project.dto.TrabajadorDTO;
 import com.al_lado.al_lado_project.service.TrabajadorService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,22 +17,29 @@ public class TrabajadorController {
     private final TrabajadorService service;
 
     @GetMapping
-    public List<Trabajador> obtenerTodos() {
-        return service.obtenerTodos();
+    public ResponseEntity<List<TrabajadorDTO>> obtenerTodos() {
+        return ResponseEntity.ok(service.obtenerTodos());
     }
 
     @GetMapping("/{id}")
-    public Trabajador obtenerPorId(@PathVariable Long id) {
-        return service.obtenerPorId(id);
+    public ResponseEntity<TrabajadorDTO> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(service.obtenerPorId(id));
     }
 
     @PostMapping
-    public Trabajador guardar(@RequestBody Trabajador trabajador) {
-        return service.guardar(trabajador);
+    public ResponseEntity<TrabajadorDTO> guardar(@RequestBody TrabajadorDTO trabajadorDTO) {
+        return new  ResponseEntity<>(service.guardar(trabajadorDTO), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<TrabajadorDTO> actualizar(@PathVariable Long id, @RequestBody TrabajadorDTO trabajadorDTO) {
+        trabajadorDTO.setId(id);
+        return ResponseEntity.ok(service.guardar(trabajadorDTO));
     }
 
     @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable Long id) {
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.eliminar(id);
+        return ResponseEntity.noContent().build();
     }
 }
