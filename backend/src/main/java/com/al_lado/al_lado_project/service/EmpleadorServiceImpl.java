@@ -1,7 +1,7 @@
-package com.al_lado.al_lado_project.service.impl;
+package com.al_lado.al_lado_project.service;
 
-import com.al_lado.al_lado_project.dto.EmpleadorRequestDTO;
-import com.al_lado.al_lado_project.dto.EmpleadorResponseDTO;
+import com.al_lado.al_lado_project.dto.EmpleadorDTO;
+import com.al_lado.al_lado_project.dto.OportunidadLaboralResumenDTO;
 import com.al_lado.al_lado_project.entity.Empleador;
 import com.al_lado.al_lado_project.repository.EmpleadorRepository;
 import com.al_lado.al_lado_project.repository.UsuarioRepository;
@@ -22,61 +22,40 @@ public class EmpleadorServiceImpl implements EmpleadorService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EmpleadorResponseDTO> obtenerTodos() {
+    public List<EmpleadorDTO> obtenerTodos() {
         return repository.findAll().stream()
-                .map(this::convertToResponseDto)
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public EmpleadorResponseDTO obtenerPorId(Long id) {
+    public EmpleadorDTO obtenerPorId(Long id) {
         Empleador empleador = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Empleador no encontrado con ID: " + id));
-        return convertToResponseDto(empleador);
+        return convertToDto(empleador);
     }
 
     @Override
-    public Empleador guardar(Empleador empleador) {
-        return null;
-    }
-
     @Transactional
-    @Override
-    public EmpleadorResponseDTO registrarEmpleador(EmpleadorRequestDTO requestDTO) {
-        if (usuarioRepository.existsByEmail(requestDTO.getEmail())) {
+    public EmpleadorDTO guardar(EmpleadorDTO dto) {
+        if (dto.getId() == null && usuarioRepository.existsByEmail(dto.getEmail())) {
             throw new RuntimeException("El email ya está registrado.");
         }
 
-        Empleador empleador = new Empleador();
-        empleador.setNombre(requestDTO.getNombre());
-        empleador.setEmail(requestDTO.getEmail());
-        empleador.setPassword(requestDTO.getPassword());
+        Empleador empleador = dto.getId() != null ?
+                repository.findById(dto.getId()).orElseThrow(() -> new RuntimeException("Empleador no encontrado"))
+                : new Empleador();
+
+        empleador.setNombre(dto.getNombre());
+        empleador.setEmail(dto.getEmail());
+
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            empleador.setPassword(dto.getPassword());
+        }
 
         Empleador guardado = repository.save(empleador);
-        return convertToResponseDto(guardado);
-    }
-
-    @Transactional
-    @Override
-    public EmpleadorResponseDTO actualizar(Long id, EmpleadorRequestDTO requestDTO) {
-        Empleador existente = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Empleador no encontrado con ID: " + id));
-
-        if (!existente.getEmail().equalsIgnoreCase(requestDTO.getEmail()) &&
-                usuarioRepository.existsByEmail(requestDTO.getEmail())) {
-            throw new RuntimeException("El email ya está en uso por otro usuario.");
-        }
-
-        existente.setNombre(requestDTO.getNombre());
-        existente.setEmail(requestDTO.getEmail());
-
-        if (requestDTO.getPassword() != null && !requestDTO.getPassword().isBlank()) {
-            existente.setPassword(requestDTO.getPassword());
-        }
-
-        Empleador actualizado = repository.save(existente);
-        return convertToResponseDto(actualizado);
+        return convertToDto(guardado);
     }
 
     @Override
@@ -88,11 +67,26 @@ public class EmpleadorServiceImpl implements EmpleadorService {
         repository.deleteById(id);
     }
 
-    private EmpleadorResponseDTO convertToResponseDto(Empleador entity) {
-        EmpleadorResponseDTO dto = new EmpleadorResponseDTO();
+    private EmpleadorDTO convertToDto(Empleador entity) {
+        EmpleadorDTO dto = new EmpleadorDTO();
         dto.setId(entity.getId());
         dto.setNombre(entity.getNombre());
         dto.setEmail(entity.getEmail());
+
+        if (entity.getOportunidades() != null) {
+            List<OportunidadLaboralResumenDTO> resumenes = entity.getOportunidades().stream().map(op -> {
+                OportunidadLaboralResumenDTO resumen = new OportunidadLaboralResumenDTO();
+                resumen.setId(op.getId());
+                resumen.setTitulo(op.getTitulo());
+                resumen.setDescripcion(op.getDescripcion());
+                resumen.setImagen(op.getImagen());
+                resumen.setEstado(op.getEstado());
+                resumen.setFechaPublicacion(op.getFechaPublicacion());
+                resumen.setFechaCierre(op.getFechaCierre());
+                return resumen;
+            }).collect(Collectors.toList());
+            dto.setOportunidades(resumenes);
+        }
         return dto;
     }
 }

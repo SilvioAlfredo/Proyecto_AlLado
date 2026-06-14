@@ -1,7 +1,8 @@
-package com.al_lado.al_lado_project.service.impl;
+package com.al_lado.al_lado_project.service;
 
-import com.al_lado.al_lado_project.dto.PostulacionRequestDTO;
-import com.al_lado.al_lado_project.dto.PostulacionResponseDTO;
+import com.al_lado.al_lado_project.dto.OportunidadLaboralResumenDTO;
+import com.al_lado.al_lado_project.dto.PostulacionDTO;
+import com.al_lado.al_lado_project.dto.UsuarioResumenDTO;
 import com.al_lado.al_lado_project.entity.OportunidadLaboral;
 import com.al_lado.al_lado_project.entity.Postulacion;
 import com.al_lado.al_lado_project.entity.Trabajador;
@@ -26,66 +27,76 @@ public class PostulacionServiceImpl implements PostulacionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PostulacionResponseDTO> obtenerTodas() {
+    public List<PostulacionDTO> obtenerTodas() {
         return repository.findAll().stream()
-                .map(this::convertToResponseDto)
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PostulacionResponseDTO obtenerPorId(Long id) {
+    public PostulacionDTO obtenerPorId(Long id) {
         Postulacion postulacion = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Postulación no encontrada con ID: " + id));
-        return convertToResponseDto(postulacion);
+        return convertToDto(postulacion);
     }
 
     @Override
     @Transactional
-    public PostulacionResponseDTO crearPostulacion(PostulacionRequestDTO requestDTO) {
-        Trabajador trabajador = trabajadorRepository.findById(requestDTO.getTrabajadorId())
-                .orElseThrow(() -> new RuntimeException("Trabajador no encontrado con ID: " + requestDTO.getTrabajadorId()));
+    public PostulacionDTO crearPostulacion(PostulacionDTO dto) {
+        if (dto.getAutor() == null || dto.getAutor().getId() == null) {
+            throw new RuntimeException("El autor (Trabajador) es obligatorio.");
+        }
+        if (dto.getOportunidad() == null || dto.getOportunidad().getId() == null) {
+            throw new RuntimeException("La oportunidad laboral es obligatoria.");
+        }
 
-        OportunidadLaboral oportunidad = oportunidadRepository.findById(requestDTO.getOportunidadId())
-                .orElseThrow(() -> new RuntimeException("Oportunidad laboral no encontrada con ID: " + requestDTO.getOportunidadId()));
+        Long trabajadorId = dto.getAutor().getId();
+        Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
+                .orElseThrow(() -> new RuntimeException("Trabajador no encontrado con ID: " + trabajadorId));
+
+        Long oportunidadId = dto.getOportunidad().getId();
+        OportunidadLaboral oportunidad = oportunidadRepository.findById(oportunidadId)
+                .orElseThrow(() -> new RuntimeException("Oportunidad laboral no encontrada con ID: " + oportunidadId));
 
         if ("CERRADA".equalsIgnoreCase(oportunidad.getEstado())) {
             throw new RuntimeException("No se permiten postulaciones a una oportunidad cerrada.");
         }
 
         Postulacion postulacion = new Postulacion();
-        postulacion.setTitulo(requestDTO.getTitulo());
-        postulacion.setDescripcion(requestDTO.getDescripcion());
-        postulacion.setPresupuesto(requestDTO.getPresupuesto());
-        postulacion.setDisponibilidad(requestDTO.getDisponibilidad());
+        postulacion.setTitulo(dto.getTitulo());
+        postulacion.setDescripcion(dto.getDescripcion());
+        postulacion.setImagen(dto.getImagen());
+        postulacion.setPresupuesto(dto.getPresupuesto());
+        postulacion.setDisponibilidad(dto.getDisponibilidad());
         postulacion.setAutor(trabajador);
         postulacion.setOportunidad(oportunidad);
         postulacion.setEstado("PENDIENTE");
 
         Postulacion guardada = repository.save(postulacion);
-        return convertToResponseDto(guardada);
+        return convertToDto(guardada);
     }
 
     @Override
     @Transactional
-    public PostulacionResponseDTO seleccionarPostulacion(Long id) {
+    public PostulacionDTO seleccionarPostulacion(Long id) {
         Postulacion postulacion = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Postulación no encontrada con ID: " + id));
 
         postulacion.setEstado("SELECCIONADA");
         Postulacion actualizada = repository.save(postulacion);
-        return convertToResponseDto(actualizada);
+        return convertToDto(actualizada);
     }
 
     @Override
     @Transactional
-    public PostulacionResponseDTO rechazarPostulacion(Long id) {
+    public PostulacionDTO rechazarPostulacion(Long id) {
         Postulacion postulacion = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Postulación no encontrada con ID: " + id));
 
         postulacion.setEstado("RECHAZADA");
         Postulacion actualizada = repository.save(postulacion);
-        return convertToResponseDto(actualizada);
+        return convertToDto(actualizada);
     }
 
     @Override
@@ -97,20 +108,37 @@ public class PostulacionServiceImpl implements PostulacionService {
         repository.deleteById(id);
     }
 
-    private PostulacionResponseDTO convertToResponseDto(Postulacion entity) {
-        PostulacionResponseDTO dto = new PostulacionResponseDTO();
+    private PostulacionDTO convertToDto(Postulacion entity) {
+        PostulacionDTO dto = new PostulacionDTO();
         dto.setId(entity.getId());
         dto.setTitulo(entity.getTitulo());
         dto.setDescripcion(entity.getDescripcion());
+        dto.setImagen(entity.getImagen());
+
+        if (entity.getAutor() != null) {
+            UsuarioResumenDTO autorResumen = new UsuarioResumenDTO();
+            autorResumen.setId(entity.getAutor().getId());
+            autorResumen.setNombre(entity.getAutor().getNombre());
+            autorResumen.setEmail(entity.getAutor().getEmail());
+            dto.setAutor(autorResumen);
+        }
+
         dto.setPresupuesto(entity.getPresupuesto());
         dto.setDisponibilidad(entity.getDisponibilidad());
         dto.setEstado(entity.getEstado());
-        if (entity.getAutor() != null) {
-            dto.setTrabajadorId(entity.getAutor().getId());
-        }
+
         if (entity.getOportunidad() != null) {
-            dto.setOportunidadId(entity.getOportunidad().getId());
+            OportunidadLaboralResumenDTO opResumen = new OportunidadLaboralResumenDTO();
+            opResumen.setId(entity.getOportunidad().getId());
+            opResumen.setTitulo(entity.getOportunidad().getTitulo());
+            opResumen.setDescripcion(entity.getOportunidad().getDescripcion());
+            opResumen.setImagen(entity.getOportunidad().getImagen());
+            opResumen.setEstado(entity.getOportunidad().getEstado());
+            opResumen.setFechaPublicacion(entity.getOportunidad().getFechaPublicacion());
+            opResumen.setFechaCierre(entity.getOportunidad().getFechaCierre());
+            dto.setOportunidad(opResumen);
         }
+
         return dto;
     }
 }

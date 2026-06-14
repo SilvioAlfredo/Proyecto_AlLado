@@ -1,23 +1,11 @@
 package com.al_lado.al_lado_project.service;
 
-import com.al_lado.al_lado_project.entity.Empleador;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.al_lado.al_lado_project.dto.EmpleadorDTO;
 import java.util.List;
 
 public interface EmpleadorService {
-
-    List<Empleador> obtenerTodos();
-
-    EmpleadorResponseDTO obtenerPorId(Long id);
-
-    Empleador guardar(Empleador empleador);
-
-    @Transactional
-    EmpleadorResponseDTO registrarEmpleador(EmpleadorRequestDTO requestDTO);
-
-    @Transactional
-    EmpleadorResponseDTO actualizar(Long id, EmpleadorRequestDTO requestDTO);
-
+    List<EmpleadorDTO> obtenerTodos();
+    EmpleadorDTO obtenerPorId(Long id);
+    EmpleadorDTO guardar(EmpleadorDTO empleadorDTO);
     void eliminar(Long id);
 }
