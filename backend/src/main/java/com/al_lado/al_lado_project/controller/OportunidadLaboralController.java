@@ -1,7 +1,9 @@
 package com.al_lado.al_lado_project.controller;
 
+import com.al_lado.al_lado_project.dto.OportunidadLaboralDTO;
 import com.al_lado.al_lado_project.entity.OportunidadLaboral;
 import com.al_lado.al_lado_project.service.OportunidadLaboralService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
