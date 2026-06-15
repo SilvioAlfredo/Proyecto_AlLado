@@ -15,7 +15,7 @@ import java.util.List;
 public class OportunidadLaboralController {
 
 
-    private OportunidadLaboralService service;
+    private final OportunidadLaboralService service;
 
     @GetMapping
     public ResponseEntity<List<OportunidadLaboralDTO>> obtenerTodas() {

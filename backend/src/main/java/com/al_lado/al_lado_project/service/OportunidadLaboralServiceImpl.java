@@ -111,8 +111,8 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
         dto.setFechaPublicacion(entity.getFechaPublicacion());
         dto.setFechaCierre(entity.getFechaCierre());
 
-        if (entity.getPostulaciones() != null) {
-            List<PostulacionResumenDTO> resumenes = entity.getPostulaciones().stream().map(postulacion -> {
+        if (entity.getPostulacionesRecibidas() != null) {
+            List<PostulacionResumenDTO> resumenes = entity.getPostulacionesRecibidas().stream().map(postulacion -> {
                 PostulacionResumenDTO resumen = new PostulacionResumenDTO();
                 resumen.setId(postulacion.getId());
                 resumen.setPresupuesto(postulacion.getPresupuesto());

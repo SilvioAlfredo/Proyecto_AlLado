@@ -39,13 +39,23 @@ public class EmpleadorServiceImpl implements EmpleadorService {
     @Override
     @Transactional
     public EmpleadorDTO guardar(EmpleadorDTO dto) {
-        if (dto.getId() == null && usuarioRepository.existsByEmail(dto.getEmail())) {
-            throw new RuntimeException("El email ya está registrado.");
-        }
+        Empleador empleador;
 
-        Empleador empleador = dto.getId() != null ?
-                repository.findById(dto.getId()).orElseThrow(() -> new RuntimeException("Empleador no encontrado"))
-                : new Empleador();
+        if (dto.getId() == null) {
+            // Creación: Validar email único
+            if (usuarioRepository.existsByEmail(dto.getEmail())) {
+                throw new RuntimeException("El email ya está registrado.");
+            }
+            empleador = new Empleador();
+        } else {
+            // Edición: Validar que si cambia el email, no pertenezca a otro ID
+            empleador = repository.findById(dto.getId())
+                    .orElseThrow(() -> new RuntimeException("Empleador no encontrado"));
+
+            if (!empleador.getEmail().equals(dto.getEmail()) && usuarioRepository.existsByEmail(dto.getEmail())) {
+                throw new RuntimeException("El email ya está registrado por otro usuario.");
+            }
+        }
 
         empleador.setNombre(dto.getNombre());
         empleador.setEmail(dto.getEmail());
@@ -54,8 +64,7 @@ public class EmpleadorServiceImpl implements EmpleadorService {
             empleador.setPassword(dto.getPassword());
         }
 
-        Empleador guardado = repository.save(empleador);
-        return convertToDto(guardado);
+        return convertToDto(repository.save(empleador));
     }
 
     @Override
