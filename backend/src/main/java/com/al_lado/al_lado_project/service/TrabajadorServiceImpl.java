@@ -1,9 +1,8 @@
 package com.al_lado.al_lado_project.service;
 
-import com.al_lado.al_lado_project.dto.PostulacionResumenDTO;
 import com.al_lado.al_lado_project.dto.TrabajadorDTO;
-import com.al_lado.al_lado_project.dto.UsuarioResumenDTO;
 import com.al_lado.al_lado_project.entity.Trabajador;
+import com.al_lado.al_lado_project.mappers.TrabajadorMapper;
 import com.al_lado.al_lado_project.repository.TrabajadorRepository;
 import com.al_lado.al_lado_project.repository.UsuarioRepository;
 import com.al_lado.al_lado_project.service.TrabajadorService;
@@ -20,12 +19,13 @@ public class TrabajadorServiceImpl implements TrabajadorService {
 
     private final TrabajadorRepository repository;
     private final UsuarioRepository usuarioRepository;
+    private final TrabajadorMapper mapper;
 
     @Override
     @Transactional(readOnly = true)
     public List<TrabajadorDTO> obtenerTodos() {
         return repository.findAll().stream()
-                .map(this::convertToDto)
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -34,7 +34,7 @@ public class TrabajadorServiceImpl implements TrabajadorService {
     public TrabajadorDTO obtenerPorId(Long id) {
         Trabajador trabajador = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Trabajador no encontrado con ID: " + id));
-        return convertToDto(trabajador);
+        return mapper.toDTO(trabajador);
     }
 
     @Override
@@ -43,15 +43,13 @@ public class TrabajadorServiceImpl implements TrabajadorService {
         Trabajador trabajador;
 
         if (dto.getId() == null) {
-            // Creación: Validar email único
             if (usuarioRepository.existsByEmail(dto.getEmail())) {
                 throw new RuntimeException("El email ya está registrado.");
             }
-            trabajador = new Trabajador();
+            trabajador = mapper.toEntity(dto);
         } else {
-            // Edición: Validar que si cambia el email, no pertenezca a otro ID
             trabajador = repository.findById(dto.getId())
-                    .orElseThrow(() -> new RuntimeException("Empleador no encontrado"));
+                    .orElseThrow(() -> new RuntimeException("Trabajador no encontrado"));
 
             if (!trabajador.getEmail().equals(dto.getEmail()) && usuarioRepository.existsByEmail(dto.getEmail())) {
                 throw new RuntimeException("El email ya está registrado por otro usuario.");
@@ -61,11 +59,11 @@ public class TrabajadorServiceImpl implements TrabajadorService {
         trabajador.setNombre(dto.getNombre());
         trabajador.setEmail(dto.getEmail());
 
-        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+        if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
             trabajador.setPassword(dto.getPassword());
         }
 
-        return convertToDto(repository.save(trabajador));
+        return mapper.toDTO(repository.save(trabajador));
     }
 
     @Override
@@ -75,33 +73,5 @@ public class TrabajadorServiceImpl implements TrabajadorService {
             throw new RuntimeException("Trabajador no encontrado con ID: " + id);
         }
         repository.deleteById(id);
-    }
-
-    private TrabajadorDTO convertToDto(Trabajador entity) {
-        TrabajadorDTO dto = new TrabajadorDTO();
-        dto.setId(entity.getId());
-        dto.setNombre(entity.getNombre());
-        dto.setEmail(entity.getEmail());
-
-        if (entity.getPostulaciones() != null) {
-            List<PostulacionResumenDTO> resumenes = entity.getPostulaciones().stream().map(postulacion -> {
-                PostulacionResumenDTO resumen = new PostulacionResumenDTO();
-                resumen.setId(postulacion.getId());
-                resumen.setPresupuesto(postulacion.getPresupuesto());
-                resumen.setDisponibilidad(postulacion.getDisponibilidad());
-                resumen.setEstado(postulacion.getEstado());
-
-                if (postulacion.getAutor() != null) {
-                    UsuarioResumenDTO autorResumen = new UsuarioResumenDTO();
-                    autorResumen.setId(postulacion.getAutor().getId());
-                    autorResumen.setNombre(postulacion.getAutor().getNombre());
-                    autorResumen.setEmail(postulacion.getAutor().getEmail());
-                    resumen.setAutor(autorResumen);
-                }
-                return resumen;
-            }).collect(Collectors.toList());
-            dto.setPostulaciones(resumenes);
-        }
-        return dto;
     }
 }

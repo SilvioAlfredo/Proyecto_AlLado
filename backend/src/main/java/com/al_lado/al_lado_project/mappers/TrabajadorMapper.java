@@ -1,16 +1,16 @@
 package com.al_lado.al_lado_project.mappers;
 
-import com.al_lado.al_lado_project.dto.UsuarioDTO;
+import com.al_lado.al_lado_project.dto.TrabajadorDTO;
 import com.al_lado.al_lado_project.entity.Trabajador;
 import org.springframework.stereotype.Component;
 
 @Component
 public class TrabajadorMapper {
 
-    public UsuarioDTO toDTO(Trabajador entity) {
+    public TrabajadorDTO toDTO(Trabajador entity) {
         if (entity == null) return null;
 
-        UsuarioDTO dto = new UsuarioDTO() {};
+        TrabajadorDTO dto = new TrabajadorDTO();
         dto.setId(entity.getId());
         dto.setNombre(entity.getNombre());
         dto.setEmail(entity.getEmail());
@@ -18,7 +18,7 @@ public class TrabajadorMapper {
         return dto;
     }
 
-    public Trabajador toEntity(UsuarioDTO dto) {
+    public Trabajador toEntity(TrabajadorDTO dto) {
         if (dto == null) return null;
 
         Trabajador entity = new Trabajador();
