@@ -17,15 +17,4 @@ public class UsuarioMapper {
         dto.setPassword(entity.getPassword());
         return dto;
     }
-
-    public Usuario toEntity(UsuarioDTO dto) {
-        if (dto == null) return null;
-
-        Usuario entity = new Usuario() {};
-        entity.setId(dto.getId());
-        entity.setNombre(dto.getNombre());
-        entity.setEmail(dto.getEmail());
-        entity.setPassword(dto.getPassword());
-        return entity;
-    }
 }

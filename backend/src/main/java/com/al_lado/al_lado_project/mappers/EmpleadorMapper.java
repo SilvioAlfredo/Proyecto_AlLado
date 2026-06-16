@@ -15,6 +15,7 @@ public class EmpleadorMapper {
         dto.setNombre(entity.getNombre());
         dto.setEmail(entity.getEmail());
         dto.setPassword(entity.getPassword());
+        //
         return dto;
     }
 
