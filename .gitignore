@@ -1,0 +1,18 @@
+# Ignorar la carpeta de compilación de Maven
+/target/
+
+# Ignorar archivos de configuración del IDE (IntelliJ, Eclipse, VS Code)
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# Ignorar archivos de sistema o logs
+*.log
+.DS_Store
+
+.hg/
+.hgignore
+.hgtags
