@@ -1,5 +1,0 @@
-podman run --name al_lado_db \
-  -e POSTGRES_PASSWORD=1234 \
-  -e POSTGRES_DB=al_lado_db \
-  -p 5432:5432 \
-  -d postgres:18
