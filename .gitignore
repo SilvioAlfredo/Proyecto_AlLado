@@ -1,5 +1,5 @@
 # Ignorar la carpeta de compilación de Maven
-/target/
+target/
 
 # Ignorar archivos de configuración del IDE (IntelliJ, Eclipse, VS Code)
 .idea/
@@ -13,6 +13,7 @@
 *.log
 .DS_Store
 
+# Ignorar repositorio y metadatos de Mercurial
 .hg/
 .hgignore
 .hgtags

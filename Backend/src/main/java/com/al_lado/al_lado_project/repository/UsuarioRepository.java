@@ -1,6 +1,6 @@
 package com.al_lado.al_lado_project.repository;
 
-import com.al_lado.al_lado_project.entity.Usuario;
+import com.al_lado.al_lado_project.entity.usuario.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;

@@ -2,7 +2,7 @@ package com.al_lado.al_lado_project.mappers;
 
 import com.al_lado.al_lado_project.dto.PostulacionDTO;
 import com.al_lado.al_lado_project.dto.OportunidadLaboralResumenDTO;
-import com.al_lado.al_lado_project.entity.Postulacion;
+import com.al_lado.al_lado_project.entity.trabajo.Postulacion;
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,11 +1,10 @@
 package com.al_lado.al_lado_project.service;
 
 import com.al_lado.al_lado_project.dto.EmpleadorDTO;
-import com.al_lado.al_lado_project.entity.Empleador;
+import com.al_lado.al_lado_project.entity.usuario.Empleador;
 import com.al_lado.al_lado_project.mappers.EmpleadorMapper;
 import com.al_lado.al_lado_project.repository.EmpleadorRepository;
 import com.al_lado.al_lado_project.repository.UsuarioRepository;
-import com.al_lado.al_lado_project.service.EmpleadorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

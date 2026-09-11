@@ -1,7 +1,7 @@
 package com.al_lado.al_lado_project.mappers;
 
 import com.al_lado.al_lado_project.dto.PostulacionResumenDTO;
-import com.al_lado.al_lado_project.entity.Postulacion;
+import com.al_lado.al_lado_project.entity.trabajo.Postulacion;
 import org.springframework.stereotype.Component;
 
 @Component

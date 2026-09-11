@@ -1,7 +1,7 @@
 package com.al_lado.al_lado_project.mappers;
 
 import com.al_lado.al_lado_project.dto.UsuarioDTO;
-import com.al_lado.al_lado_project.entity.Usuario;
+import com.al_lado.al_lado_project.entity.usuario.Usuario;
 import org.springframework.stereotype.Component;
 
 @Component

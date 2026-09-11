@@ -1,12 +1,11 @@
 package com.al_lado.al_lado_project.service;
 
 import com.al_lado.al_lado_project.dto.OportunidadLaboralDTO;
-import com.al_lado.al_lado_project.entity.Empleador;
-import com.al_lado.al_lado_project.entity.OportunidadLaboral;
+import com.al_lado.al_lado_project.entity.usuario.Empleador;
+import com.al_lado.al_lado_project.entity.trabajo.OportunidadLaboral;
 import com.al_lado.al_lado_project.mappers.OportunidadLaboralMapper;
 import com.al_lado.al_lado_project.repository.EmpleadorRepository;
 import com.al_lado.al_lado_project.repository.OportunidadLaboralRepository;
-import com.al_lado.al_lado_project.service.OportunidadLaboralService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,7 +1,7 @@
 package com.al_lado.al_lado_project.mappers;
 
 import com.al_lado.al_lado_project.dto.TrabajadorDTO;
-import com.al_lado.al_lado_project.entity.Trabajador;
+import com.al_lado.al_lado_project.entity.usuario.Trabajador;
 import org.springframework.stereotype.Component;
 
 @Component

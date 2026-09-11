@@ -1,7 +1,7 @@
 package com.al_lado.al_lado_project.mappers;
 
 import com.al_lado.al_lado_project.dto.PostBaseDTO;
-import com.al_lado.al_lado_project.entity.PostBase;
+import com.al_lado.al_lado_project.entity.trabajo.PostBase;
 
 public abstract class PostBaseMapper {
 
