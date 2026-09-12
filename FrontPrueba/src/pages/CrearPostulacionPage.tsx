@@ -19,7 +19,7 @@ export function CrearPostulacionPage({ oportunidad, onVolver, onExito }: CrearPo
         descripcion: mensaje,
         presupuesto: parseFloat(presupuesto) || 0,
         disponibilidad,
-        autor: { id: 5 }, // Sin login, id hardocodeado para pruebas
+        autor: { id: 5 }, // Sin login, id hardocodeado para pruebas.
         oportunidad: { id: oportunidad?.id }
       });
       alert('¡Postulación realizada con éxito!');

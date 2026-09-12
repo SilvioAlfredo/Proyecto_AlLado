@@ -4,13 +4,12 @@ import com.al_lado.al_lado_project.dto.OportunidadLaboralDTO;
 import com.al_lado.al_lado_project.entity.usuario.Empleador;
 import com.al_lado.al_lado_project.entity.trabajo.OportunidadLaboral;
 import com.al_lado.al_lado_project.mappers.OportunidadLaboralMapper;
-import com.al_lado.al_lado_project.repository.EmpleadorRepository;
-import com.al_lado.al_lado_project.repository.OportunidadLaboralRepository;
+import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
+import com.al_lado.al_lado_project.repository.trabajo.OportunidadLaboralRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,14 +53,13 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
                 : mapper.toEntity(dto);
 
         oportunidad.setTitulo(dto.getTitulo());
-        oportunidad.setDescripcion(dto.getDescripcion());
+        oportunidad.setContenido(dto.getTitulo()); // PostBase utiliza 'contenido'
         oportunidad.setAutor(empleador);
 
         if (dto.getId() == null) {
-            oportunidad.setFechaPublicacion(new Date());
-            oportunidad.setEstado("ACTIVA");
+            oportunidad.setActiva(true);
         } else {
-            oportunidad.setEstado(dto.getEstado());
+            oportunidad.setActiva(dto.getEstado() == null || !"CERRADA".equalsIgnoreCase(dto.getEstado()));
         }
 
         return mapper.toDTO(repository.save(oportunidad));
@@ -73,8 +71,7 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
         OportunidadLaboral oportunidad = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Oportunidad no encontrada con ID: " + id));
 
-        oportunidad.setEstado("CERRADA");
-        oportunidad.setFechaCierre(new Date());
+        oportunidad.setActiva(false);
 
         return mapper.toDTO(repository.save(oportunidad));
     }

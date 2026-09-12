@@ -5,9 +5,9 @@ import com.al_lado.al_lado_project.entity.trabajo.OportunidadLaboral;
 import com.al_lado.al_lado_project.entity.trabajo.Postulacion;
 import com.al_lado.al_lado_project.entity.usuario.Trabajador;
 import com.al_lado.al_lado_project.mappers.PostulacionMapper;
-import com.al_lado.al_lado_project.repository.OportunidadLaboralRepository;
-import com.al_lado.al_lado_project.repository.PostulacionRepository;
-import com.al_lado.al_lado_project.repository.TrabajadorRepository;
+import com.al_lado.al_lado_project.repository.trabajo.OportunidadLaboralRepository;
+import com.al_lado.al_lado_project.repository.trabajo.PostulacionRepository;
+import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,13 +58,13 @@ public class PostulacionServiceImpl implements PostulacionService {
         OportunidadLaboral oportunidad = oportunidadRepository.findById(oportunidadId)
                 .orElseThrow(() -> new RuntimeException("Oportunidad laboral no encontrada con ID: " + oportunidadId));
 
-        if ("CERRADA".equalsIgnoreCase(oportunidad.getEstado())) {
+        if (!oportunidad.isActiva()) {
             throw new RuntimeException("No se permiten postulaciones a una oportunidad cerrada.");
         }
 
         Postulacion postulacion = mapper.toEntity(dto);
-        postulacion.setAutor(trabajador);       // Vincula la entidad gestionada persistente
-        postulacion.setOportunidad(oportunidad); // Vincula la entidad gestionada persistente
+        postulacion.setAutor(trabajador);
+        postulacion.setOportunidadLaboral(oportunidad);
         postulacion.setEstado("PENDIENTE");
 
         return mapper.toDTO(repository.save(postulacion));
