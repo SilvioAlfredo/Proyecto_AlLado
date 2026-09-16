@@ -1,6 +1,7 @@
 package com.al_lado.al_lado_project.repository.trabajo;
 
 import com.al_lado.al_lado_project.entity.trabajo.OportunidadLaboral;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,12 +12,14 @@ import java.util.List;
 @Repository
 public interface OportunidadLaboralRepository extends JpaRepository<OportunidadLaboral, Long> {
 
+    @EntityGraph(attributePaths = {"etiquetas", "autor"})
     List<OportunidadLaboral> findByActivaTrue();
 
     List<OportunidadLaboral> findByAutorId(Long autorId);
 
     List<OportunidadLaboral> findByAutorIdAndActiva(Long autorId, boolean activa);
 
+    @EntityGraph(attributePaths = {"etiquetas", "autor"})
     @Query("SELECT o FROM OportunidadLaboral o WHERE " +
             "(LOWER(o.titulo) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +
             "LOWER(o.contenido) LIKE LOWER(CONCAT('%', :filtro, '%'))) " +

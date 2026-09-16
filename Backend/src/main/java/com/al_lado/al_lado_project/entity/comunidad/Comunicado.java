@@ -1,7 +1,6 @@
 package com.al_lado.al_lado_project.entity.comunidad;
 
 import com.al_lado.al_lado_project.entity.usuario.Administrador;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,15 +27,13 @@ public class Comunicado {
     private String contenido;
 
     @Column(length = 50)
-    private String alcance; // Ej: "TODOS", "TRABAJADORES", "EMPLEADORES"
+    private String alcance;
 
     @Column(name = "fecha_emision", nullable = false, updatable = false)
     private LocalDateTime fechaEmision;
 
-    // Administrador que emite el comunicado (coincide con mappedBy = "emisor" en Administrador)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "administrador_id", nullable = false)
-    @JsonIgnoreProperties({"comunicadosEnviados", "reportesModerados", "perfilesSupervisados", "password"})
     private Administrador emisor;
 
     @PrePersist

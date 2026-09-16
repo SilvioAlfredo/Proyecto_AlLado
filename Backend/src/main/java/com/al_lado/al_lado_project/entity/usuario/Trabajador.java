@@ -22,7 +22,6 @@ import java.util.Set;
 @NoArgsConstructor
 public class Trabajador extends Usuario {
 
-    // Se removió cascade = ALL y orphanRemoval para preservar el historial transaccional
     @OneToMany(mappedBy = "autor")
     private Set<Postulacion> postulaciones = new HashSet<>();
 
@@ -59,5 +58,16 @@ public class Trabajador extends Usuario {
             preferenciaNotificacion.setTrabajador(this);
         }
         this.preferenciaNotificacion = preferenciaNotificacion;
+    }
+
+    // Helpers M:N con Etiqueta
+    public void addEspecialidad(Etiqueta etiqueta) {
+        this.especialidades.add(etiqueta);
+        etiqueta.getTrabajadores().add(this);
+    }
+
+    public void removeEspecialidad(Etiqueta etiqueta) {
+        this.especialidades.remove(etiqueta);
+        etiqueta.getTrabajadores().remove(this);
     }
 }
