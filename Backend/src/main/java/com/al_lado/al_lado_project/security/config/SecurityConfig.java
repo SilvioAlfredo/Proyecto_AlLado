@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -18,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity // Habilita las anotaciones como @PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -30,16 +32,25 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Endpoints Públicos
+                        // 1. Peticiones de Preflight (CORS) permitidas siempre
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 2. Endpoints públicos de autenticación y registro
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/oportunidades/**", "/comunicados/**", "/publicidades/**", "/foro/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/trabajadores", "/empleadores").permitAll()
-                        // Endpoints de Administración
+
+                        // 3. Endpoints públicos de lectura (catálogos/foro)
+                        .requestMatchers(HttpMethod.GET, "/oportunidades/**", "/comunicados/**", "/publicidades/**", "/foro/**", "/reportes/**").permitAll()
+
+                        // 4. Panel de administración REST (protegido para ROLE_ADMIN)
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/administradores/**").hasRole("ADMIN")
                         .requestMatchers("/reportes/*/resolver").hasRole("ADMIN")
-                        // Cualquier otra petición requiere autenticación
+
+                        // 5. Cualquier otra petición requiere autenticación
                         .anyRequest().authenticated()
                 )
+                // ✅ Correcto
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="adminTopbar(titleText, activePage)">
+    <!-- Desktop Header -->
+    <header class="topbar-desktop">
+        <div>
+            <p class="topbar-title" th:text="${titleText}">Dashboard</p>
+            <p class="topbar-meta">Módulo de Administración · AlLado v2.4</p>
+        </div>
+        <div class="status-badge">
+            <span class="indicator-green"></span>
+            <span class="status-text">Sistema activo</span>
+        </div>
+    </header>
+
+    <!-- Mobile Top Bar -->
+    <div class="topbar-mobile">
+        <div class="mobile-brand">
+            <div class="logo-box-sm">AL</div>
+            <span class="brand-title-sm">AlLado Admin</span>
+        </div>
+        <div class="status-badge-sm">
+            <span class="indicator-green"></span>
+            <span class="status-text-sm">LIVE</span>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a th:href="@{/admin/dashboard}"
+           class="bottom-nav-item"
+           th:classappend="${activePage == 'dashboard'} ? ' active' : ''">
+            <span class="bottom-label">Dashboard</span>
+        </a>
+        <a th:href="@{/admin/contratos}"
+           class="bottom-nav-item"
+           th:classappend="${activePage == 'contratos'} ? ' active' : ''">
+            <span class="bottom-label">Contratos</span>
+        </a>
+        <a th:href="@{/admin/comunidad}"
+           class="bottom-nav-item"
+           th:classappend="${activePage == 'comunidad'} ? ' active' : ''">
+            <span class="bottom-label">Comunidad</span>
+        </a>
+    </nav>
+</div>
+</body>
+</html>

@@ -19,6 +19,12 @@ public interface OportunidadLaboralRepository extends JpaRepository<OportunidadL
 
     List<OportunidadLaboral> findByAutorIdAndActiva(Long autorId, boolean activa);
 
+    @Query("SELECT e.nombre, COUNT(o) " +
+            "FROM OportunidadLaboral o JOIN o.etiquetas e " +
+            "GROUP BY e.nombre " +
+            "ORDER BY COUNT(o) DESC")
+    List<Object[]> findTendenciasPorEtiqueta();
+
     @EntityGraph(attributePaths = {"etiquetas", "autor"})
     @Query("SELECT o FROM OportunidadLaboral o WHERE " +
             "(LOWER(o.titulo) LIKE LOWER(CONCAT('%', :filtro, '%')) OR " +

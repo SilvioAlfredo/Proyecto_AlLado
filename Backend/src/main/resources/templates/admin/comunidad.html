@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/admin/head :: adminHead('Comunidad')}"></head>
+<body class="admin-app">
+
+<!-- Sidebar Desktop -->
+<aside th:replace="~{fragments/admin/sidebar :: adminSidebar('comunidad')}"></aside>
+
+<!-- Contenedor Principal -->
+<div class="main-wrapper">
+    <!-- Topbar unificada -->
+    <div th:replace="~{fragments/admin/topbar :: adminTopbar('Comunidad', 'comunidad')}"></div>
+
+    <main class="content-container">
+        <section class="screen-view active">
+            <div class="mb-4">
+                <p class="section-meta">MODERACIÓN</p>
+                <h1 class="heading-1">Comunidad & Foro</h1>
+            </div>
+
+            <!-- Pestañas de filtrado de Foro -->
+            <div class="pill-filters mb-4">
+                <button type="button" class="tab-btn active" data-tab="Recientes">Recientes</button>
+                <button type="button" class="tab-btn" data-tab="Populares">Populares</button>
+            </div>
+
+            <!-- Lista de Publicaciones del Foro -->
+            <div class="cards-stack mb-5">
+                <div class="card p-4 post-card" th:each="p : ${posts}">
+                    <div class="post-layout">
+                        <!-- Avatar con inicial del Autor -->
+                        <div class="avatar-bubble avatar-gold"
+                             th:text="${p.autor != null and p.autor.nombre != null ? #strings.substring(p.autor.nombre, 0, 1) : 'U'}">
+                            U
+                        </div>
+                        <div class="post-body">
+                            <div class="post-title-row">
+                                <p class="post-author"
+                                   th:text="${p.autor != null and p.autor.nombre != null ? p.autor.nombre : 'Vecino'}">
+                                    Nombre del Vecino
+                                </p>
+                                <span class="post-tag tag-yellow">Foro</span>
+                            </div>
+                            <p class="post-time"
+                               th:text="${p.fechaCreacion != null ? #temporals.format(p.fechaCreacion, 'dd/MM/yyyy HH:mm') : 'Reciente'}">
+                                hace 2h
+                            </p>
+                            <h3 style="font-size: 1.05rem; font-weight: 600; color: #fff; margin-bottom: 4px;" th:text="${p.titulo}">
+                                Título del post
+                            </h3>
+                            <p class="post-text" th:text="${p.contenido}">
+                                Contenido de la publicación del foro...
+                            </p>
+                            <div class="post-actions">
+                                <span class="text-muted text-sm">💬 Foro vecinal</span>
+                                <button type="button" class="btn-moderate">Moderar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensaje cuando no hay posts -->
+                <div th:if="${#lists.isEmpty(posts)}" class="card p-4 text-center text-muted">
+                    No hay publicaciones en el foro actualmente.
+                </div>
+            </div>
+
+            <!-- Módulo: Reportes y Denuncias de la BD -->
+            <div class="reports-container">
+                <div class="reports-header">
+                    <div class="reports-header-title">
+                        <span class="text-red">⚠️</span>
+                        <p class="card-title">Reportes y Denuncias</p>
+                    </div>
+                    <span class="reports-badge" th:text="${pendientesCount != null ? pendientesCount + ' pendientes' : '0 pendientes'}">
+              0 pendientes
+            </span>
+                </div>
+
+                <!-- Tabla Desktop -->
+                <div class="reports-desktop-table">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>USUARIO</th>
+                            <th>MOTIVO</th>
+                            <th>ESTADO</th>
+                            <th>ACCIONES</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="r : ${reportes}">
+                            <td class="text-yellow font-mono" th:text="'RPT-' + ${r.id}">RPT-001</td>
+                            <td class="font-dm font-semibold"
+                                th:text="${r.reportado != null and r.reportado.nombre != null ? r.reportado.nombre : (r.reportado != null ? r.reportado.email : '@usuario')}">
+                                @usuario
+                            </td>
+                            <td class="text-muted-light text-sm max-w-desc" th:text="${r.motivo}">Motivo de la denuncia</td>
+                            <td>
+                                <span class="status-pill-pending" th:text="${r.estado != null ? r.estado : 'PENDIENTE'}">PENDIENTE</span>
+                            </td>
+                            <td>
+                                <div class="btn-group-sm">
+                                    <button type="button" class="btn-action-green">Aprobar</button>
+                                    <button type="button" class="btn-action-red">Bloquear</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(reportes)}">
+                            <td colspan="5" style="text-align: center; color: #6b7280; padding: 20px;">
+                                No hay reportes ni denuncias registradas.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Cards Móvil -->
+                <div class="reports-mobile-stack">
+                    <div class="report-mobile-card" th:each="r : ${reportes}">
+                        <div class="report-mobile-head">
+                            <span class="text-yellow font-mono text-sm" th:text="'RPT-' + ${r.id}">RPT-001</span>
+                            <span class="status-pill-pending" th:text="${r.estado != null ? r.estado : 'PENDIENTE'}">PENDIENTE</span>
+                        </div>
+                        <p class="font-dm font-semibold"
+                           th:text="${r.reportado != null and r.reportado.nombre != null ? r.reportado.nombre : '@usuario'}">
+                            @usuario
+                        </p>
+                        <p class="text-muted text-sm mt-1" th:text="${r.motivo}">Motivo</p>
+                        <div class="report-mobile-buttons">
+                            <button type="button" class="btn-action-green-lg">✓ Aprobar</button>
+                            <button type="button" class="btn-action-red-lg">✕ Bloquear</button>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(reportes)}" class="p-4 text-center text-muted">
+                        No hay reportes ni denuncias registradas.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div th:replace="~{fragments/admin/scripts :: adminScripts('/js/admin/comunidad.js')}"></div>
+</body>
+</html>

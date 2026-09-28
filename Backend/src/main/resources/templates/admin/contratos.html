@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/admin/head :: adminHead('Contratos')}"></head>
+<body class="admin-app">
+
+<!-- Sidebar Desktop -->
+<aside th:replace="~{fragments/admin/sidebar :: adminSidebar('contratos')}"></aside>
+
+<!-- Contenedor Principal -->
+<div class="main-wrapper">
+    <!-- Topbar unificada -->
+    <div th:replace="~{fragments/admin/topbar :: adminTopbar('Contratos', 'contratos')}"></div>
+
+    <main class="content-container">
+        <section class="screen-view active">
+            <div class="mb-4">
+                <p class="section-meta">HISTORIAL</p>
+                <h1 class="heading-1">Contratos y Actividad</h1>
+            </div>
+
+            <div class="pill-filters mb-4">
+                <button type="button" class="filter-btn active" data-filter="Todos">Todos</button>
+                <button type="button" class="filter-btn" data-filter="ACEPTADA">En Curso</button>
+                <button type="button" class="filter-btn" data-filter="FINALIZADA">Finalizados</button>
+            </div>
+
+            <!-- Métricas dinámicas calculadas en el Controller -->
+            <div class="stats-grid mb-4">
+                <div class="stat-card">
+                    <p class="stat-num text-yellow" th:text="${totalContratos != null ? totalContratos : 0}">0</p>
+                    <p class="stat-label">TOTAL</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-num text-yellow" th:text="${totalEnCurso != null ? totalEnCurso : 0}">0</p>
+                    <p class="stat-label">EN CURSO</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-num text-green" th:text="${totalFinalizados != null ? totalFinalizados : 0}">0</p>
+                    <p class="stat-label">FINALIZADOS</p>
+                </div>
+            </div>
+
+            <!-- Listado Dinámico de Contratos / Postulaciones -->
+            <div class="cards-stack">
+                <div class="card p-4 contract-card"
+                     th:each="c : ${contratos}"
+                     th:attr="data-estado=${c.estado}">
+
+                    <div class="contract-head">
+                        <div>
+                            <!-- Título tomado de la Oportunidad Laboral relacionada o del post base -->
+                            <p class="contract-service"
+                               th:text="${c.oportunidadLaboral != null ? c.oportunidadLaboral.titulo : (c.titulo != null ? c.titulo : 'Servicio general')}">
+                                Instalación eléctrica domiciliaria
+                            </p>
+                            <p class="contract-id" th:text="'C-' + ${c.id}">C-0000</p>
+                        </div>
+
+                        <!-- Badge con color condicional -->
+                        <span class="badge"
+                              th:classappend="${c.estado == 'ACEPTADA' or c.estado == 'PENDIENTE'} ? 'badge-en-curso' : 'badge-finalizado'">
+                <span class="badge-dot"
+                      th:classappend="${c.estado == 'ACEPTADA' or c.estado == 'PENDIENTE'} ? 'dot-yellow' : 'dot-green'"></span>
+                <span th:text="${c.estado == 'ACEPTADA' ? 'En Curso' : (c.estado == 'FINALIZADA' ? 'Finalizado' : c.estado)}">
+                  En Curso
+                </span>
+              </span>
+                    </div>
+
+                    <div class="contract-foot">
+                        <div class="user-meta-row">
+                            <!-- Inicial del Trabajador -->
+                            <div class="avatar-bubble avatar-gold"
+                                 th:text="${c.trabajador != null and c.trabajador.nombre != null ? #strings.substring(c.trabajador.nombre, 0, 1) : 'T'}">
+                                T
+                            </div>
+                            <div>
+                                <p class="meta-label">TRABAJADOR</p>
+                                <p class="user-display"
+                                   th:text="${c.trabajador != null ? c.trabajador.nombre + ' ' + (c.trabajador.apellido != null ? c.trabajador.apellido : '') : 'Sin asignar'}">
+                                    Martín Córdoba
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Fecha y hora de creación -->
+                        <div class="contract-timestamp">
+                            <p th:text="${c.fechaCreacion != null ? #temporals.format(c.fechaCreacion, 'dd MMM yyyy') : '--'}">--</p>
+                            <p th:text="${c.fechaCreacion != null ? #temporals.format(c.fechaCreacion, 'HH:mm') + ' hs' : '--:--'}">--:--</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mensaje cuando la base de datos está vacía -->
+                <div th:if="${#lists.isEmpty(contratos)}" class="card p-4 text-center text-muted">
+                    No se encontraron contratos registrados en la plataforma.
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div th:replace="~{fragments/admin/scripts :: adminScripts('/js/admin/contratos.js')}"></div>
+</body>
+</html>
