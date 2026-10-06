@@ -39,7 +39,9 @@ public class Favorito {
 
     @PrePersist
     protected void onCreate() {
-        this.fechaGuardado = LocalDateTime.now();
+        if (this.fechaGuardado == null) {
+            this.fechaGuardado = LocalDateTime.now();
+        }
     }
 
     public Favorito(Empleador empleador, Trabajador trabajador) {

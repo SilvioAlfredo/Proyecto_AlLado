@@ -44,10 +44,17 @@ public class EtiquetaServiceImpl implements EtiquetaService {
             throw new BusinessRuleException("El nombre de la etiqueta es obligatorio.");
         }
 
-        Etiqueta etiqueta = repository.findByNombreIgnoreCase(nombre)
-                .orElseGet(() -> repository.save(new Etiqueta(nombre)));
-
-        return mapper.toDTO(etiqueta);
+        String nombreNormalizado = nombre.trim();
+        try {
+            Etiqueta etiqueta = repository.findByNombreIgnoreCase(nombreNormalizado)
+                    .orElseGet(() -> repository.save(new Etiqueta(nombreNormalizado)));
+            return mapper.toDTO(etiqueta);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // Alta concurrente con el mismo nombre: re-leer en vez de duplicar.
+            Etiqueta etiqueta = repository.findByNombreIgnoreCase(nombreNormalizado)
+                    .orElseThrow(() -> e);
+            return mapper.toDTO(etiqueta);
+        }
     }
 
     @Override

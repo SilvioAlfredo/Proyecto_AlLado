@@ -1,6 +1,7 @@
 package com.al_lado.al_lado_project.dto.comunidad;
 
 import com.al_lado.al_lado_project.dto.usuario.UsuarioResumenDTO;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -20,6 +21,7 @@ public class PublicacionForoDTO {
     @NotBlank(message = "El contenido no puede estar vacío.")
     private String contenido;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime fechaCreacion;
 
     @NotNull(message = "El autor es obligatorio.")

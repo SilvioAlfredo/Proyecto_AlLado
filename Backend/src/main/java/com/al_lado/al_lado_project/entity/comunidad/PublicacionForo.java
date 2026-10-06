@@ -37,7 +37,9 @@ public class PublicacionForo {
 
     @PrePersist
     protected void onCreate() {
-        this.fechaCreacion = LocalDateTime.now();
+        if (this.fechaCreacion == null) {
+            this.fechaCreacion = LocalDateTime.now();
+        }
     }
 
     public PublicacionForo(String titulo, String contenido, Usuario autor) {

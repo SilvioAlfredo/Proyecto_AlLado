@@ -8,6 +8,7 @@ import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
 import com.al_lado.al_lado_project.mappers.comunidad.PublicidadMapper;
 import com.al_lado.al_lado_project.repository.comunidad.PublicidadRepository;
 import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
+import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.comunidad.PublicidadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -71,12 +72,22 @@ public class PublicidadServiceImpl implements PublicidadService {
         }
 
         Long anuncianteId = dto.getAnunciante().getId();
+        SecurityUtils.requireSelfOrAdmin(anuncianteId);
         Empleador anunciante = empleadorRepository.findById(anuncianteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Empleador no encontrado con ID: " + anuncianteId));
 
-        Publicidad publicidad = dto.getId() != null ?
+        boolean esNueva = (dto.getId() == null);
+        Publicidad publicidad = !esNueva ?
                 repository.findById(dto.getId()).orElseThrow(() -> new ResourceNotFoundException("Publicidad no encontrada"))
                 : mapper.toEntity(dto);
+
+        if (!esNueva) {
+            Long propietarioId = publicidad.getAnunciante() != null ? publicidad.getAnunciante().getId() : null;
+            SecurityUtils.requireSelfOrAdmin(propietarioId);
+            if (!anuncianteId.equals(propietarioId) && !SecurityUtils.isAdmin()) {
+                throw new BusinessRuleException("No puede transferir una publicidad a otro anunciante.");
+            }
+        }
 
         publicidad.setTitulo(dto.getTitulo());
         publicidad.setContenido(dto.getContenido());
@@ -84,7 +95,7 @@ public class PublicidadServiceImpl implements PublicidadService {
         publicidad.setUrlDestino(dto.getUrlDestino());
         publicidad.setFechaInicio(dto.getFechaInicio());
         publicidad.setFechaFin(dto.getFechaFin());
-        publicidad.setActiva(dto.isActiva());
+        publicidad.setActiva(esNueva || dto.isActiva());
         publicidad.setAnunciante(anunciante);
 
         return mapper.toDTO(repository.save(publicidad));
@@ -93,9 +104,10 @@ public class PublicidadServiceImpl implements PublicidadService {
     @Override
     @Transactional
     public void eliminar(Long id) {
-        if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Publicidad no encontrada con ID: " + id);
-        }
-        repository.deleteById(id);
+        Publicidad publicidad = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Publicidad no encontrada con ID: " + id));
+        Long propietarioId = publicidad.getAnunciante() != null ? publicidad.getAnunciante().getId() : null;
+        SecurityUtils.requireSelfOrAdmin(propietarioId);
+        repository.delete(publicidad);
     }
 }

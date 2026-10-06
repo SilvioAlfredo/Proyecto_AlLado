@@ -29,7 +29,12 @@ public class TrabajadorMapper {
         dto.setId(entity.getId());
         dto.setNombre(entity.getNombre());
         dto.setEmail(entity.getEmail());
-        dto.setPassword(entity.getPassword());
+        dto.setTelefono(entity.getTelefono());
+
+        // RF-02, HU-03: campos de perfil trabajador
+        dto.setFotografia(entity.getFotografia());
+        dto.setBiografia(entity.getBiografia());
+        dto.setCertificados(entity.getCertificados());
 
         if (entity.getEspecialidades() != null) {
             dto.setEspecialidades(entity.getEspecialidades().stream()
@@ -70,6 +75,12 @@ public class TrabajadorMapper {
         entity.setNombre(dto.getNombre());
         entity.setEmail(dto.getEmail());
         entity.setPassword(dto.getPassword());
+        entity.setTelefono(dto.getTelefono());
+
+        // RF-02, HU-03: campos de perfil trabajador
+        entity.setFotografia(dto.getFotografia());
+        entity.setBiografia(dto.getBiografia());
+        entity.setCertificados(dto.getCertificados());
 
         if (dto.getEspecialidades() != null) {
             entity.setEspecialidades(dto.getEspecialidades().stream()

@@ -25,6 +25,8 @@ public class PublicacionForoMapper {
         return dto;
     }
 
+    // La relacion autor se resuelve en PublicacionForoServiceImpl por ID;
+    // no se reconstruye aqui para no crear entidades transient.
     public PublicacionForo toEntity(PublicacionForoDTO dto) {
         if (dto == null) return null;
 

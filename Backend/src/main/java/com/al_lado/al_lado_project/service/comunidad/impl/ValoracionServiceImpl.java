@@ -11,13 +11,14 @@ import com.al_lado.al_lado_project.mappers.comunidad.ValoracionMapper;
 import com.al_lado.al_lado_project.repository.comunidad.ValoracionRepository;
 import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
 import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
+import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.comunidad.ValoracionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -30,18 +31,14 @@ public class ValoracionServiceImpl implements ValoracionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ValoracionDTO> obtenerPorTrabajador(Long trabajadorId) {
-        return repository.findByTrabajadorId(trabajadorId).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<ValoracionDTO> obtenerPorTrabajador(Long trabajadorId, Pageable pageable) {
+        return repository.findByTrabajadorId(trabajadorId, pageable).map(mapper::toDTO);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ValoracionDTO> obtenerPorAutor(Long autorId) {
-        return repository.findByAutorId(autorId).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<ValoracionDTO> obtenerPorAutor(Long autorId, Pageable pageable) {
+        return repository.findByAutorId(autorId, pageable).map(mapper::toDTO);
     }
 
     @Override
@@ -66,6 +63,7 @@ public class ValoracionServiceImpl implements ValoracionService {
 
         Long autorId = dto.getAutor().getId();
         Long trabajadorId = dto.getTrabajador().getId();
+        SecurityUtils.requireSelfOrAdmin(autorId);
 
         if (repository.existsByAutorIdAndTrabajadorId(autorId, trabajadorId)) {
             throw new DuplicateResourceException("Ya existe una valoración de este empleador a este trabajador.");
@@ -86,9 +84,10 @@ public class ValoracionServiceImpl implements ValoracionService {
     @Override
     @Transactional
     public void eliminar(Long id) {
-        if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Valoración no encontrada con ID: " + id);
-        }
-        repository.deleteById(id);
+        Valoracion valoracion = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Valoración no encontrada con ID: " + id));
+        Long autorId = valoracion.getAutor() != null ? valoracion.getAutor().getId() : null;
+        SecurityUtils.requireSelfOrAdmin(autorId);
+        repository.delete(valoracion);
     }
 }

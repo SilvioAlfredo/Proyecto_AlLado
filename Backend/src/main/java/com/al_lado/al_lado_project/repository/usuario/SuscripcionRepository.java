@@ -38,4 +38,8 @@ public interface SuscripcionRepository extends JpaRepository<Suscripcion, Long> 
     // Query JPQL para consultar si un usuario tiene una suscripción vigente al día de hoy
     @Query("SELECT s FROM Suscripcion s WHERE s.usuario.id = :usuarioId AND s.activa = true AND (s.fechaFin IS NULL OR s.fechaFin >= :hoy)")
     Optional<Suscripcion> findSuscripcionVigentePorUsuarioId(@Param("usuarioId") Long usuarioId, @Param("hoy") LocalDate hoy);
+
+    // Agregacion en BD para el dashboard: cuenta sin cargar entidades.
+    @Query("SELECT COUNT(s) FROM Suscripcion s WHERE s.activa = true AND UPPER(s.nivel) = 'PRO'")
+    long countActivasPro();
 }

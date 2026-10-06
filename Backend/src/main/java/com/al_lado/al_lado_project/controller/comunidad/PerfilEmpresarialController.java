@@ -5,6 +5,7 @@ import com.al_lado.al_lado_project.service.comunidad.PerfilEmpresarialService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,6 +25,7 @@ public class PerfilEmpresarialController {
         return ResponseEntity.ok(service.guardar(empleadorId, dto));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/verificar")
     public ResponseEntity<PerfilEmpresarialDTO> verificar(@PathVariable Long id, @RequestParam Long supervisorId) {
         return ResponseEntity.ok(service.verificar(id, supervisorId));

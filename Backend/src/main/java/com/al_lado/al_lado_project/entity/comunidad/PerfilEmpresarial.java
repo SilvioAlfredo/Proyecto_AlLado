@@ -24,7 +24,7 @@ public class PerfilEmpresarial {
     @Column(name = "nombre_empresa", nullable = false, length = 100)
     private String nombreEmpresa;
 
-    @Column(length = 20)
+    @Column(length = 20, unique = true)
     private String cuit;
 
     @Column(columnDefinition = "TEXT")

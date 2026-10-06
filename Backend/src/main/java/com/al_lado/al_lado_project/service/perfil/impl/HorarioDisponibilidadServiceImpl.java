@@ -8,6 +8,7 @@ import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
 import com.al_lado.al_lado_project.mappers.perfil.HorarioDisponibilidadMapper;
 import com.al_lado.al_lado_project.repository.perfil.HorarioDisponibilidadRepository;
 import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
+import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.perfil.HorarioDisponibilidadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,11 +36,24 @@ public class HorarioDisponibilidadServiceImpl implements HorarioDisponibilidadSe
     @Override
     @Transactional
     public HorarioDisponibilidadDTO agregar(Long trabajadorId, HorarioDisponibilidadDTO dto) {
+        SecurityUtils.requireSelfOrAdmin(trabajadorId);
         if (dto.getHoraInicio() == null || dto.getHoraFin() == null) {
             throw new BusinessRuleException("La hora de inicio y de fin son obligatorias.");
         }
         if (!dto.getHoraInicio().isBefore(dto.getHoraFin())) {
             throw new BusinessRuleException("La hora de inicio debe ser anterior a la hora de fin.");
+        }
+        if (dto.getDiaSemana() == null || dto.getDiaSemana().isBlank()) {
+            throw new BusinessRuleException("El día de la semana es obligatorio.");
+        }
+
+        String diaNormalizado = dto.getDiaSemana().trim();
+        boolean solapado = repository.findByTrabajadorIdAndDiaSemanaIgnoreCase(trabajadorId, diaNormalizado).stream()
+                .anyMatch(h -> h.getHoraInicio() != null && h.getHoraFin() != null
+                        && dto.getHoraInicio().isBefore(h.getHoraFin())
+                        && h.getHoraInicio().isBefore(dto.getHoraFin()));
+        if (solapado) {
+            throw new BusinessRuleException("El horario se solapa con otro ya registrado ese día.");
         }
 
         Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
@@ -54,9 +68,10 @@ public class HorarioDisponibilidadServiceImpl implements HorarioDisponibilidadSe
     @Override
     @Transactional
     public void eliminar(Long id) {
-        if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Horario no encontrado con ID: " + id);
-        }
-        repository.deleteById(id);
+        HorarioDisponibilidad horario = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Horario no encontrado con ID: " + id));
+        Long propietarioId = horario.getTrabajador() != null ? horario.getTrabajador().getId() : null;
+        SecurityUtils.requireSelfOrAdmin(propietarioId);
+        repository.delete(horario);
     }
 }

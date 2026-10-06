@@ -22,4 +22,7 @@ public class TrabajadorDTO extends UsuarioDTO {
     private List<PortafolioItemDTO> portafolioItems = new ArrayList<>();
     private List<HorarioDisponibilidadDTO> horarios = new ArrayList<>();
     private PreferenciaNotificacionDTO preferenciaNotificacion;
+    private String fotografia; // RF-02, HU-03: campo solicitado en la spec
+    private String biografia; // RF-02, HU-03: campo solicitado en la spec
+    private String certificados; // RF-02, HU-03: campo solicitado en la spec
 }

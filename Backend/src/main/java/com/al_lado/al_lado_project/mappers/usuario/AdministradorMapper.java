@@ -14,7 +14,7 @@ public class AdministradorMapper {
         dto.setId(entity.getId());
         dto.setNombre(entity.getNombre());
         dto.setEmail(entity.getEmail());
-        dto.setPassword(entity.getPassword());
+        dto.setTelefono(entity.getTelefono());
         dto.setNivelAcceso(entity.getNivelAcceso());
         return dto;
     }
@@ -26,6 +26,7 @@ public class AdministradorMapper {
         entity.setId(dto.getId());
         entity.setNombre(dto.getNombre());
         entity.setEmail(dto.getEmail());
+        entity.setTelefono(dto.getTelefono());
         entity.setPassword(dto.getPassword());
         entity.setNivelAcceso(dto.getNivelAcceso());
         return entity;

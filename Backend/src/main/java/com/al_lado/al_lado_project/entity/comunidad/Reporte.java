@@ -51,7 +51,9 @@ public class Reporte {
 
     @PrePersist
     protected void onCreate() {
-        this.fechaCreacion = LocalDateTime.now();
+        if (this.fechaCreacion == null) {
+            this.fechaCreacion = LocalDateTime.now();
+        }
     }
 
     public Reporte(String motivo, String descripcion, Usuario reportante, Usuario reportado) {

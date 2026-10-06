@@ -7,6 +7,7 @@ import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
 import com.al_lado.al_lado_project.mappers.perfil.PreferenciaNotificacionMapper;
 import com.al_lado.al_lado_project.repository.perfil.PreferenciaNotificacionRepository;
 import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
+import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.perfil.PreferenciaNotificacionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ public class PreferenciaNotificacionServiceImpl implements PreferenciaNotificaci
     @Override
     @Transactional(readOnly = true)
     public PreferenciaNotificacionDTO obtenerPorTrabajador(Long trabajadorId) {
+        SecurityUtils.requireSelfOrAdmin(trabajadorId);
         PreferenciaNotificacion preferencia = repository.findByTrabajadorId(trabajadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Este trabajador todavía no tiene preferencias cargadas."));
         return mapper.toDTO(preferencia);
@@ -31,6 +33,7 @@ public class PreferenciaNotificacionServiceImpl implements PreferenciaNotificaci
     @Override
     @Transactional
     public PreferenciaNotificacionDTO guardar(Long trabajadorId, PreferenciaNotificacionDTO dto) {
+        SecurityUtils.requireSelfOrAdmin(trabajadorId);
         PreferenciaNotificacion preferencia = repository.findByTrabajadorId(trabajadorId)
                 .orElseGet(() -> {
                     Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
@@ -43,6 +46,7 @@ public class PreferenciaNotificacionServiceImpl implements PreferenciaNotificaci
         preferencia.setNotificarEmail(dto.isNotificarEmail());
         preferencia.setNotificarPush(dto.isNotificarPush());
         preferencia.setAlertasNuevasOfertas(dto.isAlertasNuevasOfertas());
+        preferencia.setAlertasNuevasPostulaciones(dto.isAlertasNuevasPostulaciones());
 
         return mapper.toDTO(repository.save(preferencia));
     }

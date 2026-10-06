@@ -1,12 +1,17 @@
 package com.al_lado.al_lado_project.service.usuario.impl;
 
 import com.al_lado.al_lado_project.dto.usuario.TrabajadorDTO;
+import com.al_lado.al_lado_project.entity.trabajo.Etiqueta;
 import com.al_lado.al_lado_project.entity.usuario.Trabajador;
+import com.al_lado.al_lado_project.exception.BusinessRuleException;
+import com.al_lado.al_lado_project.exception.BusinessRuleException;
 import com.al_lado.al_lado_project.exception.DuplicateResourceException;
 import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
 import com.al_lado.al_lado_project.mappers.usuario.TrabajadorMapper;
+import com.al_lado.al_lado_project.repository.trabajo.EtiquetaRepository;
 import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
 import com.al_lado.al_lado_project.repository.usuario.UsuarioRepository;
+import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.usuario.TrabajadorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +29,7 @@ public class TrabajadorServiceImpl implements TrabajadorService {
 
     private final TrabajadorRepository repository;
     private final UsuarioRepository usuarioRepository;
+    private final EtiquetaRepository etiquetaRepository;
     private final TrabajadorMapper mapper;
     private final PasswordEncoder passwordEncoder;
 
@@ -55,10 +63,11 @@ public class TrabajadorServiceImpl implements TrabajadorService {
                 trabajador.setPassword(passwordEncoder.encode(dto.getPassword()));
             }
         } else {
+            SecurityUtils.requireSelfOrAdmin(dto.getId());
             trabajador = repository.findById(dto.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Trabajador no encontrado con ID: " + dto.getId()));
 
-            if (!trabajador.getEmail().equals(dto.getEmail()) && usuarioRepository.existsByEmail(dto.getEmail())) {
+            if (!Objects.equals(trabajador.getEmail(), dto.getEmail()) && usuarioRepository.existsByEmail(dto.getEmail())) {
                 throw new DuplicateResourceException("El email ya se encuentra registrado por otro usuario.");
             }
 
@@ -69,6 +78,21 @@ public class TrabajadorServiceImpl implements TrabajadorService {
 
         trabajador.setNombre(dto.getNombre());
         trabajador.setEmail(dto.getEmail());
+        trabajador.setTelefono(dto.getTelefono());
+
+        // RF-02, HU-03: el update tambien debe persistir el perfil.
+        trabajador.setFotografia(dto.getFotografia());
+        trabajador.setBiografia(dto.getBiografia());
+        trabajador.setCertificados(dto.getCertificados());
+
+        // Especialidades siempre como entidades gestionadas (evita
+        // duplicados por unique y re-inserciones en lote).
+        if (dto.getEspecialidades() != null) {
+            Set<Etiqueta> especialidades = dto.getEspecialidades().stream()
+                    .map(e -> resolverEtiqueta(e.getId(), e.getNombre()))
+                    .collect(Collectors.toSet());
+            trabajador.setEspecialidades(especialidades);
+        }
 
         return mapper.toDTO(repository.save(trabajador));
     }
@@ -76,9 +100,27 @@ public class TrabajadorServiceImpl implements TrabajadorService {
     @Override
     @Transactional
     public void eliminar(Long id) {
+        SecurityUtils.requireSelfOrAdmin(id);
         if (!repository.existsById(id)) {
             throw new ResourceNotFoundException("Trabajador no encontrado con ID: " + id);
         }
-        repository.deleteById(id);
+        try {
+            repository.deleteById(id);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new BusinessRuleException("No se puede eliminar el trabajador porque tiene elementos asociados.");
+        }
+    }
+
+    private Etiqueta resolverEtiqueta(Long id, String nombre) {
+        if (id != null) {
+            return etiquetaRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Etiqueta no encontrada con ID: " + id));
+        }
+        String nombreNormalizado = nombre != null ? nombre.trim() : null;
+        if (nombreNormalizado == null || nombreNormalizado.isEmpty()) {
+            throw new BusinessRuleException("El nombre de la etiqueta es obligatorio.");
+        }
+        return etiquetaRepository.findByNombreIgnoreCase(nombreNormalizado)
+                .orElseGet(() -> etiquetaRepository.save(new Etiqueta(nombreNormalizado)));
     }
 }

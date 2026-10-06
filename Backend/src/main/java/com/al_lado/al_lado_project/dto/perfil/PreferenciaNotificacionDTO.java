@@ -9,4 +9,5 @@ public class PreferenciaNotificacionDTO {
     private boolean notificarEmail;
     private boolean notificarPush;
     private boolean alertasNuevasOfertas;
+    private boolean alertasNuevasPostulaciones;
 }

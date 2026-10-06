@@ -20,6 +20,10 @@ public abstract class UsuarioDTO {
     @Size(max = 150, message = "El email no puede superar los 150 caracteres.")
     private String email;
 
+    @NotBlank(message = "El teléfono es obligatorio.")
+    @Size(max = 20, message = "El teléfono no puede superar los 20 caracteres.")
+    private String telefono; // RF-01, HU-04: campo teléfono obligatorio con código de país
+
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 }

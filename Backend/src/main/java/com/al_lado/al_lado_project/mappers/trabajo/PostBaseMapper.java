@@ -9,11 +9,14 @@ public abstract class PostBaseMapper {
         if (entity == null || dto == null) return;
         dto.setId(entity.getId());
         dto.setTitulo(entity.getTitulo());
+        dto.setContenido(entity.getContenido());
+        dto.setFechaCreacion(entity.getFechaCreacion());
     }
 
     protected void mapBaseToEntity(PostBaseDTO dto, PostBase entity) {
         if (dto == null || entity == null) return;
         entity.setId(dto.getId());
         entity.setTitulo(dto.getTitulo());
+        entity.setContenido(dto.getContenido());
     }
 }

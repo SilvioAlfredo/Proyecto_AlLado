@@ -23,6 +23,10 @@ public class DonacionMapper {
         dto.setMecanismoPago(entity.getMecanismoPago());
         dto.setFechaDonacion(entity.getFechaDonacion());
         dto.setUsuario(usuarioResumenMapper.toDTO(entity.getUsuario()));
+        dto.setEstado(entity.getEstado());
+        dto.setBanco(entity.getBanco());
+        dto.setTipoTransferencia(entity.getTipoTransferencia());
+        dto.setAsuntoTransferencia(entity.getAsuntoTransferencia());
         return dto;
     }
 
@@ -32,8 +36,12 @@ public class DonacionMapper {
         Donacion entity = new Donacion();
         entity.setId(dto.getId());
         entity.setMonto(dto.getMonto());
-        entity.setMoneda(dto.getMoneda() != null ? dto.getMoneda() : "ARS");
+        entity.setMoneda(dto.getMoneda() != null ? dto.getMoneda() : Donacion.MONEDA_POR_DEFECTO);
         entity.setMecanismoPago(dto.getMecanismoPago());
+        entity.setEstado(dto.getEstado());
+        entity.setBanco(dto.getBanco());
+        entity.setTipoTransferencia(dto.getTipoTransferencia());
+        entity.setAsuntoTransferencia(dto.getAsuntoTransferencia());
         return entity;
     }
 }

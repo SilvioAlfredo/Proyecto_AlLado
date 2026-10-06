@@ -11,6 +11,8 @@ import com.al_lado.al_lado_project.mappers.trabajo.PostulacionMapper;
 import com.al_lado.al_lado_project.repository.trabajo.OportunidadLaboralRepository;
 import com.al_lado.al_lado_project.repository.trabajo.PostulacionRepository;
 import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
+import com.al_lado.al_lado_project.repository.comunidad.ValoracionRepository;
+import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.trabajo.PostulacionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.al_lado.al_lado_project.dto.usuario.EstadisticasTrabajadorDTO;
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 public class PostulacionServiceImpl implements PostulacionService {
@@ -26,6 +31,7 @@ public class PostulacionServiceImpl implements PostulacionService {
     private final PostulacionRepository repository;
     private final TrabajadorRepository trabajadorRepository;
     private final OportunidadLaboralRepository oportunidadRepository;
+    private final ValoracionRepository valoracionRepository;
     private final PostulacionMapper mapper;
 
     @Override
@@ -55,6 +61,7 @@ public class PostulacionServiceImpl implements PostulacionService {
         }
 
         Long trabajadorId = dto.getAutor().getId();
+        SecurityUtils.requireSelfOrAdmin(trabajadorId);
         Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trabajador no encontrado con ID: " + trabajadorId));
 
@@ -73,7 +80,7 @@ public class PostulacionServiceImpl implements PostulacionService {
         Postulacion postulacion = mapper.toEntity(dto);
         postulacion.setAutor(trabajador);
         postulacion.setOportunidadLaboral(oportunidad);
-        postulacion.setEstado("PENDIENTE");
+        postulacion.setEstado(Postulacion.ESTADO_PENDIENTE);
 
         return mapper.toDTO(repository.save(postulacion));
     }
@@ -84,7 +91,27 @@ public class PostulacionServiceImpl implements PostulacionService {
         Postulacion postulacion = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Postulación no encontrada con ID: " + id));
 
-        postulacion.setEstado("SELECCIONADA");
+        exigirEmpleadorPropietario(postulacion);
+        if (!Postulacion.ESTADO_PENDIENTE.equals(postulacion.getEstado())) {
+            throw new BusinessRuleException("Solo las postulaciones PENDIENTES pueden seleccionarse.");
+        }
+
+        postulacion.setEstado(Postulacion.ESTADO_SELECCIONADA);
+        return mapper.toDTO(repository.save(postulacion));
+    }
+
+    @Override
+    @Transactional
+    public PostulacionDTO completarPostulacion(Long id) {
+        Postulacion postulacion = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Postulación no encontrada con ID: " + id));
+
+        exigirEmpleadorPropietario(postulacion);
+        // RF-08/HU-08: solo se puede completar una postulacion seleccionada
+        if (!Postulacion.ESTADO_SELECCIONADA.equals(postulacion.getEstado())) {
+            throw new BusinessRuleException("Solo las postulaciones con estado SELECCIONADA pueden completarse.");
+        }
+        postulacion.setEstado(Postulacion.ESTADO_COMPLETADA);
         return mapper.toDTO(repository.save(postulacion));
     }
 
@@ -94,16 +121,107 @@ public class PostulacionServiceImpl implements PostulacionService {
         Postulacion postulacion = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Postulación no encontrada con ID: " + id));
 
-        postulacion.setEstado("RECHAZADA");
+        exigirEmpleadorPropietario(postulacion);
+        if (!Postulacion.ESTADO_PENDIENTE.equals(postulacion.getEstado())
+                && !Postulacion.ESTADO_SELECCIONADA.equals(postulacion.getEstado())) {
+            throw new BusinessRuleException("Solo las postulaciones PENDIENTES o SELECCIONADAS pueden rechazarse.");
+        }
+
+        postulacion.setEstado(Postulacion.ESTADO_RECHAZADA);
         return mapper.toDTO(repository.save(postulacion));
     }
 
-    @Override
-    @Transactional
-    public void eliminar(Long id) {
-        if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Postulación no encontrada con ID: " + id);
+    /** Solo el empleador dueño de la oferta (o un admin) opera sus postulaciones. */
+    private void exigirEmpleadorPropietario(Postulacion postulacion) {
+        OportunidadLaboral oportunidad = postulacion.getOportunidadLaboral();
+        if (oportunidad == null || oportunidad.getAutor() == null || oportunidad.getAutor().getId() == null) {
+            throw new BusinessRuleException("La postulación no tiene una oportunidad válida asociada.");
         }
-        repository.deleteById(id);
+        SecurityUtils.requireSelfOrAdmin(oportunidad.getAutor().getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EstadisticasTrabajadorDTO obtenerEstadisticasTrabajador(Long trabajadorId) {
+        SecurityUtils.requireSelfOrAdmin(trabajadorId);
+        Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trabajador no encontrado con ID: " + trabajadorId));
+
+        // Contar valoraciones recibidas usando el repositorio de valoraciones
+        Long valoracionesCount = valoracionRepository.countByTrabajadorId(trabajadorId);
+
+        // Calcular promedio de valoraciones usando el query del repositorio
+        Double promedioDouble = valoracionRepository.calcularPromedioPuntuacionPorTrabajadorId(trabajadorId);
+        BigDecimal promedio = promedioDouble != null ? BigDecimal.valueOf(promedioDouble) : BigDecimal.ZERO;
+
+        // Contar postulaciones por estado con el repository de postulaciones
+        long completadas = repository.countByAutorIdAndEstadoIgnoreCase(
+                trabajadorId, Postulacion.ESTADO_COMPLETADA);
+        long seleccionadas = repository.countByAutorIdAndEstadoIgnoreCase(
+                trabajadorId, Postulacion.ESTADO_SELECCIONADA);
+        long enviadas = repository.countByAutorId(trabajadorId);
+
+        // Estadísticasplaceholder para ingresos
+        EstadisticasTrabajadorDTO stats = new EstadisticasTrabajadorDTO();
+        stats.setId(trabajador.getId());
+        stats.setNombre(trabajador.getNombre());
+        stats.setEmail(trabajador.getEmail());
+        stats.setIngresosTotales(BigDecimal.ZERO);
+        stats.setIngresosUltimos3Meses(BigDecimal.ZERO);
+        stats.setValoracionesCount(valoracionesCount != null ? valoracionesCount.intValue() : 0);
+        stats.setPromedioValoraciones(promedio);
+        stats.setOfertasPublicadas(0);
+        stats.setPostulacionesEnviadas((int) enviadas);
+        stats.setPostulacionesSeleccionadas((int) seleccionadas);
+        stats.setPostulacionesCompletadas((int) completadas);
+        stats.setNivelRecomendacion(4);
+        stats.setPerfilCompleto(trabajador.getFotografia() != null && !trabajador.getFotografia().isEmpty());
+        stats.setUltimoLogin(null);
+        stats.setSuscripcionActiva(trabajador.getSuscripcion() != null && trabajador.getSuscripcion().isActiva());
+
+        return stats;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EstadisticasTrabajadorDTO obtenerEstadisticasTrabajadorPorEmail(String email) {
+        // Buscar trabajador por email
+        Trabajador trabajador = trabajadorRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Trabajador no encontrado con email: " + email));
+        SecurityUtils.requireSelfOrAdmin(trabajador.getId());
+
+        // Contar valoraciones recibidas usando el repositorio de valoraciones
+        Long valoracionesCount = valoracionRepository.countByTrabajadorId(trabajador.getId());
+
+        // Calcular promedio de valoraciones usando el query del repositorio
+        Double promedioDouble = valoracionRepository.calcularPromedioPuntuacionPorTrabajadorId(trabajador.getId());
+        BigDecimal promedio = promedioDouble != null ? BigDecimal.valueOf(promedioDouble) : BigDecimal.ZERO;
+
+        // Contar postulaciones por estado con el repository de postulaciones
+        long completadas = repository.countByAutorIdAndEstadoIgnoreCase(
+                trabajador.getId(), Postulacion.ESTADO_COMPLETADA);
+        long seleccionadas = repository.countByAutorIdAndEstadoIgnoreCase(
+                trabajador.getId(), Postulacion.ESTADO_SELECCIONADA);
+        long enviadas = repository.countByAutorId(trabajador.getId());
+
+        // Estadísticas placeholder para ingresos
+        EstadisticasTrabajadorDTO stats = new EstadisticasTrabajadorDTO();
+        stats.setId(trabajador.getId());
+        stats.setNombre(trabajador.getNombre());
+        stats.setEmail(trabajador.getEmail());
+        stats.setIngresosTotales(BigDecimal.ZERO);
+        stats.setIngresosUltimos3Meses(BigDecimal.ZERO);
+        stats.setValoracionesCount(valoracionesCount != null ? valoracionesCount.intValue() : 0);
+        stats.setPromedioValoraciones(promedio);
+        stats.setOfertasPublicadas(0);
+        stats.setPostulacionesEnviadas((int) enviadas);
+        stats.setPostulacionesSeleccionadas((int) seleccionadas);
+        stats.setPostulacionesCompletadas((int) completadas);
+        stats.setNivelRecomendacion(4);
+        stats.setPerfilCompleto(trabajador.getFotografia() != null && !trabajador.getFotografia().isEmpty());
+        stats.setUltimoLogin(null);
+        stats.setSuscripcionActiva(trabajador.getSuscripcion() != null && trabajador.getSuscripcion().isActiva());
+
+        return stats;
     }
 }

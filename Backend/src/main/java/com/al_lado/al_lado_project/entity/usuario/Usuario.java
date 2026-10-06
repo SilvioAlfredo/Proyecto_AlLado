@@ -14,9 +14,11 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -47,6 +49,9 @@ public abstract class Usuario implements UserDetails {
 
     @Column(nullable = false, unique = true, length = 150)
     private String email;
+
+    @Column(nullable = false, length = 20)
+    private String telefono; // RF-01, HU-04: campo teléfono obligatorio con código de país
 
     @Column(nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -120,8 +125,33 @@ public abstract class Usuario implements UserDetails {
         return true;
     }
 
+    @Column(name = "habilitado", nullable = false)
+    private boolean habilitado = true;
+
+    @Column(name = "email_verificado", nullable = false)
+    private boolean emailVerificado = false;
+
+    // Campo para recuperación de contraseña
+    @Column(name = "password_reset_token", length = 100)
+    private String passwordResetToken;
+
+    @Column(name = "password_reset_token_expiry")
+    private LocalDateTime passwordResetTokenExpiry;
+
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.habilitado;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Usuario usuario)) return false;
+        return id != null && Objects.equals(id, usuario.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Usuario.class.hashCode();
     }
 }

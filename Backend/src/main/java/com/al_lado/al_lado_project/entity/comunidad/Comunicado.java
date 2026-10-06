@@ -38,7 +38,9 @@ public class Comunicado {
 
     @PrePersist
     protected void onCreate() {
-        this.fechaEmision = LocalDateTime.now();
+        if (this.fechaEmision == null) {
+            this.fechaEmision = LocalDateTime.now();
+        }
     }
 
     public Comunicado(String titulo, String contenido, String alcance, Administrador emisor) {

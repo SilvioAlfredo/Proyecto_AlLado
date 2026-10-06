@@ -1,6 +1,7 @@
 package com.al_lado.al_lado_project.service.trabajo;
 
 import com.al_lado.al_lado_project.dto.trabajo.PostulacionDTO;
+import com.al_lado.al_lado_project.dto.usuario.EstadisticasTrabajadorDTO;
 
 import java.util.List;
 
@@ -10,5 +11,7 @@ public interface PostulacionService {
     PostulacionDTO crearPostulacion(PostulacionDTO postulacionDTO);
     PostulacionDTO seleccionarPostulacion(Long id);
     PostulacionDTO rechazarPostulacion(Long id);
-    void eliminar(Long id);
+    PostulacionDTO completarPostulacion(Long id);
+    EstadisticasTrabajadorDTO obtenerEstadisticasTrabajador(Long trabajadorId);
+    EstadisticasTrabajadorDTO obtenerEstadisticasTrabajadorPorEmail(String email);
 }

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -36,5 +37,18 @@ public class Etiqueta {
 
     public Etiqueta(String nombre) {
         this.nombre = nombre;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Etiqueta etiqueta = (Etiqueta) o;
+        return id != null && Objects.equals(id, etiqueta.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

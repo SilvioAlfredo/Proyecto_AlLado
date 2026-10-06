@@ -29,16 +29,20 @@ public class PreferenciaNotificacion {
     @Column(name = "alertas_nuevas_ofertas", nullable = false)
     private boolean alertasNuevasOfertas = true;
 
+    @Column(name = "alertas_nuevas_postulaciones", nullable = false)
+    private boolean alertasNuevasPostulaciones = true;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trabajador_id", nullable = false, unique = true)
     @JsonIgnore
     private Trabajador trabajador;
 
-    public PreferenciaNotificacion(Trabajador trabajador, boolean notificarEmail, boolean notificarPush, boolean alertasNuevasOfertas) {
+    public PreferenciaNotificacion(Trabajador trabajador, boolean notificarEmail, boolean notificarPush, boolean alertasNuevasOfertas, boolean alertasNuevasPostulaciones) {
         this.trabajador = trabajador;
         this.notificarEmail = notificarEmail;
         this.notificarPush = notificarPush;
         this.alertasNuevasOfertas = alertasNuevasOfertas;
+        this.alertasNuevasPostulaciones = alertasNuevasPostulaciones;
     }
 
     @Override

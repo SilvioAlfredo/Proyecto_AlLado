@@ -3,14 +3,25 @@ import "./App.css";
 import { FeedPage } from "./pages/FeedPage";
 import { CrearOfertaPage } from "./pages/CrearOfertaPage";
 import { CrearPostulacionPage } from "./pages/CrearPostulacionPage";
+import { PerfilTrabajadorPage } from "./pages/PerfilTrabajadorPage";
 
 export default function App() {
-  const [screen, setScreen] = useState<"inicio" | "nueva" | "postulacion">("inicio");
+  const [screen, setScreen] = useState<"inicio" | "nueva" | "postulacion" | "perfil-trabajador">("inicio");
   const [ofertaSeleccionada, setOfertaSeleccionada] = useState<any>(null);
+  const [trabajadorId, setTrabajadorId] = useState<number | null>(null);
 
   const handleIrAPostular = (oferta: any) => {
     setOfertaSeleccionada(oferta);
     setScreen("postulacion");
+  };
+
+  const handleIrAPerfil = (id: number) => {
+    setTrabajadorId(id);
+    setScreen("perfil-trabajador");
+  };
+
+  const handleVolver = () => {
+    setScreen("inicio");
   };
 
   return (
@@ -35,6 +46,10 @@ export default function App() {
           onVolver={() => setScreen("inicio")}
           onExito={() => setScreen("inicio")}
         />
+      )}
+
+      {screen === "perfil-trabajador" && trabajadorId && (
+        <PerfilTrabajadorPage trabajadorId={trabajadorId} onVolver={handleVolver} />
       )}
     </main>
   );

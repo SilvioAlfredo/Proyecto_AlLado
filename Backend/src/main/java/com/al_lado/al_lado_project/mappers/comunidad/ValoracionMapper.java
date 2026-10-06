@@ -26,6 +26,8 @@ public class ValoracionMapper {
         return dto;
     }
 
+    // Las relaciones autor/trabajador se resuelven en ValoracionServiceImpl
+    // por ID; no se reconstruyen aqui para no crear entidades transient.
     public Valoracion toEntity(ValoracionDTO dto) {
         if (dto == null) return null;
 

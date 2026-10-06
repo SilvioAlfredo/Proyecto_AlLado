@@ -2,12 +2,13 @@ package com.al_lado.al_lado_project.service.comunidad;
 
 import com.al_lado.al_lado_project.dto.comunidad.ReporteDTO;
 
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface ReporteService {
-    List<ReporteDTO> obtenerTodos();
+    Page<ReporteDTO> obtenerTodos(Pageable pageable);
     ReporteDTO obtenerPorId(Long id);
-    List<ReporteDTO> obtenerPorEstado(String estado);
+    Page<ReporteDTO> obtenerPorEstado(String estado, Pageable pageable);
     ReporteDTO crear(ReporteDTO dto);
     ReporteDTO resolver(Long id, Long moderadorId, String nuevoEstado);
 }

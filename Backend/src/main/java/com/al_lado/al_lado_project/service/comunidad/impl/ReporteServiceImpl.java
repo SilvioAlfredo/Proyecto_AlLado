@@ -10,13 +10,14 @@ import com.al_lado.al_lado_project.mappers.comunidad.ReporteMapper;
 import com.al_lado.al_lado_project.repository.comunidad.ReporteRepository;
 import com.al_lado.al_lado_project.repository.usuario.AdministradorRepository;
 import com.al_lado.al_lado_project.repository.usuario.UsuarioRepository;
+import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.comunidad.ReporteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -29,10 +30,8 @@ public class ReporteServiceImpl implements ReporteService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ReporteDTO> obtenerTodos() {
-        return repository.findAll().stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<ReporteDTO> obtenerTodos(Pageable pageable) {
+        return repository.findAll(pageable).map(mapper::toDTO);
     }
 
     @Override
@@ -45,10 +44,8 @@ public class ReporteServiceImpl implements ReporteService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ReporteDTO> obtenerPorEstado(String estado) {
-        return repository.findByEstadoIgnoreCase(estado).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<ReporteDTO> obtenerPorEstado(String estado, Pageable pageable) {
+        return repository.findByEstadoIgnoreCase(estado, pageable).map(mapper::toDTO);
     }
 
     @Override
@@ -59,6 +56,7 @@ public class ReporteServiceImpl implements ReporteService {
         }
 
         Long reportanteId = dto.getReportante().getId();
+        SecurityUtils.requireSelfOrAdmin(reportanteId);
         Usuario reportante = usuarioRepository.findById(reportanteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario reportante no encontrado con ID: " + reportanteId));
 
@@ -81,11 +79,23 @@ public class ReporteServiceImpl implements ReporteService {
         Reporte reporte = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reporte no encontrado con ID: " + id));
 
+        if ("RESUELTO".equalsIgnoreCase(reporte.getEstado())
+                || "DESCARTADO".equalsIgnoreCase(reporte.getEstado())) {
+            throw new BusinessRuleException("El reporte ya fue moderado y no puede re-resolverse.");
+        }
+
+        String estadoFinal = nuevoEstado != null ? nuevoEstado : "RESUELTO";
+        if (!"EN_REVISION".equalsIgnoreCase(estadoFinal)
+                && !"RESUELTO".equalsIgnoreCase(estadoFinal)
+                && !"DESCARTADO".equalsIgnoreCase(estadoFinal)) {
+            throw new BusinessRuleException("Estado inválido. Valores permitidos: EN_REVISION, RESUELTO, DESCARTADO.");
+        }
+
         Administrador moderador = administradorRepository.findById(moderadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Administrador no encontrado con ID: " + moderadorId));
 
         reporte.setModerador(moderador);
-        reporte.setEstado(nuevoEstado != null ? nuevoEstado : "RESUELTO");
+        reporte.setEstado(estadoFinal.toUpperCase());
 
         return mapper.toDTO(repository.save(reporte));
     }

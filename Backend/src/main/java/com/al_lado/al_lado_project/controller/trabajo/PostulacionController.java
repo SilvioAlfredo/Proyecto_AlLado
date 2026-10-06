@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,33 +19,36 @@ public class PostulacionController {
     private final PostulacionService service;
 
     @GetMapping
-    public ResponseEntity<List<PostulacionDTO>> obtenerTodas() {
+    public ResponseEntity<List<PostulacionDTO>> listarPostulaciones() {
         return ResponseEntity.ok(service.obtenerTodas());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PostulacionDTO> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<PostulacionDTO> obtenerPostulacion(@PathVariable Long id) {
         return ResponseEntity.ok(service.obtenerPorId(id));
     }
 
+    @PreAuthorize("hasRole('TRABAJADOR')")
     @PostMapping
     public ResponseEntity<PostulacionDTO> crearPostulacion(@Valid @RequestBody PostulacionDTO postulacionDTO) {
         return new ResponseEntity<>(service.crearPostulacion(postulacionDTO), HttpStatus.CREATED);
     }
 
-    @PutMapping("/seleccionar/{id}")
+    @PreAuthorize("hasAnyRole('EMPLEADOR', 'ADMIN')")
+    @PatchMapping("/{id}/seleccionar")
     public ResponseEntity<PostulacionDTO> seleccionarPostulacion(@PathVariable Long id) {
         return ResponseEntity.ok(service.seleccionarPostulacion(id));
     }
 
-    @PutMapping("/rechazar/{id}")
+    @PreAuthorize("hasAnyRole('EMPLEADOR', 'ADMIN')")
+    @PatchMapping("/{id}/rechazar")
     public ResponseEntity<PostulacionDTO> rechazarPostulacion(@PathVariable Long id) {
         return ResponseEntity.ok(service.rechazarPostulacion(id));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        service.eliminar(id);
-        return ResponseEntity.noContent().build();
+    @PreAuthorize("hasAnyRole('EMPLEADOR', 'ADMIN')")
+    @PatchMapping("/{id}/completar")
+    public ResponseEntity<PostulacionDTO> completarPostulacion(@PathVariable Long id) {
+        return ResponseEntity.ok(service.completarPostulacion(id));
     }
 }

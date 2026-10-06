@@ -1,6 +1,7 @@
 package com.al_lado.al_lado_project.dto.comunidad;
 
 import com.al_lado.al_lado_project.dto.usuario.UsuarioResumenDTO;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -19,6 +20,7 @@ public class ValoracionDTO {
     private Integer puntuacion;
 
     private String comentario;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime fechaCreacion;
 
     @NotNull(message = "El autor de la valoración es obligatorio.")

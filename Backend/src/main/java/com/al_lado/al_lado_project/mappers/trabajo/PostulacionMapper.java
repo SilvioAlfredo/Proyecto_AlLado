@@ -1,6 +1,5 @@
 package com.al_lado.al_lado_project.mappers.trabajo;
 
-import com.al_lado.al_lado_project.dto.trabajo.OportunidadLaboralResumenDTO;
 import com.al_lado.al_lado_project.dto.trabajo.PostulacionDTO;
 import com.al_lado.al_lado_project.entity.trabajo.Postulacion;
 import com.al_lado.al_lado_project.mappers.usuario.UsuarioResumenMapper;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Component;
 public class PostulacionMapper extends PostBaseMapper {
 
     private final UsuarioResumenMapper usuarioResumenMapper;
+    private final OportunidadLaboralResumenMapper oportunidadResumenMapper;
 
     public PostulacionDTO toDTO(Postulacion entity) {
         if (entity == null) return null;
@@ -27,15 +27,7 @@ public class PostulacionMapper extends PostBaseMapper {
         dto.setEstado(entity.getEstado());
 
         if (entity.getOportunidadLaboral() != null) {
-            OportunidadLaboralResumenDTO resumen = new OportunidadLaboralResumenDTO();
-            resumen.setId(entity.getOportunidadLaboral().getId());
-            resumen.setTitulo(entity.getOportunidadLaboral().getTitulo());
-            resumen.setUbicacion(entity.getOportunidadLaboral().getUbicacion());
-            resumen.setModalidad(entity.getOportunidadLaboral().getModalidad());
-            resumen.setRangoSalarial(entity.getOportunidadLaboral().getRangoSalarial());
-            resumen.setActiva(entity.getOportunidadLaboral().isActiva());
-            resumen.setFechaCreacion(entity.getOportunidadLaboral().getFechaCreacion());
-            dto.setOportunidadLaboral(resumen);
+            dto.setOportunidadLaboral(oportunidadResumenMapper.toDTO(entity.getOportunidadLaboral()));
         }
 
         return dto;
@@ -48,7 +40,7 @@ public class PostulacionMapper extends PostBaseMapper {
         mapBaseToEntity(dto, entity);
 
         entity.setRemuneracionPretendida(dto.getRemuneracionPretendida());
-        entity.setEstado(dto.getEstado() != null ? dto.getEstado() : "PENDIENTE");
+        entity.setEstado(dto.getEstado() != null ? dto.getEstado() : Postulacion.ESTADO_PENDIENTE);
 
         return entity;
     }

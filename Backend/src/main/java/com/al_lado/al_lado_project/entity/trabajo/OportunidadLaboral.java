@@ -49,7 +49,7 @@ public class OportunidadLaboral extends PostBase {
         this.rangoSalarial = rangoSalarial;
     }
 
-    // Helper getter para delegar en el autor heredado
+    // Getter auxiliar para delegar en el autor heredado
     public Empleador getEmpleador() {
         if (getAutor() instanceof Empleador) {
             return (Empleador) getAutor();
@@ -57,19 +57,25 @@ public class OportunidadLaboral extends PostBase {
         return null;
     }
 
-    // Helper setter explícito
+    // Setter auxiliar explícito
     public void setEmpleador(Empleador empleador) {
         setAutor(empleador);
     }
 
-    // Helper methods para gestionar postulaciones
+    // Métodos auxiliares para gestionar etiquetas (sincronizan ambos lados M:N)
+    public void addEtiqueta(Etiqueta etiqueta) {
+        this.etiquetas.add(etiqueta);
+        etiqueta.getOportunidades().add(this);
+    }
+
+    public void removeEtiqueta(Etiqueta etiqueta) {
+        this.etiquetas.remove(etiqueta);
+        etiqueta.getOportunidades().remove(this);
+    }
+
+    // Métodos auxiliares para gestionar postulaciones
     public void addPostulacion(Postulacion postulacion) {
         postulaciones.add(postulacion);
         postulacion.setOportunidadLaboral(this);
-    }
-
-    public void removePostulacion(Postulacion postulacion) {
-        postulaciones.remove(postulacion);
-        postulacion.setOportunidadLaboral(null);
     }
 }

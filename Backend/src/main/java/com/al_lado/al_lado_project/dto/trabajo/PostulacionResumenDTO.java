@@ -1,6 +1,7 @@
 package com.al_lado.al_lado_project.dto.trabajo;
 
 import com.al_lado.al_lado_project.dto.usuario.UsuarioResumenDTO;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ public class PostulacionResumenDTO {
     private String titulo;
     private String estado;
     private Double remuneracionPretendida;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime fechaCreacion;
     private UsuarioResumenDTO autor;
 }

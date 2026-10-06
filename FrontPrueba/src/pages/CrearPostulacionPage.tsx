@@ -12,14 +12,33 @@ export function CrearPostulacionPage({ oportunidad, onVolver, onExito }: CrearPo
   const [disponibilidad, setDisponibilidad] = useState('');
   const [mensaje, setMensaje] = useState('');
 
+  // Obtener ID del usuario logueado desde localStorage
+  const getUsuarioId = () => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        return JSON.parse(user).id;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
   const handleEnviar = async () => {
+    const usuarioId = getUsuarioId();
+    if (!usuarioId) {
+      alert('Debes iniciar sesión para postularte');
+      return;
+    }
+
     try {
       await api.post('/postulaciones', {
         titulo: `Postulación para ${oportunidad?.titulo || 'Oferta'}`,
         descripcion: mensaje,
         presupuesto: parseFloat(presupuesto) || 0,
         disponibilidad,
-        autor: { id: 5 }, // Sin login, id hardocodeado para pruebas.
+        autor: { id: usuarioId },
         oportunidad: { id: oportunidad?.id }
       });
       alert('¡Postulación realizada con éxito!');

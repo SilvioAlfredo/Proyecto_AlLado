@@ -10,6 +10,7 @@ import com.al_lado.al_lado_project.mappers.comunidad.PerfilEmpresarialMapper;
 import com.al_lado.al_lado_project.repository.comunidad.PerfilEmpresarialRepository;
 import com.al_lado.al_lado_project.repository.usuario.AdministradorRepository;
 import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
+import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.comunidad.PerfilEmpresarialService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -35,12 +36,14 @@ public class PerfilEmpresarialServiceImpl implements PerfilEmpresarialService {
     @Override
     @Transactional
     public PerfilEmpresarialDTO guardar(Long empleadorId, PerfilEmpresarialDTO dto) {
+        SecurityUtils.requireSelfOrAdmin(empleadorId);
         Empleador empleador = empleadorRepository.findById(empleadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Empleador no encontrado con ID: " + empleadorId));
 
         if (dto.getCuit() != null && !dto.getCuit().isBlank()) {
             repository.findByCuit(dto.getCuit()).ifPresent(existente -> {
-                if (!existente.getEmpleador().getId().equals(empleadorId)) {
+                Long propietarioId = existente.getEmpleador() != null ? existente.getEmpleador().getId() : null;
+                if (propietarioId == null || !propietarioId.equals(empleadorId)) {
                     throw new DuplicateResourceException("Ese CUIT ya está registrado por otro empleador.");
                 }
             });
@@ -64,6 +67,10 @@ public class PerfilEmpresarialServiceImpl implements PerfilEmpresarialService {
     public PerfilEmpresarialDTO verificar(Long id, Long supervisorId) {
         PerfilEmpresarial perfil = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Perfil empresarial no encontrado con ID: " + id));
+
+        if (perfil.isVerificado()) {
+            return mapper.toDTO(perfil);
+        }
 
         Administrador supervisor = administradorRepository.findById(supervisorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Administrador no encontrado con ID: " + supervisorId));

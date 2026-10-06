@@ -26,6 +26,8 @@ public class ComunicadoMapper {
         return dto;
     }
 
+    // La relacion emisor se resuelve en ComunicadoServiceImpl por ID;
+    // no se reconstruye aqui para no crear entidades transient.
     public Comunicado toEntity(ComunicadoDTO dto) {
         if (dto == null) return null;
 

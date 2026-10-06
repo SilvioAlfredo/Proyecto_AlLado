@@ -11,4 +11,8 @@ public interface SuscripcionService {
     SuscripcionDTO crear(SuscripcionDTO dto);
     SuscripcionDTO cancelar(Long id);
     void eliminar(Long id);
+
+    // RF-04, HU-01: límite de 3 ofertas mensuales para el plan Básico.
+    // Invocado por OportunidadLaboralServiceImpl#guardar().
+    boolean puedePublicarOferta(Long usuarioId);
 }

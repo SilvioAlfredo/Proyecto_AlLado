@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,11 +23,13 @@ public class HorarioDisponibilidadController {
         return ResponseEntity.ok(service.obtenerPorTrabajador(trabajadorId));
     }
 
+    @PreAuthorize("hasAnyRole('TRABAJADOR', 'ADMIN')")
     @PostMapping("/trabajador/{trabajadorId}")
     public ResponseEntity<HorarioDisponibilidadDTO> agregar(@PathVariable Long trabajadorId, @Valid @RequestBody HorarioDisponibilidadDTO dto) {
         return new ResponseEntity<>(service.agregar(trabajadorId, dto), HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasAnyRole('TRABAJADOR', 'ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         service.eliminar(id);

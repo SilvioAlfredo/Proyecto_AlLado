@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Entity
 @Table(name = "suscripciones")
@@ -40,5 +41,17 @@ public class Suscripcion {
         this.fechaInicio = fechaInicio;
         this.fechaFin = fechaFin;
         this.activa = activa;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Suscripcion that)) return false;
+        return id != null && Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Suscripcion.class.hashCode();
     }
 }

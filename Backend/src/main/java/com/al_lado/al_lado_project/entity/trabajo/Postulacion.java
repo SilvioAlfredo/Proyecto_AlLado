@@ -15,7 +15,12 @@ import lombok.Setter;
 public class Postulacion extends PostBase {
 
     @Column(length = 50, nullable = false)
-    private String estado = "PENDIENTE"; // Ej: "PENDIENTE", "ACEPTADA", "RECHAZADA"
+    private String estado = "PENDIENTE"; // Ej: "PENDIENTE", "SELECCIONADA", "RECHAZADA", "COMPLETADA"
+
+    public static final String ESTADO_PENDIENTE = "PENDIENTE";
+    public static final String ESTADO_SELECCIONADA = "SELECCIONADA";
+    public static final String ESTADO_RECHAZADA = "RECHAZADA";
+    public static final String ESTADO_COMPLETADA = "COMPLETADA";
 
     @Column(name = "remuneracion_pretendida")
     private Double remuneracionPretendida;
@@ -31,7 +36,7 @@ public class Postulacion extends PostBase {
         this.remuneracionPretendida = remuneracionPretendida;
     }
 
-    // Helper getter para obtener directamente el objeto Trabajador casteado desde la clase base
+    // Getter auxiliar para obtener directamente el objeto Trabajador casteado desde la clase base
     public Trabajador getTrabajador() {
         if (getAutor() instanceof Trabajador) {
             return (Trabajador) getAutor();
@@ -39,7 +44,7 @@ public class Postulacion extends PostBase {
         return null;
     }
 
-    // Helper setter explícito
+    // Setter auxiliar explícito
     public void setTrabajador(Trabajador trabajador) {
         setAutor(trabajador);
     }

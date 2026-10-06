@@ -1,15 +1,18 @@
 package com.al_lado.al_lado_project.repository.comunidad;
 
 import com.al_lado.al_lado_project.entity.comunidad.PublicacionForo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface PublicacionForoRepository extends JpaRepository<PublicacionForo, Long> {
 
-    List<PublicacionForo> findByAutorId(Long autorId);
+    @EntityGraph(attributePaths = {"autor"})
+    Page<PublicacionForo> findByAutorId(Long autorId, Pageable pageable);
 
-    List<PublicacionForo> findAllByOrderByFechaCreacionDesc();
+    @EntityGraph(attributePaths = {"autor"})
+    Page<PublicacionForo> findAllByOrderByFechaCreacionDesc(Pageable pageable);
 }

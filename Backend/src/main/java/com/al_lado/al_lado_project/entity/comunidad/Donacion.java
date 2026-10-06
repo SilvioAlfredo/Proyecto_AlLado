@@ -18,6 +18,8 @@ import java.util.Objects;
 @NoArgsConstructor
 public class Donacion {
 
+    public static final String MONEDA_POR_DEFECTO = "ARS";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -26,7 +28,7 @@ public class Donacion {
     private BigDecimal monto;
 
     @Column(length = 10, nullable = false)
-    private String moneda = "ARS"; // Ej: "ARS", "USD"
+    private String moneda = MONEDA_POR_DEFECTO; // Ej: "ARS", "USD"
 
     @Column(name = "mecanismo_pago", length = 50)
     private String mecanismoPago; // Ej: "MERCADO_PAGO", "TRANSFERENCIA", "STRIPE"
@@ -39,16 +41,34 @@ public class Donacion {
     @JsonIgnoreProperties({"donaciones", "publicacionesForo", "reportesEnviados", "reportesRecibidos", "suscripcion", "password"})
     private Usuario usuario;
 
+    @Column(length = 20, nullable = false)
+    private String estado = "PENDIENTE"; // PENDIENTE, VERIFICADO, RECHAZADO
+
+    @Column(length = 50)
+    private String banco; // Banco donde se realizó la transferencia
+
+    @Column(length = 50)
+    private String tipoTransferencia; // Ej: "SINPE", "TED", "PIX", "OTRO"
+
+    @Column(length = 100)
+    private String asuntoTransferencia; // Asunto que el admin debe verificar
+
     @PrePersist
     protected void onCreate() {
-        this.fechaDonacion = LocalDateTime.now();
+        if (this.fechaDonacion == null) {
+            this.fechaDonacion = LocalDateTime.now();
+        }
+        if (this.estado == null) {
+            this.estado = "PENDIENTE";
+        }
     }
 
     public Donacion(BigDecimal monto, String moneda, String mecanismoPago, Usuario usuario) {
         this.monto = monto;
-        this.moneda = moneda;
+        this.moneda = moneda != null ? moneda : MONEDA_POR_DEFECTO;
         this.mecanismoPago = mecanismoPago;
         this.usuario = usuario;
+        this.estado = "PENDIENTE";
     }
 
     @Override

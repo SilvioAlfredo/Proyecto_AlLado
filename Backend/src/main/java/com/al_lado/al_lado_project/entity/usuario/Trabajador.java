@@ -45,6 +45,21 @@ public class Trabajador extends Usuario {
     @OneToMany(mappedBy = "trabajador")
     private Set<Valoracion> valoracionesRecibidas = new HashSet<>();
 
+    @Column(length = 255)
+    private String fotografia; // RF-02, HU-03: campo solicitado en la spec
+
+    @Column(columnDefinition = "TEXT")
+    private String biografia; // RF-02, HU-03: campo solicitado en la spec
+
+    @Column(columnDefinition = "TEXT")
+    private String certificados; // RF-02, HU-03: campo solicitado en la spec
+
+    @Column(length = 100)
+    private String sector; // sector barrial o zona (HU-13 CA-02, RF-13)
+
+    @Column(length = 255)
+    private String tokenPush; // Token para notificaciones push (FCM/APNs)
+
     public Trabajador(String nombre, String email, String password) {
         super(nombre, email, password);
     }
@@ -60,7 +75,7 @@ public class Trabajador extends Usuario {
         this.preferenciaNotificacion = preferenciaNotificacion;
     }
 
-    // Helpers M:N con Etiqueta
+    // Métodos auxiliares M:N con Etiqueta
     public void addEspecialidad(Etiqueta etiqueta) {
         this.especialidades.add(etiqueta);
         etiqueta.getTrabajadores().add(this);

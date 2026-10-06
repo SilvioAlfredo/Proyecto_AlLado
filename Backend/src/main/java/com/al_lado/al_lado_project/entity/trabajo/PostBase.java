@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "posts_base")
@@ -46,12 +47,27 @@ public abstract class PostBase {
 
     @PrePersist
     protected void onCreate() {
-        this.fechaCreacion = LocalDateTime.now();
+        if (this.fechaCreacion == null) {
+            this.fechaCreacion = LocalDateTime.now();
+        }
     }
 
     public PostBase(String titulo, String contenido, Usuario autor) {
         this.titulo = titulo;
         this.contenido = contenido;
         this.autor = autor;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PostBase postBase = (PostBase) o;
+        return id != null && Objects.equals(id, postBase.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

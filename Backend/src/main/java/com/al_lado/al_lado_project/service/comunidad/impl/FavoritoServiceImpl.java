@@ -10,6 +10,7 @@ import com.al_lado.al_lado_project.mappers.comunidad.FavoritoMapper;
 import com.al_lado.al_lado_project.repository.comunidad.FavoritoRepository;
 import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
 import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
+import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.comunidad.FavoritoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class FavoritoServiceImpl implements FavoritoService {
     @Override
     @Transactional(readOnly = true)
     public List<FavoritoDTO> obtenerPorEmpleador(Long empleadorId) {
+        SecurityUtils.requireSelfOrAdmin(empleadorId);
         return repository.findByEmpleadorId(empleadorId).stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
@@ -38,6 +40,7 @@ public class FavoritoServiceImpl implements FavoritoService {
     @Override
     @Transactional
     public FavoritoDTO agregar(Long empleadorId, Long trabajadorId) {
+        SecurityUtils.requireSelfOrAdmin(empleadorId);
         if (repository.existsByEmpleadorIdAndTrabajadorId(empleadorId, trabajadorId)) {
             throw new DuplicateResourceException("Este trabajador ya está en la lista de favoritos.");
         }
@@ -54,6 +57,7 @@ public class FavoritoServiceImpl implements FavoritoService {
     @Override
     @Transactional
     public void quitar(Long empleadorId, Long trabajadorId) {
+        SecurityUtils.requireSelfOrAdmin(empleadorId);
         if (!repository.existsByEmpleadorIdAndTrabajadorId(empleadorId, trabajadorId)) {
             throw new ResourceNotFoundException("El trabajador no se encuentra en la lista de favoritos.");
         }

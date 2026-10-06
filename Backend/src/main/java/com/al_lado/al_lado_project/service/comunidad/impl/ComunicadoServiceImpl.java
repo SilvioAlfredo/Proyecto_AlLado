@@ -13,8 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +26,8 @@ public class ComunicadoServiceImpl implements ComunicadoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ComunicadoDTO> obtenerTodos() {
-        return repository.findAllByOrderByFechaEmisionDesc().stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<ComunicadoDTO> obtenerTodos(Pageable pageable) {
+        return repository.findAllByOrderByFechaEmisionDesc(pageable).map(mapper::toDTO);
     }
 
     @Override
@@ -42,10 +40,8 @@ public class ComunicadoServiceImpl implements ComunicadoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ComunicadoDTO> obtenerPorAlcance(String alcance) {
-        return repository.findByAlcanceIgnoreCase(alcance).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<ComunicadoDTO> obtenerPorAlcance(String alcance, Pageable pageable) {
+        return repository.findByAlcanceIgnoreCase(alcance, pageable).map(mapper::toDTO);
     }
 
     @Override

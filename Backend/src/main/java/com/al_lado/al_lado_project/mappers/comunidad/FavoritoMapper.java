@@ -23,4 +23,15 @@ public class FavoritoMapper {
         dto.setFechaGuardado(entity.getFechaGuardado());
         return dto;
     }
+
+    // Las relaciones empleador/trabajador se resuelven en FavoritoServiceImpl
+    // a partir de sus IDs (ver agregar(empleadorId, trabajadorId)); no se
+    // reconstruyen aquí para no crear entidades transient.
+    public Favorito toEntity(FavoritoDTO dto) {
+        if (dto == null) return null;
+
+        Favorito entity = new Favorito();
+        entity.setId(dto.getId());
+        return entity;
+    }
 }

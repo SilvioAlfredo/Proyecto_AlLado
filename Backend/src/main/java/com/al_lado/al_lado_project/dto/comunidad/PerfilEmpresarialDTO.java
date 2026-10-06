@@ -18,7 +18,9 @@ public class PerfilEmpresarialDTO {
     private String cuit;
 
     private String descripcion;
+    @Size(max = 150, message = "El sitio web no puede superar los 150 caracteres.")
     private String sitioWeb;
+    @Size(max = 255, message = "La URL del logo no puede superar los 255 caracteres.")
     private String urlLogo;
     private boolean verificado;
     private UsuarioResumenDTO empleador;

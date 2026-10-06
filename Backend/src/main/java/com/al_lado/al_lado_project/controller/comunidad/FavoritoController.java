@@ -5,6 +5,7 @@ import com.al_lado.al_lado_project.service.comunidad.FavoritoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,11 +22,13 @@ public class FavoritoController {
         return ResponseEntity.ok(service.obtenerPorEmpleador(empleadorId));
     }
 
+    @PreAuthorize("hasAnyRole('EMPLEADOR', 'ADMIN')")
     @PostMapping("/empleador/{empleadorId}/trabajador/{trabajadorId}")
     public ResponseEntity<FavoritoDTO> agregar(@PathVariable Long empleadorId, @PathVariable Long trabajadorId) {
         return new ResponseEntity<>(service.agregar(empleadorId, trabajadorId), HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasAnyRole('EMPLEADOR', 'ADMIN')")
     @DeleteMapping("/empleador/{empleadorId}/trabajador/{trabajadorId}")
     public ResponseEntity<Void> quitar(@PathVariable Long empleadorId, @PathVariable Long trabajadorId) {
         service.quitar(empleadorId, trabajadorId);

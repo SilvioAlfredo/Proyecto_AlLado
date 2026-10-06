@@ -2,10 +2,12 @@ package com.al_lado.al_lado_project.exception;
 
 import com.al_lado.al_lado_project.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,6 +40,21 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.CONFLICT.value())
                 .error("Conflict")
                 .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    // 2b. Manejo de violaciones de integridad no previstas (HTTP 409).
+    // Los flujos conocidos la convierten antes a BusinessRuleException (400);
+    // esto cubre carreras residuales con un 409 genérico sin filtrar SQL.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.CONFLICT.value())
+                .error("Conflict")
+                .message("La operación viola una restricción de integridad de datos.")
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -103,13 +120,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
 
+    // 5b. Manejo de fallos de autenticación de cuenta (deshabilitada, bloqueada, expirada) (HTTP 401)
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .error("Unauthorized")
+                .message("Credenciales de acceso inválidas o cuenta no habilitada.")
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
     // 7. Captura de cualquier otra excepción no contemplada (HTTP 500)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error("Internal Server Error")
-                .message("Ocurrió un error inesperado en el servidor: " + ex.getMessage())
+                .message("Ocurrió un error inesperado en el servidor.")
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();

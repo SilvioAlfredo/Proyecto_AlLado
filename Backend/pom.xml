@@ -16,11 +16,12 @@
 	<artifactId>al_lado_project</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>al_lado_project</name>
-	<description>Proyecto Spring Boot con PostgreSQL y H2 de Pruebas</description>
+	<description>Proyecto Spring Boot con PostgreSQL</description>
 
 	<properties>
 		<java.version>21</java.version>
 		<jjwt.version>0.12.5</jjwt.version>
+		<springdoc.version>2.5.0</springdoc.version>
 	</properties>
 
 	<dependencies>
@@ -49,19 +50,32 @@
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
-			<version>0.11.5</version>
+			<version>${jjwt.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
-			<version>0.11.5</version>
+			<version>${jjwt.version}</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId>
-			<version>0.11.5</version>
+			<version>${jjwt.version}</version>
 			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Documentación Interactiva (Swagger UI / OpenAPI) -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>${springdoc.version}</version>
+		</dependency>
+
+		<!-- Monitoreo e Inspección de Beans (Opcional) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 
 		<!-- Herramientas de Desarrollo -->
@@ -78,17 +92,11 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- Bases de Datos -->
+		<!-- Base de Datos PostgreSQL -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>test</scope>
 		</dependency>
 
 		<!-- Testing -->

@@ -21,10 +21,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -76,7 +78,7 @@ public class AdministradorServiceImpl implements AdministradorService {
             administrador = repository.findById(dto.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Administrador no encontrado con ID: " + dto.getId()));
 
-            if (!administrador.getEmail().equals(dto.getEmail()) && usuarioRepository.existsByEmail(dto.getEmail())) {
+            if (!Objects.equals(administrador.getEmail(), dto.getEmail()) && usuarioRepository.existsByEmail(dto.getEmail())) {
                 throw new DuplicateResourceException("El email ya se encuentra registrado por otro usuario.");
             }
 
@@ -108,48 +110,41 @@ public class AdministradorServiceImpl implements AdministradorService {
         NumberFormat formatoMoneda = NumberFormat.getCurrencyInstance(localeAr);
         formatoMoneda.setMaximumFractionDigits(0);
 
-        // 1. Ingresos por donaciones y suscripciones
-        double totalDonaciones = donacionRepository.findAll().stream()
-                .mapToDouble(d -> d.getMonto() != null ? d.getMonto().doubleValue() : 0.0)
-                .sum();
+        // 1. Ingresos por donaciones y suscripciones (agregaciones en BD,
+        // sin cargar entidades a memoria; BigDecimal puro para moneda)
+        BigDecimal sumDonaciones = donacionRepository.sumTotalMontos();
+        BigDecimal totalDonaciones = sumDonaciones != null ? sumDonaciones : BigDecimal.ZERO;
 
-        final double PRECIO_PLAN_PRO = 15000.0;
-        double totalSuscripciones = suscripcionRepository.findAll().stream()
-                .filter(s -> s.isActiva())
-                .mapToDouble(s -> "PRO".equalsIgnoreCase(s.getNivel()) ? PRECIO_PLAN_PRO : 0.0)
-                .sum();
+        final BigDecimal PRECIO_PLAN_PRO = new BigDecimal("15000");
+        BigDecimal totalSuscripciones = BigDecimal.valueOf(suscripcionRepository.countActivasPro())
+                .multiply(PRECIO_PLAN_PRO);
 
-        double totalIngresos = totalDonaciones + totalSuscripciones;
+        BigDecimal totalIngresos = totalDonaciones.add(totalSuscripciones);
 
-        // 2. Postulaciones y Trabajadores
-        List<Postulacion> listaPostulaciones = postulacionRepository.findAll();
+        // 2. Postulaciones y Trabajadores (conteos en BD)
+        long metricContratos = postulacionRepository.count();
         long totalTrabajadores = trabajadorRepository.count();
 
-        // 3. Remuneración pretendida promedio
-        double avgContrato = listaPostulaciones.stream()
-                .filter(p -> p.getRemuneracionPretendida() != null && p.getRemuneracionPretendida() > 0)
-                .mapToDouble(Postulacion::getRemuneracionPretendida)
-                .average()
-                .orElse(0.0);
+        // 3. Remuneración pretendida promedio (AVG en BD, con guarda ante null
+        // si la query cambiara y dejara de usar COALESCE)
+        Double avgContrato = Objects.requireNonNullElse(
+                postulacionRepository.promedioRemuneracionPositiva(), 0.0);
 
-        // 4. Contratos finalizados y Dinero en la comunidad
-        List<Postulacion> finalizados = listaPostulaciones.stream()
-                .filter(p -> "FINALIZADA".equalsIgnoreCase(p.getEstado()))
-                .toList();
+        // 4. Contratos finalizados y Dinero en la comunidad (agregaciones en BD)
+        // Ojo: el estado real de una postulación es COMPLETADA (no "FINALIZADA").
+        Double dineroComunidad = Objects.requireNonNullElse(
+                postulacionRepository.sumaRemuneracionCompletadas(), 0.0);
 
-        double dineroComunidad = finalizados.stream()
-                .filter(p -> p.getRemuneracionPretendida() != null)
-                .mapToDouble(Postulacion::getRemuneracionPretendida)
-                .sum();
-
-        long trabajosCompletados = finalizados.size();
+        long trabajosCompletados = postulacionRepository.countByEstadoIgnoreCase(Postulacion.ESTADO_COMPLETADA);
 
         // 5. Cálculo de tendencias
         long totalOportunidades = oportunidadLaboralRepository.count();
         List<TendenciaDTO> tendencias = new ArrayList<>();
         List<Object[]> rawTendencias = oportunidadLaboralRepository.findTendenciasPorEtiqueta();
 
-        String[] paletaColores = {"fill-yellow", "fill-yellow", "fill-gold", "fill-dark-gold", "fill-dark-gold"};
+        // Degradado de la paleta definida en static/css/admin.css
+        // (solo existen .fill-yellow, .fill-gold y .fill-dark-gold)
+        String[] paletaColores = {"fill-yellow", "fill-gold", "fill-dark-gold", "fill-dark-gold", "fill-dark-gold"};
 
         int index = 0;
         for (Object[] row : rawTendencias) {
@@ -169,7 +164,7 @@ public class AdministradorServiceImpl implements AdministradorService {
 
         return new DashboardMetricsDTO(
                 formatoMoneda.format(totalIngresos),
-                (long) listaPostulaciones.size(),
+                metricContratos,
                 totalTrabajadores,
                 formatoMoneda.format(avgContrato),
                 formatoMoneda.format(dineroComunidad),

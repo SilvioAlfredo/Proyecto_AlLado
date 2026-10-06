@@ -1,8 +1,10 @@
 package com.al_lado.al_lado_project.dto.comunidad;
 
 import com.al_lado.al_lado_project.dto.usuario.UsuarioResumenDTO;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -18,7 +20,9 @@ public class ReporteDTO {
     @NotBlank(message = "La descripción del reporte es obligatoria.")
     private String descripcion;
 
+    @Pattern(regexp = "PENDIENTE|EN_REVISION|RESUELTO|DESCARTADO", message = "Estado inválido. Valores permitidos: PENDIENTE, EN_REVISION, RESUELTO, DESCARTADO.")
     private String estado;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime fechaCreacion;
 
     @NotNull(message = "El usuario reportante es obligatorio.")

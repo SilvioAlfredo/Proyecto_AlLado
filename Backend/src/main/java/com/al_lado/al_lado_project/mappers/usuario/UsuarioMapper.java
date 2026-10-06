@@ -7,6 +7,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class UsuarioMapper {
 
+    // Solo toDTO por diseno: Usuario es abstracta y no puede instanciarse
+    // en un toEntity generico. La creacion se delega a los mappers
+    // concretos (TrabajadorMapper, EmpleadorMapper, AdministradorMapper).
     public UsuarioDTO toDTO(Usuario entity) {
         if (entity == null) return null;
 
@@ -14,7 +17,7 @@ public class UsuarioMapper {
         dto.setId(entity.getId());
         dto.setNombre(entity.getNombre());
         dto.setEmail(entity.getEmail());
-        dto.setPassword(entity.getPassword());
+        dto.setTelefono(entity.getTelefono());
         return dto;
     }
 }

@@ -8,13 +8,14 @@ import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
 import com.al_lado.al_lado_project.mappers.comunidad.PublicacionForoMapper;
 import com.al_lado.al_lado_project.repository.comunidad.PublicacionForoRepository;
 import com.al_lado.al_lado_project.repository.usuario.UsuarioRepository;
+import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.comunidad.PublicacionForoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +27,8 @@ public class PublicacionForoServiceImpl implements PublicacionForoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PublicacionForoDTO> obtenerTodas() {
-        return repository.findAllByOrderByFechaCreacionDesc().stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<PublicacionForoDTO> obtenerTodas(Pageable pageable) {
+        return repository.findAllByOrderByFechaCreacionDesc(pageable).map(mapper::toDTO);
     }
 
     @Override
@@ -42,10 +41,8 @@ public class PublicacionForoServiceImpl implements PublicacionForoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<PublicacionForoDTO> obtenerPorAutor(Long autorId) {
-        return repository.findByAutorId(autorId).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
+    public Page<PublicacionForoDTO> obtenerPorAutor(Long autorId, Pageable pageable) {
+        return repository.findByAutorId(autorId, pageable).map(mapper::toDTO);
     }
 
     @Override
@@ -56,6 +53,7 @@ public class PublicacionForoServiceImpl implements PublicacionForoService {
         }
 
         Long autorId = dto.getAutor().getId();
+        SecurityUtils.requireSelfOrAdmin(autorId);
         Usuario autor = usuarioRepository.findById(autorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + autorId));
 
@@ -68,9 +66,10 @@ public class PublicacionForoServiceImpl implements PublicacionForoService {
     @Override
     @Transactional
     public void eliminar(Long id) {
-        if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Publicación no encontrada con ID: " + id);
-        }
-        repository.deleteById(id);
+        PublicacionForo publicacion = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Publicación no encontrada con ID: " + id));
+        Long autorId = publicacion.getAutor() != null ? publicacion.getAutor().getId() : null;
+        SecurityUtils.requireSelfOrAdmin(autorId);
+        repository.delete(publicacion);
     }
 }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,7 @@ public class Valoracion {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     @Min(1)
     @Max(5)
     @Column(nullable = false)
@@ -47,7 +49,9 @@ public class Valoracion {
 
     @PrePersist
     protected void onCreate() {
-        this.fechaCreacion = LocalDateTime.now();
+        if (this.fechaCreacion == null) {
+            this.fechaCreacion = LocalDateTime.now();
+        }
     }
 
     public Valoracion(Integer puntuacion, String comentario, Empleador autor, Trabajador trabajador) {

@@ -7,6 +7,7 @@ import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
 import com.al_lado.al_lado_project.mappers.perfil.PortafolioItemMapper;
 import com.al_lado.al_lado_project.repository.perfil.PortafolioItemRepository;
 import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
+import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.perfil.PortafolioItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class PortafolioItemServiceImpl implements PortafolioItemService {
     @Override
     @Transactional
     public PortafolioItemDTO agregar(Long trabajadorId, PortafolioItemDTO dto) {
+        SecurityUtils.requireSelfOrAdmin(trabajadorId);
         Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trabajador no encontrado con ID: " + trabajadorId));
 
@@ -46,9 +48,10 @@ public class PortafolioItemServiceImpl implements PortafolioItemService {
     @Override
     @Transactional
     public void eliminar(Long id) {
-        if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Ítem de portafolio no encontrado con ID: " + id);
-        }
-        repository.deleteById(id);
+        PortafolioItem item = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Ítem de portafolio no encontrado con ID: " + id));
+        Long propietarioId = item.getTrabajador() != null ? item.getTrabajador().getId() : null;
+        SecurityUtils.requireSelfOrAdmin(propietarioId);
+        repository.delete(item);
     }
 }

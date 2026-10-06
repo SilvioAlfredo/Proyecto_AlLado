@@ -1,9 +1,0 @@
-<!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
-<body>
-<div th:fragment="adminScripts(specificScript)">
-    <!-- Script particular de la vista si se define -->
-    <script th:if="${specificScript != null}" th:src="@{${specificScript}}"></script>
-</div>
-</body>
-</html>

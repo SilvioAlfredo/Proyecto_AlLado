@@ -28,6 +28,9 @@ public class ReporteMapper {
         return dto;
     }
 
+    // Las relaciones reportante/reportado/moderador se resuelven en
+    // ReporteServiceImpl a partir de sus IDs; no se reconstruyen aqui
+    // para no crear entidades transient.
     public Reporte toEntity(ReporteDTO dto) {
         if (dto == null) return null;
 
@@ -35,6 +38,7 @@ public class ReporteMapper {
         entity.setId(dto.getId());
         entity.setMotivo(dto.getMotivo());
         entity.setDescripcion(dto.getDescripcion());
+        entity.setEstado(dto.getEstado());
         return entity;
     }
 }
