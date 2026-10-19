@@ -15,6 +15,13 @@
 - [**HU-11**](#hu-11)
 - [**HU-12**](#hu-12)
 - [**HU-13**](#hu-13)
+- [**HU-14**](#hu-14)
+- [**HU-15**](#hu-15)
+- [**HU-16**](#hu-16)
+- [**HU-17**](#hu-17)
+- [**HU-18**](#hu-18)
+- [**HU-19**](#hu-19)
+- [**HU-20**](#hu-20)
 
 ---
 
@@ -30,8 +37,8 @@
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Publicación exitosa de tarea | El Empleador se encuentra autenticado en el sistema y abre el formulario de creación | Completa la descripción, selecciona las etiquetas de especialidad y presiona 'Confirmar Publicación' | El sistema almacena el objeto `CreateTareaDTO` en la base de datos en menos de 1 segundo e indexa la tarea en el mapa. |
-| **CA-02** | Control de límites comerciales | El Empleador posee una cuenta en "Nivel Básico" y ya completó las 3 ofertas mensuales | Intenta presionar el botón para confirmar una nueva publicación de trabajo | El sistema bloquea el almacenamiento de datos y despliega un mensaje modal invitándolo a actualizar al "Nivel Pro". |
+| **CA-01** | Publicación exitosa de tarea | El Empleador se encuentra autenticado y abre el formulario de creación | Completa título, descripción, ubicación, modalidad, rango salarial y etiquetas, y confirma la publicación | El sistema almacena la `OportunidadLaboral` y la deja visible en el listado de oportunidades. |
+| **CA-02** | Control de límites comerciales | El Empleador posee una cuenta en "Nivel Básico" y ya registra 3 ofertas activas en el mes | Intenta confirmar una nueva publicación | El sistema bloquea el almacenamiento y muestra un mensaje invitándolo a actualizar al "Nivel Pro". |
 
 ---
 
@@ -40,15 +47,16 @@
 | Componente | Detalle |
 | :---- | :---- |
 | **Como** | Trabajador |
-| **Quiero** | Postularme y aceptar solicitudes de tareas activas en mi barrio |
+| **Quiero** | Postularme a las solicitudes de tareas activas de mi barrio |
 | **Para** | Obtener remuneración y construir una reputación dentro de mi comunidad |
 
 ### Criterios de Aceptación
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Envío de postulación directa | El Trabajador visualiza una necesidad de un Empleador compatible con su ubicación | Completa el formulario de propuesta económica `PostulacionDTO` y presiona 'Enviar Postulación' | El sistema vincula su postulación a la tarea y actualiza instantáneamente el panel de control del Empleador. |
-| **CA-02** | Restricción de prioridad de postulación | Una nueva tarea barrial acaba de ser indexada en el sistema | Un Trabajador con cuenta en "Nivel Básico" intenta postularse dentro de los primeros 15 minutos de vigencia | El sistema bloquea la acción e indica que la oferta está en fase de exclusividad temporal para usuarios "Pro". |
+| **CA-01** | Envío de postulación | El Trabajador visualiza una necesidad compatible con sus especialidades | Completa su postulación con un mensaje y una remuneración pretendida y presiona "Enviar" | El sistema crea la `Postulacion` en estado `PENDIENTE`, la vincula a la oportunidad y notifica al Empleador. |
+| **CA-02** | Retiro de postulación | La postulación del Trabajador sigue en estado `PENDIENTE` o `SELECCIONADA` | Presiona "Retirar" | El sistema cambia el estado a `RETIRADA` y la retira del seguimiento activo. |
+| **CA-03** | Acceso PRO a propuestas | El Trabajador posee una suscripción PRO vigente | Ingresa a la sección "Propuestas PRO" | El sistema le devuelve las oportunidades reservadas para usuarios PRO. |
 
 ---
 
@@ -64,7 +72,7 @@
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Despliegue de información de confianza | El Empleador se encuentra revisando la lista de postulantes asignada a su necesidad | Selecciona y hace clic sobre el nombre de uno de los Trabajadores postulados | El sistema recupera el objeto `PerfilTrabajadorDTO` y renderiza de forma pública la fotografía, biografía, certificados y su nivel de recomendación. |
+| **CA-01** | Despliegue de información de confianza | El Empleador revisa la lista de postulantes de su necesidad | Selecciona a uno de los Trabajadores | El sistema recupera el `TrabajadorDTO` y renderiza su fotografía, biografía, certificados, especialidades y valoraciones recibidas. |
 
 ---
 
@@ -73,15 +81,15 @@
 | Componente | Detalle |
 | :---- | :---- |
 | **Como** | Trabajador |
-| **Quiero** | Registrarme en la plataforma y validar mi número de teléfono |
-| **Para** | Generar confianza en los clientes potenciales de la zona y habilitar mi contacto directo |
+| **Quiero** | Registrarme en la plataforma y validar mi correo electrónico |
+| **Para** | Generar confianza en los clientes potenciales de la zona y habilitar mi contacto |
 
 ### Criterios de Aceptación
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Validación de formatos obligatorios | Un visitante completa el formulario web para crear una cuenta | Ingresa una contraseña de menos de 8 caracteres o introduce un correo electrónico con formato inválido | El sistema bloquea el envío, resalta los campos erróneos y muestra alertas de validación en tiempo real. |
-| **CA-02** | Autenticación obligatoria por SMS | El visitante completa correctamente todos los campos obligatorios del `UserRegistrationDTO` | Presiona el botón 'Confirmar Registro' | El sistema envía un token numérico vía SMS en menos de 60 segundos, manteniendo la cuenta inactiva hasta su verificación. |
+| **CA-01** | Validación de formatos obligatorios | Un visitante completa el formulario de registro | Ingresa una contraseña de menos de 8 caracteres o un correo con formato inválido | El sistema bloquea el envío y muestra las alertas de validación correspondientes. |
+| **CA-02** | Verificación por correo electrónico | El visitante completó correctamente todos los campos del `RegisterRequestDTO` | Presiona "Confirmar Registro" | El sistema crea la cuenta, devuelve su token de sesión y emite un token de verificación por correo; la cuenta queda con `emailVerificado = false` hasta la confirmación, sin bloquear el inicio de sesión. |
 
 ---
 
@@ -97,7 +105,7 @@
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Visualización segura de datos del Empleador | El Trabajador se encuentra revisando las solicitudes de mano de obra disponibles en su zona | Accede a la ficha del Empleador que generó la oferta laboral | El sistema despliega el historial paginado de tareas pasadas y sus preferencias de contratación, ocultando sus datos privados de contacto. |
+| **CA-01** | Visualización segura de datos del Empleador | El Trabajador revisa las solicitudes disponibles | Accede a la ficha del Empleador que generó la oferta | El sistema despliega su historial de oportunidades publicadas y, si existe, su perfil empresarial, sin exponer credenciales ni datos privados. |
 
 ---
 
@@ -106,15 +114,15 @@
 | Componente | Detalle |
 | :---- | :---- |
 | **Como** | Empleador |
-| **Quiero** | Calificar con estrellas y dejar una reseña escrita sobre el servicio recibido |
+| **Quiero** | Calificar con estrellas y dejar una reseña sobre el servicio recibido |
 | **Para** | Reportar el desempeño del profesional y ayudar a construir reputación y confianza vecinal |
 
 ### Criterios de Aceptación
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Consolidación obligatoria del feedback | El Trabajador marcó la tarea como finalizada en el sistema | Completa el formulario de `ValoracionDTO` con estrellas (1-5) y una reseña escrita, y presiona 'Enviar' | El sistema almacena el feedback de forma inmutable, cierra el contrato y recalcula el nivel de recomendación pública del Trabajador. |
-| **CA-02** | Propuesta voluntaria de donación | El Empleador ha completado satisfactoriamente el envío de la calificación del servicio | La ventana modal de valoraciones se cierra de forma exitosa | El sistema despliega una interfaz modal para realizar una micro-donación voluntaria (Tip de Gratitud) destinada al servidor. |
+| **CA-01** | Consolidación del feedback | El Empleador dio por completado el trabajo | Asigna una puntuación de 1 a 5 estrellas y, opcionalmente, un comentario, y presiona "Enviar" | El sistema persiste la `Valoracion` y actualiza el promedio del Trabajador. Un segundo intento de valorar al mismo Trabajador es rechazado. |
+| **CA-02** | Propuesta voluntaria de donación | El Empleador completó la calificación del servicio | Se ofrece la opción de colaborar | El sistema permite registrar un aporte/donación desde la sección de transferencias, sujeto a la verificación del Administrador. |
 
 ---
 
@@ -123,14 +131,14 @@
 | Componente | Detalle |
 | :---- | :---- |
 | **Como** | Empleador |
-| **Quiero** | Utilizar filtros avanzados de búsqueda basados en especialidades y recomendación |
-| **Para** | Encontrar de forma exacta al profesional que se ajuste a los requerimientos de mi avería |
+| **Quiero** | Utilizar filtros de búsqueda basados en especialidades y zona |
+| **Para** | Encontrar de forma exacta al profesional que se ajuste a mis requerimientos |
 
 ### Criterios de Aceptación
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Búsqueda indexada eficiente | El Empleador accede al mapa o motor de búsqueda de la plataforma | Selecciona una etiqueta del catálogo cerrado (ej. Electricidad) y un nivel de estrellas mínimo | El sistema procesa los filtros en el backend y devuelve los profesionales que coinciden en un tiempo inferior a 500 ms. |
+| **CA-01** | Búsqueda indexada por catálogo | El Empleador accede al directorio de profesionales | Selecciona una etiqueta del catálogo cerrado y un sector | El sistema devuelve los profesionales que coinciden con los filtros aplicados. |
 
 ---
 
@@ -146,7 +154,7 @@
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Integridad del historial de contratos | El Empleador ingresa a su panel de control privado | Hace clic sobre la sección de "Historial de Contratos" | El sistema renderiza un reporte cronológico inalterable con el ID, nombre del Trabajador, fechas y estados de cada servicio. |
+| **CA-01** | Integridad del historial | El Empleador ingresa a su panel | Hace clic en la sección de historial | El sistema renderiza un listado cronológico de las postulaciones con el nombre del Trabajador, las fechas y el estado de cada servicio (`PENDIENTE`, `SELECCIONADA`, `RECHAZADA`, `COMPLETADA`, `RETIRADA`). |
 
 ---
 
@@ -155,14 +163,16 @@
 | Componente | Detalle |
 | :---- | :---- |
 | **Como** | Trabajador |
-| **Quiero** | Recibir notificaciones push o alertas automatizadas basadas en mis etiquetas |
-| **Para** | Enterarme al instante cuando alguien publique una necesidad compatible con mis habilidades y zona |
+| **Quiero** | Recibir notificaciones dentro de la aplicación sobre mis postulaciones |
+| **Para** | Enterarme al instante cuando un empleador cambie el estado de mi propuesta |
 
 ### Criterios de Aceptación
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Envío inmediato automatizado | Un Empleador consolida la publicación de una solicitud de mano de obra barrial | El motor del backend detecta que las etiquetas y geolocalización de la tarea coinciden con el perfil de un Trabajador | Despacha automáticamente una alerta push o un mensaje integrado a la API de WhatsApp en menos de 30 segundos. |
+| **CA-01** | Aviso al Empleador por nueva postulación | Un Trabajador envía una postulación | El sistema persiste la postulación | Se genera una notificación de tipo `POSTULACION_RECIBIDA` para el Empleador. |
+| **CA-02** | Aviso al Trabajador por cambio de estado | El Empleador selecciona, rechaza o completa una postulación | El sistema guarda el nuevo estado | Se genera una notificación de tipo `POSTULACION_ESTADO` para el Trabajador. |
+| **CA-03** | Gestión de no leídas | El usuario tiene notificaciones pendientes | Abre su bandeja y las marca como leídas | El contador de no leídas se actualiza en consecuencia. |
 
 ---
 
@@ -171,14 +181,15 @@
 | Componente | Detalle |
 | :---- | :---- |
 | **Como** | Trabajador |
-| **Quiero** | Configurar mis días de descanso y mis rangos horarios de servicio |
-| **Para** | Evitar que los vecinos me contacten o visualicen mi perfil activo cuando no estoy disponible |
+| **Quiero** | Configurar mis días y rangos horarios de servicio |
+| **Para** | Comunicar a los vecinos cuándo estoy disponible |
 
 ### Criterios de Aceptación
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Exclusión del motor de búsquedas | El Trabajador se encuentra en su panel de configuración horaria | Desmarca un bloque de horas o un día específico de la semana como 'No Disponible' y guarda | El backend omite de forma automatizada su perfil de los resultados de búsqueda activos para ese lapso de tiempo. |
+| **CA-01** | Registro de franjas horarias | El Trabajador se encuentra en su panel de disponibilidad | Agrega una franja indicando día, hora de inicio y hora de fin, y guarda | El sistema persiste el `HorarioDisponibilidad` y lo lista en su perfil. |
+| **CA-02** | Control de solapamiento | El Trabajador ya registró una franja para un día | Intenta agregar otra franja que se solapa con la anterior | El sistema rechaza el registro indicando que el horario se solapa con otro ya existente. |
 
 ---
 
@@ -194,7 +205,8 @@
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Marcado e indexación instantánea | El Empleador se encuentra visualizando la vitrina pública de un profesional | Presiona el ícono marcador de "Favorito" | El sistema inserta la relación en la tabla intermedia de la base de datos y añade el acceso directo al panel del Empleador. |
+| **CA-01** | Marcado e indexación instantánea | El Empleador se encuentra visualizando el perfil de un profesional | Presiona el ícono de "Favorito" | El sistema registra la relación y añade el acceso directo al panel del Empleador. |
+| **CA-02** | Desmarcado | El profesional ya figura en la lista de favoritos | El Empleador presiona nuevamente el ícono de "Favorito" | El sistema elimina la relación y actualiza la lista. |
 
 ---
 
@@ -210,8 +222,8 @@
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Sincronización gráfica de métricas | El Trabajador abre su panel de administración | El frontend consume el endpoint y mapea los atributos del objeto `EstadisticasDTO` | El sistema despliega gráficos cuyos totales coinciden de forma exacta con la suma de sus transacciones laborales completadas. |
-| **CA-02** | Restricción de analíticas avanzadas | El Trabajador posee una cuenta gratuita en "Nivel Básico" | Intenta hacer clic en las pestañas de métricas avanzadas de visitas al perfil | El sistema restringe el acceso visual mostrando un candado informativo y un botón de actualización hacia el "Nivel Pro". |
+| **CA-01** | Sincronización de métricas | El Trabajador abre su panel | El frontend consume `EstadisticasTrabajadorDTO` | El sistema despliega ingresos totales y de los últimos 3 meses, postulaciones enviadas/seleccionadas/completadas, cantidad y promedio de valoraciones y nivel de recomendación, coincidentes con sus transacciones. |
+| **CA-02** | Indicador de plan | El Trabajador consulta su panel | El sistema evalúa su suscripción | El panel refleja si el usuario cuenta con una suscripción activa (`suscripcionActiva`). |
 
 ---
 
@@ -220,13 +232,132 @@
 | Componente | Detalle |
 | :---- | :---- |
 | **Como** | Usuario (Cualquiera) |
-| **Quiero** | Disponer de un botón para reportar perfiles abusivos y participar en foros vecinales |
+| **Quiero** | Disponer de un botón para reportar perfiles abusivos y participar en un foro vecinal |
 | **Para** | Mantener la seguridad de la red y compartir experiencias de soporte comunitario en el barrio |
 
 ### Criterios de Aceptación
 
 | CA | Escenario | Dado que | Cuando | Entonces |
 | :--- | :--- | :--- | :--- | :--- |
-| **CA-01** | Envío y flujo de reporte preventivo | Un Empleador o Trabajador autenticado detecta un fraude o acoso en la plataforma | Presiona el botón "Reportar", selecciona el motivo, añade evidencia y confirma el envío | El sistema persiste la denuncia en estado `PENDIENTE` y genera una alerta en la interfaz del Administrador para su moderación. |
-| **CA-02** | Restricción de alcance geográfico del foro | Un usuario ingresa al foro de soporte e interacción vecinal | Intenta leer o escribir mensajes en los hilos de discusión del foro | El sistema valida automáticamente su ubicación de registro, permitiéndole interactuar solo en el foro asignado a su mismo sector barrial. |
+| **CA-01** | Envío y flujo de reporte preventivo | Un Empleador o Trabajador autenticado detecta un fraude o acoso | Presiona "Reportar", completa motivo y descripción y confirma | El sistema persiste el reporte en estado `PENDIENTE` y lo pone a disposición del Administrador para su moderación. |
+| **CA-02** | Participación en el foro | Un usuario autenticado ingresa al foro | Publica un mensaje con título y contenido | El sistema persiste la publicación en el foro global, visible para la comunidad; el autor o un Administrador puede eliminarla. |
 
+---
+
+## HU-14 <a name="hu-14"></a>
+
+| Componente | Detalle |
+| :---- | :---- |
+| **Como** | Empleador |
+| **Quiero** | Publicar el perfil de mi comercio y obtener el Sello de Confianza |
+| **Para** | Dar mayor credibilidad a mis publicaciones frente a los profesionales del barrio |
+
+### Criterios de Aceptación
+
+| CA | Escenario | Dado que | Cuando | Entonces |
+| :--- | :--- | :--- | :--- | :--- |
+| **CA-01** | Alta del perfil empresarial | El Empleador posee una suscripción PRO vigente | Completa nombre de la empresa, CUIT, descripción, sitio web y logo, y guarda | El sistema almacena el `PerfilEmpresarial` asociado al Empleador. |
+| **CA-02** | Restricción por plan | El Empleador no posee una suscripción PRO vigente | Intenta guardar su perfil empresarial | El sistema rechaza la operación indicando que requiere una suscripción PRO. |
+| **CA-03** | Verificación del Sello de Confianza | El Administrador revisa los perfiles empresariales | Aprueba el perfil | El perfil queda marcado como `verificado`, otorgando el Sello de Confianza. |
+
+---
+
+## HU-15 <a name="hu-15"></a>
+
+| Componente | Detalle |
+| :---- | :---- |
+| **Como** | Empleador |
+| **Quiero** | Publicar anuncios de mi comercio en la plataforma |
+| **Para** | Llegar a los vecinos que buscan servicios relacionados con mi rubro |
+
+### Criterios de Aceptación
+
+| CA | Escenario | Dado que | Cuando | Entonces |
+| :--- | :--- | :--- | :--- | :--- |
+| **CA-01** | Alta de publicidad | El Empleador posee una suscripción PRO vigente | Carga título, contenido, imagen, enlace de destino y vigencia, y guarda | El sistema almacena la `Publicidad` asociada al Empleador anunciante. |
+| **CA-02** | Exposición de anuncios vigentes | Existen anuncios dentro de su rango de fechas y activos | Un usuario navega la plataforma | El sistema expone los anuncios vigentes a través de `GET /publicidades/vigentes`. |
+
+---
+
+## HU-16 <a name="hu-16"></a>
+
+| Componente | Detalle |
+| :---- | :---- |
+| **Como** | Usuario |
+| **Quiero** | Adquirir el nivel PRO realizando un aporte por transferencia |
+| **Para** | Acceder a los beneficios de la suscripción anual |
+
+### Criterios de Aceptación
+
+| CA | Escenario | Dado que | Cuando | Entonces |
+| :--- | :--- | :--- | :--- | :--- |
+| **CA-01** | Registro del aporte | El usuario decide adquirir PRO | Informa monto, banco, tipo y asunto de la transferencia y confirma | El sistema registra el aporte en estado `PENDIENTE` con los datos de la transferencia. |
+| **CA-02** | Verificación exitosa | El Administrador verifica el registro bancario | El asunto y el monto coinciden con el aporte declarado | El sistema marca el aporte como `VERIFICADO` y activa el nivel PRO del usuario por 1 año. |
+| **CA-03** | Verificación fallida | El Administrador verifica el registro bancario | El asunto o el monto no coinciden | El sistema rechaza la verificación y el aporte permanece pendiente, sin activar el PRO. |
+
+---
+
+## HU-17 <a name="hu-17"></a>
+
+| Componente | Detalle |
+| :---- | :---- |
+| **Como** | Trabajador |
+| **Quiero** | Armar mi portafolio y acceder a las propuestas reservadas para usuarios PRO |
+| **Para** | Diferenciarme del resto y acceder primero a las mejores oportunidades |
+
+### Criterios de Aceptación
+
+| CA | Escenario | Dado que | Cuando | Entonces |
+| :--- | :--- | :--- | :--- | :--- |
+| **CA-01** | Alta de portafolio | El Trabajador posee una suscripción PRO vigente | Agrega un ítem con título, descripción y enlace/archivo | El sistema almacena el `PortafolioItem` y lo muestra en su perfil. |
+| **CA-02** | Restricción por plan | El Trabajador no posee una suscripción PRO vigente | Intenta agregar un ítem de portafolio o abrir "Propuestas PRO" | El sistema rechaza la operación indicando que requiere una suscripción PRO. |
+
+---
+
+## HU-18 <a name="hu-18"></a>
+
+| Componente | Detalle |
+| :---- | :---- |
+| **Como** | Administrador |
+| **Quiero** | Moderar reportes y gestionar la comunidad y la taxonomía |
+| **Para** | Mantener la seguridad y el orden de la plataforma |
+
+### Criterios de Aceptación
+
+| CA | Escenario | Dado que | Cuando | Entonces |
+| :--- | :--- | :--- | :--- | :--- |
+| **CA-01** | Moderación de un reporte | Existe un reporte en estado `PENDIENTE` | El Administrador lo resuelve indicando `EN_REVISION`, `RESUELTO` o `DESCARTADO` | El sistema registra el nuevo estado y el moderador que actuó. Un reporte ya moderado no puede volver a resolverse. |
+| **CA-02** | Gestión de taxonomía | Existe un catálogo de etiquetas | El Administrador crea o elimina una etiqueta | El sistema la agrega al catálogo o la elimina si no está en uso. |
+| **CA-03** | Gestión de usuarios y comunicados | El Administrador accede a su panel | Habilita/deshabilita un usuario o emite un comunicado | El sistema aplica el cambio de estado o publica el comunicado para su lectura. |
+
+---
+
+## HU-19 <a name="hu-19"></a>
+
+| Componente | Detalle |
+| :---- | :---- |
+| **Como** | Administrador |
+| **Quiero** | Consultar un panel con métricas de la plataforma |
+| **Para** | Supervisar el crecimiento y la actividad de la comunidad |
+
+### Criterios de Aceptación
+
+| CA | Escenario | Dado que | Cuando | Entonces |
+| :--- | :--- | :--- | :--- | :--- |
+| **CA-01** | Visualización del dashboard | El Administrador se encuentra autenticado con `ROLE_ADMIN` | Abre el panel de métricas | El sistema devuelve `DashboardMetricsDTO` con contratos, trabajadores, promedio de remuneración, usuarios activos/inactivos, postulaciones por estado y tendencias. |
+
+---
+
+## HU-20 <a name="hu-20"></a>
+
+| Componente | Detalle |
+| :---- | :---- |
+| **Como** | Usuario |
+| **Quiero** | Leer los comunicados institucionales de la plataforma |
+| **Para** | Mantenerme informado sobre novedades y avisos de AlLado |
+
+### Criterios de Aceptación
+
+| CA | Escenario | Dado que | Cuando | Entonces |
+| :--- | :--- | :--- | :--- | :--- |
+| **CA-01** | Lectura de comunicados | El Administrador emitió comunicados | El usuario ingresa a la sección de comunicados | El sistema lista los comunicados publicados y permite filtrarlos por alcance. |

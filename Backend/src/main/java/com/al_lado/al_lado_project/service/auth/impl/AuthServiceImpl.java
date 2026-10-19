@@ -11,6 +11,7 @@ import com.al_lado.al_lado_project.entity.usuario.Empleador;
 import com.al_lado.al_lado_project.entity.usuario.Trabajador;
 import com.al_lado.al_lado_project.entity.usuario.Usuario;
 import com.al_lado.al_lado_project.exception.BusinessRuleException;
+import com.al_lado.al_lado_project.exception.DuplicateResourceException;
 import com.al_lado.al_lado_project.repository.seguridad.TokenRevocadoRepository;
 import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
 import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
@@ -70,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponseDTO register(RegisterRequestDTO request) {
         if (usuarioRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("El email ya se encuentra registrado.");
+            throw new DuplicateResourceException("El email ya se encuentra registrado.");
         }
 
         String rol = request.getRol() != null ? request.getRol().toUpperCase() : "TRABAJADOR";

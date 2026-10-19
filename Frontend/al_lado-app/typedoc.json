@@ -1,0 +1,39 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "AlLado — Frontend web",
+  "entryPoints": [
+    "src/features/admin/components/AdminAccess.tsx",
+    "src/features/admin/components/EmpresaAdminDetail.tsx",
+    "src/features/admin/components/OportunidadAdminDetail.tsx",
+    "src/features/admin/components/Pagination.tsx",
+    "src/features/admin/components/PersonaDetail.tsx",
+    "src/features/admin/components/PublicidadAdminDetail.tsx",
+    "src/features/admin/components/ReporteAdminDetail.tsx",
+    "src/features/admin/components/SuscripcionAdminDetail.tsx",
+    "src/features/admin/components/TransferenciaAdminDetail.tsx",
+    "src/features/admin/hooks/useAdminMetrics.ts",
+    "src/features/admin/lib/aportes.ts",
+    "src/features/admin/lib/publicidad.ts",
+    "src/features/admin/services/adminService.ts",
+    "src/features/admin/services/gestionService.ts",
+    "src/features/auth/components/LoginForm.tsx",
+    "src/features/auth/lib/access.ts",
+    "src/features/comunidad/services/perfilEmpresarialService.ts",
+    "src/features/usuario/hooks/useTrabajadorQuery.ts",
+    "src/features/usuario/services/aportesService.ts",
+    "src/lib/utils.ts",
+    "src/features/comunidad/services/moderacionService.ts",
+    "src/types"
+  ],
+  "entryPointStrategy": "expand",
+  "tsconfig": "tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "readme": "TYPEDOC.md",
+  "out": "docs/typedoc",
+  "lang": "en",
+  "excludeExternals": true,
+  "disableSources": true,
+  "treatWarningsAsErrors": true
+}

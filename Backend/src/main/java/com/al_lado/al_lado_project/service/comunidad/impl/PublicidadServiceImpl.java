@@ -10,6 +10,7 @@ import com.al_lado.al_lado_project.repository.comunidad.PublicidadRepository;
 import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
 import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.comunidad.PublicidadService;
+import com.al_lado.al_lado_project.service.usuario.SuscripcionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class PublicidadServiceImpl implements PublicidadService {
     private final PublicidadRepository repository;
     private final EmpleadorRepository empleadorRepository;
     private final PublicidadMapper mapper;
+    private final SuscripcionService suscripcionService;
 
     @Override
     @Transactional(readOnly = true)
@@ -73,6 +75,9 @@ public class PublicidadServiceImpl implements PublicidadService {
 
         Long anuncianteId = dto.getAnunciante().getId();
         SecurityUtils.requireSelfOrAdmin(anuncianteId);
+        if (!suscripcionService.esProVigente(anuncianteId)) {
+            throw new BusinessRuleException("Publicar publicidades requiere una suscripción PRO vigente.");
+        }
         Empleador anunciante = empleadorRepository.findById(anuncianteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Empleador no encontrado con ID: " + anuncianteId));
 

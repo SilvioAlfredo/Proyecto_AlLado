@@ -50,7 +50,8 @@ public class ReporteController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/resolver")
     public ResponseEntity<ReporteDTO> resolver(@PathVariable Long id,
-                                               @RequestParam Long moderadorId,
+                                               // Opcional: si se omite se usa el admin autenticado (el frontend no conoce su id numérico)
+                                               @RequestParam(required = false) Long moderadorId,
                                                @RequestParam(required = false) String estado) {
         return ResponseEntity.ok(service.resolver(id, moderadorId, estado));
     }

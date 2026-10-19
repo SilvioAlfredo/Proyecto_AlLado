@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class PostulacionDTO extends PostBaseDTO {
 
-    @Pattern(regexp = "PENDIENTE|SELECCIONADA|RECHAZADA|COMPLETADA", message = "Estado inválido. Valores permitidos: PENDIENTE, SELECCIONADA, RECHAZADA, COMPLETADA.")
+    @Pattern(regexp = "PENDIENTE|SELECCIONADA|RECHAZADA|COMPLETADA|RETIRADA", message = "Estado inválido. Valores permitidos: PENDIENTE, SELECCIONADA, RECHAZADA, COMPLETADA, RETIRADA.")
     private String estado;
     private Double remuneracionPretendida;
 

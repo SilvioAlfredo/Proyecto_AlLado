@@ -35,6 +35,7 @@ export interface OportunidadLaboralDTO {
   modalidad: string;
   rangoSalarial: string;
   activa: boolean;
+  destacada?: boolean;
   etiquetas?: EtiquetaDTO[];
   postulaciones?: PostulacionResumenDTO[];
 }
@@ -45,8 +46,8 @@ export interface PostulacionDTO {
   contenido: string;
   fechaCreacion?: string;
   autor?: UsuarioResumenDTO;
-  // Backend: PENDIENTE | SELECCIONADA | RECHAZADA | COMPLETADA
-  estado: 'PENDIENTE' | 'SELECCIONADA' | 'RECHAZADA' | 'COMPLETADA' | string;
+  // Backend: PENDIENTE | SELECCIONADA | RECHAZADA | COMPLETADA | RETIRADA
+  estado: 'PENDIENTE' | 'SELECCIONADA' | 'RECHAZADA' | 'COMPLETADA' | 'RETIRADA' | string;
   remuneracionPretendida: number;
   oportunidadLaboral: OportunidadLaboralResumenDTO;
 }

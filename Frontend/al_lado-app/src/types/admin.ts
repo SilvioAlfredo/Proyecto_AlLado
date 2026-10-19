@@ -14,4 +14,7 @@ export interface DashboardMetricsDTO {
   dineroComunidad: string;
   trabajosCompletados: number;
   tendencias: TendenciaDTO[];
+  usuariosActivos?: number;
+  usuariosInactivos?: number;
+  postulacionesPorEstado?: Record<string, number>;
 }

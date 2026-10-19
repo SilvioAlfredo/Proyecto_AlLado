@@ -18,6 +18,13 @@ import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
 
+/**
+ * Emite JWT y comprueba su firma, vencimiento y usuario.
+ *
+ * <p>Los tokens nuevos incluyen un identificador {@code jti}. La lista de tokens invalidados se
+ * consulta en {@link JwtAuthenticationFilter}, no en esta clase. Los tokens antiguos sin jti no
+ * pueden invalidarse individualmente.</p>
+ */
 @Component
 public class JwtUtils {
 
@@ -31,6 +38,12 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
+    /**
+     * Emite un JWT firmado con email, roles e identificador único.
+     *
+     * <p>La duración se configura con {@code jwt.expiration}; por defecto es de 24 horas. El
+     * filtro recarga los roles desde la base en cada solicitud.</p>
+     */
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", userDetails.getAuthorities().stream()
@@ -51,7 +64,7 @@ public class JwtUtils {
         return extractClaim(token, Claims::getSubject);
     }
 
-    /** Identificador único del token (jti), usado para revocación. Null en tokens legacy. */
+    /** Identificador único del token (jti), usado para revocación. Null en tokens antiguos. */
     public String extractTokenId(String token) {
         return extractClaim(token, Claims::getId);
     }
@@ -60,6 +73,19 @@ public class JwtUtils {
         return extractClaim(token, Claims::getExpiration);
     }
 
+    /**
+     * Comprueba la firma, el vencimiento y que el usuario coincida.
+     *
+     * <p>No comprueba si el token fue invalidado al cerrar sesión. Esa consulta la realiza
+     * {@link JwtAuthenticationFilter}.</p>
+     *
+     * @param token token recibido
+     * @param userDetails principal ya cargado por {@code UserDetailsServiceImpl}
+     * @return {@code true} si el subject coincide y no está vencido
+     * @throws io.jsonwebtoken.JwtException
+     *     si el token es malformado, la firma no coincide o está vencido (las lecturas
+     *     de claims lanzan, no devuelven {@code null})
+     */
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);

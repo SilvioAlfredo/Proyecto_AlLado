@@ -1,10 +1,44 @@
 'use client';
 
+import { cn } from '@/lib/utils';
+import type { SidebarItem } from './Sidebar';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { SidebarItem } from './Sidebar';
+import { Briefcase, FileText, User, Users } from 'lucide-react';
 
+const BOTTOM_NAV_ITEMS = [
+  { name: 'Trabajos', href: '/trabajador/oportunidades', icon: Briefcase },
+  { name: 'Postulaciones', href: '/trabajador/postulaciones', icon: FileText },
+  { name: 'Comunidad', href: '/trabajador/comunidad', icon: Users },
+  { name: 'Perfil', href: '/trabajador/perfil', icon: User },
+];
+
+export default function TrabajadorBottomNav() {
+  const pathname = usePathname();
+
+  return (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-allado-card border-t border-allado-border z-50 px-2 sm:px-4 py-2 flex justify-between items-center shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+      {BOTTOM_NAV_ITEMS.map((item) => {
+        const isActive = pathname.startsWith(item.href);
+        const Icon = item.icon;
+
+        return (
+          <Link
+            key={item.name}
+            href={item.href}
+            className={`flex flex-col items-center justify-center w-full py-1 gap-1 transition-colors ${
+              isActive ? 'text-allado-yellow' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Icon className={`w-5 h-5 ${isActive ? 'fill-allado-yellow/10' : ''}`} />
+            <span className="text-[10px] font-medium">{item.name}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
 interface BottomNavProps {
   items: SidebarItem[];
 }
@@ -23,7 +57,7 @@ export function BottomNav({ items }: BottomNavProps) {
               href={item.href}
               className={cn(
                 'flex flex-col items-center text-xs py-1 px-2 font-medium transition-colors',
-                isActive ? 'text-[#ffc107] font-bold' : 'text-zinc-500'
+                isActive ? 'text-[#ffc107] font-bold' : 'text-zinc-500',
               )}
             >
               {item.label}

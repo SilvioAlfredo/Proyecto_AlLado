@@ -25,4 +25,5 @@ public class TrabajadorDTO extends UsuarioDTO {
     private String fotografia; // RF-02, HU-03: campo solicitado en la spec
     private String biografia; // RF-02, HU-03: campo solicitado en la spec
     private String certificados; // RF-02, HU-03: campo solicitado en la spec
+    private String sector; // HU-13 CA-02, RF-13: sector barrial o zona
 }

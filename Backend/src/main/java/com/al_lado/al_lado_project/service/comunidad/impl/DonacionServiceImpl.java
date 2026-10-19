@@ -91,12 +91,16 @@ public class DonacionServiceImpl implements DonacionService {
     }
 
     /**
-     * Admin verifica y asigna la suscripción/donación si el asunto y monto son correctos
+     * Verifica el aporte dentro de una transacción con bloqueo pesimista de su fila.
+     *
+     * <p>El bloqueo se mantiene hasta finalizar la transacción y protege solo ese aporte. La
+     * suscripción se guarda por separado: no se persiste mediante la cascada de la donación. Si
+     * la comparación falla, el registro no cambia.</p>
      */
     @Override
     @Transactional
     public DonacionDTO verificarTransferencia(Long id, String asuntoEsperado, BigDecimal montoEsperado) {
-        Donacion donacion = repository.findById(id)
+        Donacion donacion = repository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Donación no encontrada con ID: " + id));
 
         if (!"PENDIENTE".equals(donacion.getEstado())) {

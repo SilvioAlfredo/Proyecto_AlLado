@@ -1,95 +1,184 @@
 'use client';
 
-import { useState } from 'react';
-import { OportunidadLaboralDTO } from '@/types/trabajo';
-import { postulacionesService } from '../services/postulacionesService';
-import { Dialog } from '@/components/ui/dialog';
+import { useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { X, DollarSign, Calendar, Send, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import type { OportunidadLaboralDTO } from '@/types/trabajo';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { obtenerRefPorEmail } from '@/lib/usuarioRef';
+import { errorMessage } from '@/lib/errors';
+import { oportunidadesService } from '@/features/oportunidades/services/oportunidadService';
+import { postulacionesService } from '../services/postulacionesService';
 
 interface PostulacionModalProps {
-  oportunidad: OportunidadLaboralDTO | null;
+  oportunidadId?: number;
+  oportunidad?: OportunidadLaboralDTO | null;
+  tituloOportunidad?: string;
+  presupuestoReferencia?: number;
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export function PostulacionModal({ oportunidad, isOpen, onClose }: PostulacionModalProps) {
-  const [contenido, setContenido] = useState('');
-  const [remuneracion, setRemuneracion] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function PostulacionModal({
+  oportunidadId,
+  oportunidad,
+  tituloOportunidad,
+  presupuestoReferencia,
+  isOpen,
+  onClose,
+  onSuccess,
+}: PostulacionModalProps) {
+  const { user } = useAuth();
+  const cache = useQueryClient();
+  const id = oportunidadId ?? oportunidad?.id;
+  const titulo = tituloOportunidad ?? oportunidad?.titulo ?? '';
+  const [tarifaPropuesta, setTarifaPropuesta] = useState(
+    presupuestoReferencia ? presupuestoReferencia.toString() : '',
+  );
+  const [tiempoEstimado, setTiempoEstimado] = useState('1');
+  const [mensaje, setMensaje] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  if (!oportunidad) return null;
+  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    if (!tarifaPropuesta || !mensaje.trim()) {
+      setErrorMsg('Por favor completa tu propuesta económica y mensaje.');
+      return;
+    }
 
     try {
+      setEnviando(true);
+      setErrorMsg(null);
+      if (
+        !user?.roles.some((rol) => rol === 'ROLE_TRABAJADOR' || rol === 'TRABAJADOR') ||
+        !id
+      ) {
+        throw new Error('Inicia sesión como trabajador para postularte.');
+      }
+      const autor = await obtenerRefPorEmail(user.email);
+      if (!autor?.id) throw new Error('No se pudo identificar tu usuario.');
+      const oferta = oportunidad ?? (await oportunidadesService.obtenerPorId(id));
+      const monto = Number(tarifaPropuesta);
+      const dias = Number(tiempoEstimado);
+      if (!Number.isFinite(monto) || monto < 0 || !Number.isInteger(dias) || dias < 1) {
+        throw new Error('Revisa el monto y el plazo de tu propuesta.');
+      }
       await postulacionesService.crear({
-        titulo: `Postulación a: ${oportunidad.titulo}`,
-        contenido,
-        remuneracionPretendida: Number(remuneracion),
-        oportunidadLaboral: {
-          id: oportunidad.id!,
-          titulo: oportunidad.titulo,
-          contenido: oportunidad.contenido,
-          ubicacion: oportunidad.ubicacion,
-          modalidad: oportunidad.modalidad,
-          rangoSalarial: oportunidad.rangoSalarial,
-          activa: oportunidad.activa,
-          fechaCreacion: oportunidad.fechaCreacion || '',
-        },
+        titulo: `Propuesta para ${titulo}`.slice(0, 150),
+        contenido: `${mensaje.trim()}\n\nPlazo estimado: ${dias} días.`,
+        autor,
+        remuneracionPretendida: monto,
+        oportunidadLaboral: { ...oferta, id, fechaCreacion: oferta.fechaCreacion ?? '' },
       });
-      setContenido('');
-      setRemuneracion('');
-      onClose();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Error al enviar la postulación. Requiere rol TRABAJADOR.');
+      await cache.invalidateQueries({ queryKey: ['trabajador'] });
+      setTarifaPropuesta('');
+      setMensaje('');
+      setTiempoEstimado('1');
+      if (onSuccess) onSuccess();
+      else onClose();
+    } catch (err: unknown) {
+      setErrorMsg(errorMessage(err, 'Ocurrió un error al enviar tu postulación.'));
     } finally {
-      setLoading(false);
+      setEnviando(false);
     }
   };
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} title={`Postularse a: ${oportunidad.titulo}`}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">{error}</div>}
-
-        <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-300">Mensaje / Propuesta (máx 500)</label>
-          <textarea
-            required
-            rows={4}
-            maxLength={500}
-            value={contenido}
-            onChange={(e) => setContenido(e.target.value)}
-            className="w-full rounded-2xl border border-[#3a3a3f] bg-[#26262a] p-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#ffc107]"
-            placeholder="Tengo experiencia en... Puedo pasar mañana y solucionarlo."
-          />
-          <p className="mt-1 text-right text-xs text-zinc-500">{contenido.length}/500</p>
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-allado-card rounded-2xl w-full max-w-lg shadow-2xl border border-allado-border overflow-hidden animate-in fade-in zoom-in-95">
+        {/* Cabecera */}
+        <div className="p-5 border-b border-allado-border flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-white text-lg">Enviar Postulación</h3>
+            <p className="text-xs text-zinc-400 line-clamp-1">{titulo}</p>
+          </div>
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-300">
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-300">Presupuesto ($) + Disponibilidad</label>
-          <Input
-            type="number"
-            required
-            value={remuneracion}
-            onChange={(e) => setRemuneracion(e.target.value)}
-            placeholder="Ej: 15000"
-          />
-        </div>
+        {/* Formulario */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {errorMsg && (
+            <div className="flex items-center gap-2 p-3 bg-red-400/10 text-red-300 text-xs rounded-lg border border-red-400/30">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
 
-        <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Enviando...' : 'Enviar Postulación'}
-          </Button>
-        </div>
-        <p className="text-xs text-zinc-600">POST /postulaciones · requiere ROLE_TRABAJADOR</p>
-      </form>
-    </Dialog>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-semibold text-zinc-200 block mb-1">
+                Tu cotización ($)
+              </label>
+              <div className="relative">
+                <DollarSign className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  className="pl-9"
+                  placeholder="Ej. 18000"
+                  value={tarifaPropuesta}
+                  onChange={(e) => setTarifaPropuesta(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-zinc-200 block mb-1">
+                Plazo estimado (días)
+              </label>
+              <div className="relative">
+                <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <Input
+                  type="number"
+                  min="1"
+                  className="pl-9"
+                  value={tiempoEstimado}
+                  onChange={(e) => setTiempoEstimado(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-zinc-200 block mb-1">
+              Mensaje o propuesta para el cliente
+            </label>
+            <textarea
+              rows={4}
+              className="w-full bg-allado-card2 text-white placeholder:text-zinc-500 text-sm rounded-xl border border-allado-border p-3 focus:outline-none focus:ring-2 focus:ring-allado-yellow focus:border-transparent resize-none"
+              placeholder="Explica tu experiencia previa, herramientas que utilizas o disponibilidad horaria..."
+              value={mensaje}
+              onChange={(e) => setMensaje(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-allado-border">
+            <Button type="button" variant="outline" onClick={onClose} disabled={enviando}>
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              className="bg-allado-yellow hover:bg-allado-yellow-hover text-black flex items-center gap-1.5"
+              disabled={enviando}
+            >
+              <Send className="w-4 h-4" />
+              <span>{enviando ? 'Enviando...' : 'Confirmar Postulación'}</span>
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

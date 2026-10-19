@@ -12,6 +12,13 @@ import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
 
+/**
+ * Convierte los datos del trabajador y sus relaciones entre entidad y DTO.
+ *
+ * <p>El DTO de salida no incluye contraseña. Al crear una entidad, copia la contraseña y
+ * convierte las especialidades; el servicio debe codificarla y resolver las etiquetas contra el
+ * repositorio.</p>
+ */
 @Component
 @RequiredArgsConstructor
 public class TrabajadorMapper {
@@ -22,6 +29,14 @@ public class TrabajadorMapper {
     private final HorarioDisponibilidadMapper horarioDisponibilidadMapper;
     private final PreferenciaNotificacionMapper preferenciaNotificacionMapper;
 
+    /**
+     * Copia el perfil, especialidades, postulaciones, portafolio, horarios y preferencias.
+     *
+     * <p>Leer relaciones sin inicializar necesita una sesión abierta y puede generar consultas
+     * adicionales. En un listado esto puede causar N+1.</p>
+     *
+     * @param entity entidad a convertir, o {@code null}
+     */
     public TrabajadorDTO toDTO(Trabajador entity) {
         if (entity == null) return null;
 
@@ -30,11 +45,13 @@ public class TrabajadorMapper {
         dto.setNombre(entity.getNombre());
         dto.setEmail(entity.getEmail());
         dto.setTelefono(entity.getTelefono());
+        dto.setHabilitado(entity.isHabilitado());
 
         // RF-02, HU-03: campos de perfil trabajador
         dto.setFotografia(entity.getFotografia());
         dto.setBiografia(entity.getBiografia());
         dto.setCertificados(entity.getCertificados());
+        dto.setSector(entity.getSector());
 
         if (entity.getEspecialidades() != null) {
             dto.setEspecialidades(entity.getEspecialidades().stream()
@@ -67,6 +84,13 @@ public class TrabajadorMapper {
         return dto;
     }
 
+    /**
+     * Crea una entidad con los datos del DTO, su ID y sus especialidades.
+     *
+     * <p>No busca las etiquetas en la base. El servicio debe resolverlas y codificar la
+     * contraseña antes de guardar. Si el ID ya existe, el guardado puede actualizar ese
+     * registro.</p>
+     */
     public Trabajador toEntity(TrabajadorDTO dto) {
         if (dto == null) return null;
 
@@ -81,6 +105,7 @@ public class TrabajadorMapper {
         entity.setFotografia(dto.getFotografia());
         entity.setBiografia(dto.getBiografia());
         entity.setCertificados(dto.getCertificados());
+        entity.setSector(dto.getSector());
 
         if (dto.getEspecialidades() != null) {
             entity.setEspecialidades(dto.getEspecialidades().stream()

@@ -89,6 +89,7 @@ public class AdministradorServiceImpl implements AdministradorService {
 
         administrador.setNombre(dto.getNombre());
         administrador.setEmail(dto.getEmail());
+        administrador.setTelefono(dto.getTelefono());
         administrador.setNivelAcceso(dto.getNivelAcceso());
 
         return mapper.toDTO(repository.save(administrador));
@@ -162,6 +163,21 @@ public class AdministradorServiceImpl implements AdministradorService {
             index++;
         }
 
+        // 6. HU admin: usuarios activos/inactivos y postulaciones por estado.
+        long usuariosActivos = usuarioRepository.countByHabilitado(true);
+        long usuariosInactivos = usuarioRepository.countByHabilitado(false);
+        java.util.Map<String, Long> postulacionesPorEstado = new java.util.LinkedHashMap<>();
+        postulacionesPorEstado.put(Postulacion.ESTADO_PENDIENTE,
+                postulacionRepository.countByEstadoIgnoreCase(Postulacion.ESTADO_PENDIENTE));
+        postulacionesPorEstado.put(Postulacion.ESTADO_SELECCIONADA,
+                postulacionRepository.countByEstadoIgnoreCase(Postulacion.ESTADO_SELECCIONADA));
+        postulacionesPorEstado.put(Postulacion.ESTADO_RECHAZADA,
+                postulacionRepository.countByEstadoIgnoreCase(Postulacion.ESTADO_RECHAZADA));
+        postulacionesPorEstado.put(Postulacion.ESTADO_COMPLETADA,
+                postulacionRepository.countByEstadoIgnoreCase(Postulacion.ESTADO_COMPLETADA));
+        postulacionesPorEstado.put(Postulacion.ESTADO_RETIRADA,
+                postulacionRepository.countByEstadoIgnoreCase(Postulacion.ESTADO_RETIRADA));
+
         return new DashboardMetricsDTO(
                 formatoMoneda.format(totalIngresos),
                 metricContratos,
@@ -169,7 +185,10 @@ public class AdministradorServiceImpl implements AdministradorService {
                 formatoMoneda.format(avgContrato),
                 formatoMoneda.format(dineroComunidad),
                 trabajosCompletados,
-                tendencias
+                tendencias,
+                usuariosActivos,
+                usuariosInactivos,
+                postulacionesPorEstado
         );
     }
 }

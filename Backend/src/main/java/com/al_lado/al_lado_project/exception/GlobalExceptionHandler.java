@@ -10,6 +10,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -17,6 +18,39 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Manejador MVC central: traduce las excepciones del dominio y de Spring a
+ * respuestas {@link ErrorResponse} con su código HTTP.
+ *
+ * <p>Política de códigos:</p>
+ * <ul>
+ *   <li><b>400</b> — {@link BusinessRuleException} (regla de negocio violada),
+ *       {@link MethodArgumentNotValidException} (Bean Validation, con detalle campo
+ *       a campo) y {@link MissingServletRequestParameterException} (parámetro
+ *       ausente).</li>
+ *   <li><b>401</b> — {@link BadCredentialsException} y cualquier
+ *       {@link org.springframework.security.core.AuthenticationException}
+ *       (cuenta deshabilitada u otras).</li>
+ *   <li><b>403</b> — {@link AccessDeniedException} (rol o titularidad).</li>
+ *   <li><b>404</b> — {@link ResourceNotFoundException}.</li>
+ *   <li><b>409</b> — {@link DuplicateResourceException} y
+ *       {@link DataIntegrityViolationException} no anticipada, con un mensaje
+ *       <b>genérico</b> que no filtra el SQL.</li>
+ *   <li><b>500</b> — todo lo no contemplado, con mensaje genérico.</li>
+ * </ul>
+ *
+ * <p><b>Límites de este manejador</b> (es un {@code @RestControllerAdvice} de MVC):</p>
+ * <ul>
+ *   <li>Solo ve excepciones que llegan al controlador. Lo que falla antes —en
+ *       particular {@code JwtAuthenticationFilter}— responde sin pasar por aquí.</li>
+ *   <li>No tiene handler para {@link IllegalArgumentException}: los rechazos de
+ *       {@code AuthService} (token inválido, contraseña actual incorrecta) caen en
+ *       el genérico y responden <b>500</b>, no 400.</li>
+ *   <li>No traduce automáticamente las violaciones de integridad a una regla de
+ *       negocio: depende de cuándo se materialicen, por lo que el código puede ser
+ *       400 o 409 según el caso.</li>
+ * </ul>
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -91,6 +125,19 @@ public class GlobalExceptionHandler {
                 .timestamp(LocalDateTime.now())
                 .build();
 
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // 4b. Parámetro requerido ausente en query/path (HTTP 400 en vez de 500)
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingServletRequestParameterException(MissingServletRequestParameterException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message("Falta el parámetro requerido: " + ex.getParameterName() + ".")
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 

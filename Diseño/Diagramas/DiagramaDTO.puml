@@ -1,46 +1,144 @@
-@startuml
+@startuml DiagramaDTO
 skinparam style strictuml
 skinparam packageStyle frame
+skinparam linetype ortho
+
+title AlLado - DTOs y capas (flujo Publicar oportunidad / Postularse / Valorar)
 
 package "Web Layer (Controllers)" #F3E5F5 {
-    class TareaController <<Controller>> {
-        + crearTarea(CreateTareaDTO) : ResponseEntity<TareaDTO>
-        + postularse(PostulacionDTO) : ResponseEntity<MessageDTO>
+    class OportunidadLaboralController <<Controller>> {
+        + listarOportunidades()
+        + crearOferta(OportunidadLaboralDTO)
+        + actualizarOferta(id, OportunidadLaboralDTO)
+        + propuestasPro(trabajadorId)
+    }
+    class PostulacionController <<Controller>> {
+        + crearPostulacion(PostulacionDTO)
+        + seleccionarPostulacion(id)
+        + completarPostulacion(id)
+        + retirarPostulacion(id)
+    }
+    class ValoracionController <<Controller>> {
+        + crear(ValoracionDTO)
+        + obtenerPromedioPorTrabajador(trabajadorId)
     }
 }
 
 package "Data Transfer Objects (DTOs)" #FFFDE7 {
-    class CreateTareaDTO <<DTO>> {
-        + String descripcion
-        + List<String> etiquetas
-    }
-    class TareaDTO <<DTO>> {
+    abstract class PostBaseDTO <<DTO>> {
         + Long id
-        + String estado
+        + String titulo
+        + String contenido
+        + LocalDateTime fechaCreacion
+        + UsuarioResumenDTO autor
     }
+    class OportunidadLaboralDTO <<DTO>> {
+        + String ubicacion
+        + String modalidad
+        + String rangoSalarial
+        + boolean activa
+        + boolean destacada
+        + Set<EtiquetaDTO> etiquetas
+    }
+    class PostulacionDTO <<DTO>> {
+        + String estado
+        + Double remuneracionPretendida
+        + OportunidadLaboralResumenDTO oportunidadLaboral
+    }
+    class ValoracionDTO <<DTO>> {
+        + Integer puntuacion
+        + String comentario
+    }
+    class EtiquetaDTO <<DTO>> {
+        + Long id
+        + String nombre
+    }
+    class UsuarioResumenDTO <<DTO>> {
+        + Long id
+        + String nombre
+        + String email
+    }
+    PostBaseDTO <|-- OportunidadLaboralDTO
+    PostBaseDTO <|-- PostulacionDTO
 }
 
 package "Service Layer" #E8F5E9 {
-    interface ITareaService <<Interface>>
-    class TareaServiceImpl <<Service>> {
-        - ModelMapper mapper
-        + registrar(CreateTareaDTO)
+    interface IOportunidadLaboralService <<Interface>>
+    class OportunidadLaboralServiceImpl <<Service>> {
+        - OportunidadLaboralMapper mapper
+        + guardar(OportunidadLaboralDTO)
+        + propuestasProParaTrabajador(Long)
     }
+    interface IPostulacionService <<Interface>>
+    class PostulacionServiceImpl <<Service>> {
+        + crear(PostulacionDTO)
+        + cambiarEstado(Long, String)
+    }
+    interface ISuscripcionService <<Interface>>
+    class SuscripcionServiceImpl <<Service>> {
+        + puedePublicarOferta(Long) : boolean
+        + esProVigente(Long) : boolean
+    }
+    interface INotificacionService <<Interface>>
+    class NotificacionServiceImpl <<Service>> {
+        + notificar(Usuario, String, String, String, Long)
+    }
+    IOportunidadLaboralService <|.. OportunidadLaboralServiceImpl
+    IPostulacionService <|.. PostulacionServiceImpl
+    ISuscripcionService <|.. SuscripcionServiceImpl
+    INotificacionService <|.. NotificacionServiceImpl
+}
+
+package "Persistence (Spring Data JPA)" #F1F8E9 {
+    interface OportunidadLaboralRepository <<Interface>> {
+        + countByAutorIdAndActivaAndFechaCreacionBetween()
+        + findByIdForUpdate(Long)
+    }
+    interface PostulacionRepository <<Interface>>
+    interface SuscripcionRepository <<Interface>>
+    interface NotificacionRepository <<Interface>>
 }
 
 package "Domain Layer (Entities)" #E3F2FD {
-    class Tarea <<Entity>> {
-        - Long id
-        - String descripcion
-        - EstadoTarea estado
-    }
+    abstract class PostBase <<Entity>>
+    class OportunidadLaboral <<Entity>>
+    class Postulacion <<Entity>>
+    class Etiqueta <<Entity>>
+    class Usuario <<Entity>>
+    class Suscripcion <<Entity>>
+    class Notificacion <<Entity>>
+    PostBase <|-- OportunidadLaboral
+    PostBase <|-- Postulacion
+    OportunidadLaboral "*" -- "*" Etiqueta
 }
 
-' Flujo de datos
-CreateTareaDTO ..> TareaController : "input"
-TareaController ..> ITareaService : "invoca"
-TareaServiceImpl ..> Tarea : "persiste"
-Tarea ..> TareaDTO : "mapea a"
-TareaDTO ..> TareaController : "output"
+' ===== Flujo de datos =====
+OportunidadLaboralDTO ..> OportunidadLaboralController : input
+PostulacionDTO ..> PostulacionController : input
+ValoracionDTO ..> ValoracionController : input
+
+OportunidadLaboralController ..> IOportunidadLaboralService : invoca
+PostulacionController ..> IPostulacionService : invoca
+PostulacionServiceImpl ..> INotificacionService : notifica
+OportunidadLaboralServiceImpl ..> ISuscripcionService : valida plan
+OportunidadLaboralServiceImpl ..> OportunidadLaboralRepository : consulta/persiste
+PostulacionServiceImpl ..> PostulacionRepository : persiste
+SuscripcionServiceImpl ..> SuscripcionRepository : consulta
+OportunidadLaboralRepository ..> OportunidadLaboral : materializa
+Postulacion ..> PostBase : <<hereda>>
+
+note right of OportunidadLaboralServiceImpl
+  Validaciones de negocio antes de persistir:
+  1) titularidad (self o admin)
+  2) límite de ofertas (Básico: 3/mes)
+  3) "destacada" exige PRO vigente
+end note
+
+note bottom of PostulacionServiceImpl
+  Transiciones de estado:
+  PENDIENTE -> SELECCIONADA -> COMPLETADA
+  PENDIENTE/SELECCIONADA -> RECHAZADA o RETIRADA
+  Cada cambio genera una Notificacion.
+end note
 
 @enduml

@@ -17,6 +17,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+/**
+ * Autentica solicitudes con la cabecera {@code Authorization: Bearer <jwt>}.
+ *
+ * <p>Sin Bearer continúa sin autenticar. Un token inválido, vencido o cuyo usuario no puede
+ * cargarse recibe 401. Los roles se obtienen de la base de datos.</p>
+ *
+ * <p>Si el token está revocado, no autentica y deja que el endpoint decida la respuesta. Los
+ * errores del filtro ocurren antes del controller y no pasan por {@link
+ * com.al_lado.al_lado_project.exception.GlobalExceptionHandler}.</p>
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -74,7 +84,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /** Tokens legacy sin jti no son revocables y se aceptan hasta su expiración. */
+    /** Tokens antiguos sin jti no son revocables y se aceptan hasta su expiración. */
     private boolean estaRevocado(String jwt) {
         try {
             String jti = jwtUtils.extractTokenId(jwt);

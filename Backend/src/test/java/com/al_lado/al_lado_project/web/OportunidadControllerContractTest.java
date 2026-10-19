@@ -93,7 +93,19 @@ class OportunidadControllerContractTest {
 
     @Test
     @WithMockUser(roles = "TRABAJADOR")
-    void filtrarRequiereSesionYDevuelveLista() throws Exception {
+    void filtrarAutenticadoDevuelveLista() throws Exception {
+        when(service.listarConFiltros(any())).thenReturn(List.of());
+
+        mockMvc.perform(post("/oportunidades/filtrar")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    @Test
+    void filtrarPublicoSinTokenDevuelveLista() throws Exception {
+        // La home pública del frontend llama a POST /oportunidades/filtrar sin JWT
         when(service.listarConFiltros(any())).thenReturn(List.of());
 
         mockMvc.perform(post("/oportunidades/filtrar")

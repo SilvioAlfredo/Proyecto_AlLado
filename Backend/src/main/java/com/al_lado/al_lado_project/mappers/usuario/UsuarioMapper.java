@@ -18,6 +18,7 @@ public class UsuarioMapper {
         dto.setNombre(entity.getNombre());
         dto.setEmail(entity.getEmail());
         dto.setTelefono(entity.getTelefono());
+        dto.setHabilitado(entity.isHabilitado());
         return dto;
     }
 }

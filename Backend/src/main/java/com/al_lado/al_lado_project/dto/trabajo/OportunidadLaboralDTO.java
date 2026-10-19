@@ -22,6 +22,7 @@ public class OportunidadLaboralDTO extends PostBaseDTO {
     @Size(max = 100, message = "El rango salarial no puede superar los 100 caracteres.")
     private String rangoSalarial;
     private boolean activa;
+    private boolean destacada;
 
     private Set<EtiquetaDTO> etiquetas = new HashSet<>();
     private List<PostulacionResumenDTO> postulaciones = new ArrayList<>();

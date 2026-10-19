@@ -1,44 +1,75 @@
-@startuml
+@startuml DiagramaActividad
 skinparam monochrome true
 skinparam shadowing false
 
-partition "Empleador / Vecino" {
-  (*) --> "Publicar Necesidad"
-  --> "Seleccionar Etiquetas (Tags)"
-  --> "Definir Zona Geográfica"
-  -right-> "Confirmar Publicación"
-}
+title AlLado - Diagrama de Actividad: ciclo de contratación vecinal
 
-partition "Sistema AlLado" {
-  "Confirmar Publicación" --> "Indexar Tarea en DB"
-  --> "Filtrar Trabajadores por Zona y Tag"
-  if "Existen trabajadores disponibles?" then
-    -->[sí] "Generar Notificaciones Push/WA"
-  else
-    -->[no] "Notificar: Sin profesionales cerca"
-    --> (*)
-  endif
-}
+|Empleador / Vecino|
+start
+:Publicar necesidad
+(título, descripción, ubicación,
+modalidad, rango y etiquetas);
 
-partition "Trabajador" {
-  "Generar Notificaciones Push/WA" --> "Recibir Alerta"
-  if "Interesado en la tarea?" then
-    -->[sí] "Enviar Postulación"
-  else
-    -->[no] "Ignorar Alerta"
-    --> (*)
-  endif
-}
+|Sistema AlLado|
+if (¿Plan PRO vigente o menos de\n3 ofertas activas en el mes?) then (sí)
+  :Persistir OportunidadLaboral
+  (activa = true, destacada opcional);
+else (no)
+  :Bloquear publicación
+  e invitar a Nivel PRO;
+  stop
+endif
 
-partition "Empleador / Vecino" {
-  "Enviar Postulación" --> "Revisar Perfil del Postulante"
-  if "Cumple expectativas?" then
-    -->[sí] "Aceptar Trabajador"
-    --> "Contactar vía WhatsApp/Tel"
-    --> (*)
-  else
-    -->[no] "Rechazar / Seguir Buscando"
-    --> "Revisar Perfil del Postulante"
-  endif
-}
-@endum
+|Trabajador|
+:Explorar oportunidades
+o Propuestas PRO;
+if (¿Le interesa la oferta?) then (sí)
+  :Enviar postulación
+  (contenido + remuneración pretendida);
+  |Sistema AlLado|
+  :Crear Postulacion
+  (estado = PENDIENTE);
+  :Notificar al Empleador;
+else (no)
+  stop
+endif
+
+|Empleador / Vecino|
+:Revisar postulantes
+y perfil del Trabajador;
+if (¿Selecciona al Trabajador?) then (sí)
+  |Sistema AlLado|
+  :Estado = SELECCIONADA;
+  :Notificar al Trabajador;
+  |Empleador / Vecino|
+  :Trabajo realizado;
+  :Marcar como COMPLETADA;
+  |Sistema AlLado|
+  :Notificar al Trabajador;
+  |Empleador / Vecino|
+  :Valorar (1 a 5 estrellas
+  + comentario opcional);
+  |Sistema AlLado|
+  :Persistir Valoracion
+  y recalcular promedio;
+else (no)
+  |Sistema AlLado|
+  :Estado = RECHAZADA;
+  :Notificar al Trabajador;
+endif
+
+|Empleador / Vecino|
+if (¿Desea colaborar con un aporte?) then (sí)
+  :Registrar donación / aporte
+  (monto, banco, asunto);
+  |Administrador|
+  :Verificar asunto y monto
+  contra el registro bancario;
+  |Sistema AlLado|
+  :Marcar VERIFICADO
+  (y activar PRO por 1 año si es suscripción);
+else (no)
+endif
+
+stop
+@enduml

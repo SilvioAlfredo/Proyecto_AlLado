@@ -31,6 +31,13 @@ public class TrabajadorController {
         return ResponseEntity.ok(trabajadorService.obtenerPorId(id));
     }
 
+    @GetMapping("/filtrar")
+    public ResponseEntity<List<TrabajadorDTO>> filtrar(
+            @RequestParam(required = false) String etiqueta,
+            @RequestParam(required = false) String sector) {
+        return ResponseEntity.ok(trabajadorService.filtrar(etiqueta, sector));
+    }
+
     @PostMapping
     public ResponseEntity<TrabajadorDTO> guardar(@Valid @RequestBody TrabajadorDTO trabajadorDTO) {
         return new ResponseEntity<>(trabajadorService.guardar(trabajadorDTO), HttpStatus.CREATED);

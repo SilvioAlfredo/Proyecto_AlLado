@@ -9,4 +9,8 @@ public interface UsuarioService {
     UsuarioDTO obtenerPorId(Long id);
     UsuarioDTO guardar(UsuarioDTO usuarioDTO);
     void eliminar(Long id);
+
+    // Moderación (ADMIN): suspender o rehabilitar una cuenta sin borrarla.
+    UsuarioDTO deshabilitar(Long id);
+    UsuarioDTO habilitar(Long id);
 }

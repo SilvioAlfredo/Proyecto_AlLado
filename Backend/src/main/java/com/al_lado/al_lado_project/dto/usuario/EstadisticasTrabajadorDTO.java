@@ -5,6 +5,24 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Estadísticas del perfil de un trabajador.
+ *
+ * <p>Mezcla métricas reales con <b>datos provisionales</b> fijos que deben leerse como
+ * «aún no implementado», no como valor de negocio:</p>
+ * <ul>
+ *   <li><b>Reales:</b> {@code valoracionesCount}, {@code promedioValoraciones} (0 si
+ *       no hay valoraciones), {@code postulacionesEnviadas/seleccionadas/completadas},
+ *       {@code perfilCompleto} (según tenga fotografía) y {@code suscripcionActiva}
+ *       (solo el indicador {@code activa}, sin comprobar vencimiento ni nivel PRO).</li>
+ *   <li><b>Aún no implementados:</b> {@code ingresosTotales} e {@code ingresosUltimos3Meses}
+ *       siempre en cero, {@code ofertasPublicadas} siempre en 0 (inaplicable al rol),
+ *       {@code nivelRecomendacion} siempre 4 y {@code ultimoLogin} siempre nulo.</li>
+ * </ul>
+ *
+ * <p>Los datos financieros no acreditan pagos. La completa
+ * {@code PostulacionServiceImpl#obtenerEstadisticasTrabajador}.</p>
+ */
 @Data
 public class EstadisticasTrabajadorDTO {
 

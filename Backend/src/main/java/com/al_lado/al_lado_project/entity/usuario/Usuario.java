@@ -21,6 +21,37 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * Usuario raíz del modelo, con <b>herencia {@code JOINED}</b>: cada subtipo tiene su
+ * propia tabla unida a {@code usuarios} por la clave primaria.
+ *
+ * <p><b>El rol no es un campo</b>: se deriva del subtipo con
+ * {@code instanceof} en {@link #getAuthorities()} (ADMIN → {@code ROLE_ADMIN},
+ * EMPLEADOR → {@code ROLE_EMPLEADOR}, TRABAJADOR → {@code ROLE_TRABAJADOR} y
+ * {@code ROLE_USER} si no coincide ninguno). Un rol «cambiado» en la base solo
+ * tendría efecto moviendo la fila a otra tabla de subtipo.</p>
+ *
+ * <p>Implementa {@link UserDetails} para ser el principal de Spring Security:</p>
+ * <ul>
+ *   <li>{@link #getUsername()} devuelve el email; la contraseña vive en un campo de
+ *       solo escritura JSON ({@code WRITE_ONLY}), por lo que nunca sale en la
+ *       respuesta.</li>
+ *   <li>Solo {@link #isEnabled()} (flag {@code habilitado}) decide si la cuenta se
+ *       autentica: caducidad de cuenta y de credenciales están en {@code true}
+ *       fijo y {@code emailVerificado} <b>no</b> se exige para entrar.</li>
+ * </ul>
+ *
+ * <p>Identidad: {@link #equals(Object)} exige {@code id != null}, así que dos
+ * entidades <b>transitorias</b> (sin persistir) nunca son iguales; el
+ * {@code hashCode} es constante por clase y estable en colecciones. A diferencia de
+ * {@code PostBase}, usa {@code instanceof} y no {@code getClass()}, por lo que
+ * tolera proxies de Hibernate.</p>
+ *
+ * <p>Relaciones: {@code suscripcion} es {@code LAZY} con sincronización bidireccional
+ * en {@link #setSuscripcion(Suscripcion)}; foro y donaciones tienen
+ * {@code CascadeType.ALL}, mientras que reportes (enviados/recibidos) no tienen
+ * cascada: borrar un usuario no borra sus reportes.</p>
+ */
 @Entity
 @Table(name = "usuarios")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -78,6 +109,13 @@ public abstract class Usuario implements UserDetails {
         this.password = password;
     }
 
+    /**
+     * Mantiene coherente la relación bidireccional {@code Usuario ↔ Suscripcion}:
+     * al asignar, enlaza también el lado inverso; al vaciar, desengancha la anterior.
+     * Es el único punto de sincronización de esa asociación.
+     *
+     * @param suscripcion suscripción a vincular o {@code null} para desvincular
+     */
     public void setSuscripcion(Suscripcion suscripcion) {
         if (suscripcion == null) {
             if (this.suscripcion != null) {
@@ -93,6 +131,11 @@ public abstract class Usuario implements UserDetails {
     // IMPLEMENTACIÓN DE USERDETAILS (SPRING SECURITY)
     // =======================================================
 
+    /**
+     * Rol derivado del subtipo (no de una columna): un único {@code GrantedAuthority}
+     * según {@code instanceof}. Si la entidad es una que no está contemplada, cae en
+     * {@code ROLE_USER}, que ningún {@code @PreAuthorize} del sistema espera.
+     */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this instanceof Administrador) {

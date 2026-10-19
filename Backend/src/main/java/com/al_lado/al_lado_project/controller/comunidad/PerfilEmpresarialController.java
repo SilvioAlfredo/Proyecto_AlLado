@@ -27,7 +27,7 @@ public class PerfilEmpresarialController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/verificar")
-    public ResponseEntity<PerfilEmpresarialDTO> verificar(@PathVariable Long id, @RequestParam Long supervisorId) {
+    public ResponseEntity<PerfilEmpresarialDTO> verificar(@PathVariable Long id, @RequestParam(required = false) Long supervisorId) {
         return ResponseEntity.ok(service.verificar(id, supervisorId));
     }
 }

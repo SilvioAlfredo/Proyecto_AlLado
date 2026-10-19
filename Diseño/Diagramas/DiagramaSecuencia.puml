@@ -1,32 +1,71 @@
-@startuml
+@startuml DiagramaSecuencia
 skinparam monochrome true
 skinparam shadowing false
+autonumber
 
-|Trabajador|
-start
-:Finalizar Tarea;
-:Informar Trabajo Completado;
+title AlLado - Diagrama de Secuencia: publicar, postular, completar y valorar
 
-|Sistema|
-:Notificar al Empleador;
+actor "Empleador" as E
+actor "Trabajador" as T
+participant "OportunidadLaboral\nController" as OCtrl
+participant "Postulacion\nController" as PCtrl
+participant "Valoracion\nController" as VCtrl
+participant "Suscripcion\nService" as SSvc
+participant "Postulacion\nService" as PSvc
+participant "Valoracion\nService" as VSvc
+participant "Notificacion\nService" as NSvc
+database "Base de Datos" as DB
 
-|Empleador / Vecino|
-:Confirmar Recepción;
-if (¿Trabajo satisfactorio?) then (sí)
-  :Asignar Estrellas (1-5);
-  :Escribir Reseña;
-else (no)
-  fork
-    :Asignar Puntuación Baja;
-  fork again
-    :Reportar Incumplimiento (Opcional);
-  end fork
-endif
+== Publicar una necesidad ==
+E -> OCtrl : POST /oportunidades
+OCtrl -> SSvc : puedePublicarOferta(autorId)
+SSvc -> DB : contar ofertas activas del mes
+DB --> SSvc : cantidad
+alt Plan PRO vigente o menos de 3 ofertas activas
+    SSvc --> OCtrl : permitido
+    OCtrl -> DB : guardar OportunidadLaboral
+    DB --> OCtrl : oportunidad
+    OCtrl --> E : 200 OportunidadLaboralDTO
+else Límite del plan alcanzado
+    SSvc --> OCtrl : denegado
+    OCtrl --> E : error "Límite mensual de ofertas alcanzado"
+end
 
-|Sistema|
-:Actualizar Historial de Contratos;
-:Recalcular Nivel de Recomendación;
-:Actualizar Panel de Estadísticas;
+== Postularse a una oportunidad ==
+T -> PCtrl : POST /postulaciones
+PCtrl -> PSvc : crear(PostulacionDTO)
+PSvc -> DB : guardar Postulacion (PENDIENTE)
+PSvc -> NSvc : notificar(Empleador, POSTULACION_RECIBIDA)
+NSvc -> DB : guardar Notificacion
+PSvc --> PCtrl : PostulacionDTO
+PCtrl --> T : 200
 
-stop
-@endum
+== Seleccionar y completar ==
+E -> PCtrl : PATCH /postulaciones/{id}/seleccionar
+PCtrl -> PSvc : cambiarEstado(PENDIENTE -> SELECCIONADA)
+PSvc -> DB : actualizar estado
+PSvc -> NSvc : notificar(Trabajador, POSTULACION_ESTADO)
+PSvc --> PCtrl : PostulacionDTO
+PCtrl --> E : 200
+
+E -> PCtrl : PATCH /postulaciones/{id}/completar
+PCtrl -> PSvc : cambiarEstado(SELECCIONADA -> COMPLETADA)
+PSvc -> DB : actualizar estado
+PSvc -> NSvc : notificar(Trabajador, POSTULACION_ESTADO)
+PSvc --> PCtrl : PostulacionDTO
+PCtrl --> E : 200
+
+== Valorar al trabajador ==
+E -> VCtrl : POST /valoraciones (1 a 5 + comentario opcional)
+VCtrl -> VSvc : crear(ValoracionDTO)
+VSvc -> DB : verificar valoración previa del par
+alt El par no registra valoración previa
+    VSvc -> DB : guardar Valoracion
+    VSvc --> VCtrl : ValoracionDTO
+    VCtrl --> E : 200
+else Ya existe una valoración
+    VSvc --> VCtrl : error "Ya existe una valoración de este empleador a este trabajador."
+    VCtrl --> E : 409
+end
+
+@enduml

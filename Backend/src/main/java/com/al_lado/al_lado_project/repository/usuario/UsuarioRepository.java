@@ -13,6 +13,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     boolean existsByEmail(String email);
 
+    long countByHabilitado(boolean habilitado);
+
     // AuthServiceImpl#resetPassword: busca el usuario por el token de recuperación
     Optional<Usuario> findByPasswordResetToken(String token);
 }

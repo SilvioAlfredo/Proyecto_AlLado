@@ -91,8 +91,15 @@ public class ReporteServiceImpl implements ReporteService {
             throw new BusinessRuleException("Estado inválido. Valores permitidos: EN_REVISION, RESUELTO, DESCARTADO.");
         }
 
-        Administrador moderador = administradorRepository.findById(moderadorId)
-                .orElseThrow(() -> new ResourceNotFoundException("Administrador no encontrado con ID: " + moderadorId));
+        // Sincronía con el frontend: no envía moderadorId porque no conoce
+        // su id numérico; se usa el admin autenticado (el endpoint ya exige ROLE_ADMIN).
+        Long moderadorEfectivo = moderadorId != null ? moderadorId
+                : com.al_lado.al_lado_project.security.SecurityUtils.currentUserId();
+        if (moderadorEfectivo == null) {
+            throw new BusinessRuleException("No se pudo determinar el moderador autenticado.");
+        }
+        Administrador moderador = administradorRepository.findById(moderadorEfectivo)
+                .orElseThrow(() -> new ResourceNotFoundException("Administrador no encontrado con ID: " + moderadorEfectivo));
 
         reporte.setModerador(moderador);
         reporte.setEstado(estadoFinal.toUpperCase());

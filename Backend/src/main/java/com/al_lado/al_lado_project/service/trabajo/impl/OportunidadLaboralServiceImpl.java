@@ -28,6 +28,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -58,6 +59,12 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
         return repository.findAll(specBusqueda(filtro, null, null), pageable).map(mapper::toDTO);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OportunidadLaboralDTO> listarOportunidades(String filtro, String modalidad, List<String> etiquetas, Pageable pageable) {
+        return repository.findAll(specBusqueda(filtro, modalidad, etiquetas), pageable).map(mapper::toDTO);
+    }
+
     /**
      * RF-02: búsqueda combinada de oportunidades. Todos los criterios son opcionales
      * y se acumulan con AND; dentro del texto libre van unidos con OR.
@@ -86,11 +93,20 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
      * puede repetir la misma oportunidad varias veces, por eso se fuerza distinct().
      */
     private Specification<OportunidadLaboral> specBusqueda(String filtro, String modalidad, List<String> etiquetas) {
+        return specBusqueda(filtro, modalidad, etiquetas, false);
+    }
+
+    private Specification<OportunidadLaboral> specBusqueda(String filtro, String modalidad, List<String> etiquetas, boolean soloDestacadas) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
             // Sólo oportunidades activas
             predicates.add(criteriaBuilder.isTrue(root.get("activa")));
+
+            // HU empleador "Oportunidad laboral pro": filtrar solo destacadas
+            if (soloDestacadas) {
+                predicates.add(criteriaBuilder.isTrue(root.get("destacada")));
+            }
 
             boolean hayFiltro = filtro != null && !filtro.trim().isEmpty();
             List<String> nombresEtiqueta = normalizarEtiquetas(etiquetas);
@@ -159,6 +175,17 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
         return mapper.toDTO(oportunidad);
     }
 
+    /**
+     * Mecanismo: la transacción arranca bloqueando el <b>empleador</b>
+     * ({@code findByIdForUpdate}), no la oferta. Ese lock serializa las altas
+     * concurrentes del mismo propietario, de modo que la comprobación de cupo
+     * ({@code puedePublicarOferta}) y el {@code save} posterior no se intercalen
+     * entre transacciones. Las ofertas de empleadores distintos no comparten lock.
+     *
+     * <p>Al editar se recarga la entidad existente y se actualizan sus campos: se trabaja
+     * sobre una entidad gestionada, por lo que no se crea un registro nuevo ni se
+     * pierden los campos no enviados en el DTO (salvo los que sí se sobrescriben).</p>
+     */
     @Override
     @Transactional
     public OportunidadLaboralDTO guardar(OportunidadLaboralDTO dto) {
@@ -220,6 +247,12 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
         } else {
             oportunidad.setActiva(dto.isActiva());
         }
+
+        // HU empleador "Oportunidad laboral pro": destacar exige plan PRO vigente.
+        if (dto.isDestacada() && !suscripcionService.esProVigente(autorId)) {
+            throw new BusinessRuleException("Destacar una oferta requiere una suscripción PRO vigente.");
+        }
+        oportunidad.setDestacada(dto.isDestacada());
 
         // Se persiste la entidad con su ID asignado.
         OportunidadLaboral guardada = repository.save(oportunidad);
@@ -285,9 +318,34 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
         String modalidad = filtros != null ? filtros.getModalidad() : null;
         List<String> etiquetas = filtros != null && filtros.getEtiquetas() != null
                 ? filtros.getEtiquetas() : null;
+        boolean soloDestacadas = filtros != null && Boolean.TRUE.equals(filtros.getSoloDestacadas());
 
-        return repository.findAll(specBusqueda(filtro, modalidad, etiquetas)).stream()
+        return repository.findAll(specBusqueda(filtro, modalidad, etiquetas, soloDestacadas)).stream()
                 .map(mapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<OportunidadLaboralDTO> propuestasProParaTrabajador(Long trabajadorId) {
+        SecurityUtils.requireSelfOrAdmin(trabajadorId);
+        if (!suscripcionService.esProVigente(trabajadorId)) {
+            throw new BusinessRuleException("Acceder a propuestas PRO requiere una suscripción PRO vigente.");
+        }
+        Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Trabajador no encontrado con ID: " + trabajadorId));
+
+        List<String> especialidades = trabajador.getEspecialidades() == null ? List.of()
+                : trabajador.getEspecialidades().stream()
+                        .map(e -> e.getNombre())
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+        if (especialidades.isEmpty()) {
+            return List.of();
+        }
+
+        return buscarPorFiltros(null, null, especialidades).stream()
+                .sorted(Comparator.comparing(OportunidadLaboralDTO::isDestacada).reversed())
                 .collect(Collectors.toList());
     }
 }

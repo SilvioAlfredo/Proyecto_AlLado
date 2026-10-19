@@ -16,5 +16,6 @@ export interface RegisterCredentials {
   apellido: string;
   email: string;
   contrasena: string;
+  telefono: string;
   rol: RolUsuario;
 }

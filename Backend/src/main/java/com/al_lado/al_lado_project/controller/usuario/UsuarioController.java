@@ -41,4 +41,16 @@ public class UsuarioController {
         service.eliminar(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}/deshabilitar")
+    public ResponseEntity<UsuarioDTO> deshabilitar(@PathVariable Long id) {
+        return ResponseEntity.ok(service.deshabilitar(id));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}/habilitar")
+    public ResponseEntity<UsuarioDTO> habilitar(@PathVariable Long id) {
+        return ResponseEntity.ok(service.habilitar(id));
+    }
 }

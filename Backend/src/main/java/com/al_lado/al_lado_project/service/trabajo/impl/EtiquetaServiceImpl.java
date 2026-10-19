@@ -60,9 +60,11 @@ public class EtiquetaServiceImpl implements EtiquetaService {
     @Override
     @Transactional
     public void eliminar(Long id) {
-        if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Etiqueta no encontrada con ID: " + id);
+        Etiqueta etiqueta = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Etiqueta no encontrada con ID: " + id));
+        if (!etiqueta.getOportunidades().isEmpty() || !etiqueta.getTrabajadores().isEmpty()) {
+            throw new BusinessRuleException("La etiqueta está asociada a trabajadores u oportunidades y no puede eliminarse.");
         }
-        repository.deleteById(id);
+        repository.delete(etiqueta);
     }
 }

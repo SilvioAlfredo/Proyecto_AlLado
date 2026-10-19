@@ -1,66 +1,130 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { ArrowRight, Eye, EyeOff, LoaderCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { errorMessage } from '@/lib/errors';
 import { useAuth } from '../hooks/useAuth';
+import { loginDestination } from '../lib/access';
 
-export function LoginForm() {
+/**
+ * Autentica una cuenta y la dirige al panel correspondiente a sus roles.
+ *
+ * @param props - Opciones del formulario.
+ * @param props.adminOnly - Restringe el acceso a ADMIN antes de persistir la sesión.
+ */
+export function LoginForm({ adminOnly = false }: { adminOnly?: boolean }) {
   const { login } = useAuth();
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
   const [email, setEmail] = useState('');
   const [contrasena, setContrasena] = useState('');
+  const [visible, setVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setPending(true);
     try {
-      const data = await login({ email, contrasena });
+      const data = await login({ email: email.trim(), contrasena }, { adminOnly });
 
-      let destino = '/';
-      if (data.roles?.includes('ROLE_ADMIN')) destino = '/admin/dashboard';
-      else if (data.roles?.includes('ROLE_EMPLEADOR')) destino = '/empleador/dashboard';
-      else if (data.roles?.includes('ROLE_TRABAJADOR')) destino = '/trabajador/dashboard';
-
-      // Recarga completa para que el Navbar lea la sesión nueva
-      window.location.href = destino;
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al iniciar sesión');
+      router.replace(loginDestination(data.roles, adminOnly));
+    } catch (err: unknown) {
+      setError(errorMessage(err, 'Error al iniciar sesión'));
+    } finally {
+      setPending(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 w-full max-w-md">
       {error && (
-        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+        <div
+          role="alert"
+          className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm"
+        >
           {error}
         </div>
       )}
       <div>
-        <label className="block text-sm font-medium text-zinc-300 mb-2">Email</label>
+        <label
+          htmlFor="login-email"
+          className="block text-sm font-medium text-zinc-300 mb-2"
+        >
+          Correo electrónico
+        </label>
         <input
+          id="login-email"
+          autoComplete="username"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full px-4 py-3 rounded-xl bg-[#1a1a1c] border border-[#2e2e33] text-white placeholder-zinc-500 focus:outline-none focus:border-[#ffc107] focus:ring-1 focus:ring-[#ffc107] transition"
+          className={
+            'w-full px-4 py-3 rounded-xl bg-[#1a1a1c] border ' +
+            'border-[#2e2e33] text-white placeholder-zinc-500 ' +
+            'focus:outline-none focus:border-[#ffc107] focus:ring-1 ' +
+            'focus:ring-[#ffc107] transition'
+          }
           placeholder="tu@email.com"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-zinc-300 mb-2">Contraseña</label>
-        <input
-          type="password"
-          value={contrasena}
-          onChange={(e) => setContrasena(e.target.value)}
-          required
-          className="w-full px-4 py-3 rounded-xl bg-[#1a1a1c] border border-[#2e2e33] text-white placeholder-zinc-500 focus:outline-none focus:border-[#ffc107] focus:ring-1 focus:ring-[#ffc107] transition"
-          placeholder="••••••••"
-        />
+        <label
+          htmlFor="login-password"
+          className="block text-sm font-medium text-zinc-300 mb-2"
+        >
+          Contraseña
+        </label>
+        <div className="relative">
+          <input
+            id="login-password"
+            autoComplete="current-password"
+            type={visible ? 'text' : 'password'}
+            value={contrasena}
+            onChange={(e) => setContrasena(e.target.value)}
+            required
+            className={
+              'w-full px-4 py-3 rounded-xl bg-[#1a1a1c] border ' +
+              'border-[#2e2e33] text-white placeholder-zinc-500 ' +
+              'focus:outline-none focus:border-[#ffc107] focus:ring-1 ' +
+              'focus:ring-[#ffc107] transition'
+            }
+            placeholder="Ingresá tu contraseña"
+            style={{ paddingRight: 48 }}
+          />
+          <button
+            type="button"
+            aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            aria-pressed={visible}
+            onClick={() => setVisible(!visible)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-400 hover:text-white focus-visible:outline-2 focus-visible:outline-allado-yellow"
+          >
+            {visible ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
+        {!adminOnly && (
+          <Link
+            href="/forgot-password"
+            className="mt-3 inline-block text-xs text-zinc-400 hover:text-allado-yellow"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        )}
       </div>
       <button
         type="submit"
-        className="w-full py-3 px-4 bg-[#ffc107] text-black font-bold rounded-xl hover:bg-[#eab308] transition"
+        disabled={pending}
+        className={
+          'w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-[#ffc107] text-black font-bold ' +
+          'rounded-xl hover:bg-[#eab308] transition disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-allado-yellow'
+        }
       >
-        Ingresar
+        {pending && <LoaderCircle size={17} className="animate-spin" />}
+        {pending ? 'Ingresando…' : adminOnly ? 'Ingresar al panel' : 'Ingresar'}
+        {!pending && <ArrowRight size={17} />}
       </button>
     </form>
   );

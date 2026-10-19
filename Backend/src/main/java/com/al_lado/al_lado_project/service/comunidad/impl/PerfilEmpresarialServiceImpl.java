@@ -4,6 +4,7 @@ import com.al_lado.al_lado_project.dto.comunidad.PerfilEmpresarialDTO;
 import com.al_lado.al_lado_project.entity.comunidad.PerfilEmpresarial;
 import com.al_lado.al_lado_project.entity.usuario.Administrador;
 import com.al_lado.al_lado_project.entity.usuario.Empleador;
+import com.al_lado.al_lado_project.exception.BusinessRuleException;
 import com.al_lado.al_lado_project.exception.DuplicateResourceException;
 import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
 import com.al_lado.al_lado_project.mappers.comunidad.PerfilEmpresarialMapper;
@@ -12,6 +13,7 @@ import com.al_lado.al_lado_project.repository.usuario.AdministradorRepository;
 import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
 import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.comunidad.PerfilEmpresarialService;
+import com.al_lado.al_lado_project.service.usuario.SuscripcionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,7 @@ public class PerfilEmpresarialServiceImpl implements PerfilEmpresarialService {
     private final EmpleadorRepository empleadorRepository;
     private final AdministradorRepository administradorRepository;
     private final PerfilEmpresarialMapper mapper;
+    private final SuscripcionService suscripcionService;
 
     @Override
     @Transactional(readOnly = true)
@@ -37,6 +40,9 @@ public class PerfilEmpresarialServiceImpl implements PerfilEmpresarialService {
     @Transactional
     public PerfilEmpresarialDTO guardar(Long empleadorId, PerfilEmpresarialDTO dto) {
         SecurityUtils.requireSelfOrAdmin(empleadorId);
+        if (!suscripcionService.esProVigente(empleadorId)) {
+            throw new BusinessRuleException("El perfil empresarial requiere una suscripción PRO vigente.");
+        }
         Empleador empleador = empleadorRepository.findById(empleadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Empleador no encontrado con ID: " + empleadorId));
 
@@ -65,6 +71,13 @@ public class PerfilEmpresarialServiceImpl implements PerfilEmpresarialService {
     @Override
     @Transactional
     public PerfilEmpresarialDTO verificar(Long id, Long supervisorId) {
+        if (!SecurityUtils.isAdmin() || SecurityUtils.currentUserId() == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Se requiere una sesión de administrador.");
+        }
+        Long actualId = SecurityUtils.currentUserId();
+        if (supervisorId != null && !supervisorId.equals(actualId)) {
+            throw new org.springframework.security.access.AccessDeniedException("El supervisor debe ser el administrador autenticado.");
+        }
         PerfilEmpresarial perfil = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Perfil empresarial no encontrado con ID: " + id));
 
@@ -72,7 +85,7 @@ public class PerfilEmpresarialServiceImpl implements PerfilEmpresarialService {
             return mapper.toDTO(perfil);
         }
 
-        Administrador supervisor = administradorRepository.findById(supervisorId)
+        Administrador supervisor = administradorRepository.findById(actualId)
                 .orElseThrow(() -> new ResourceNotFoundException("Administrador no encontrado con ID: " + supervisorId));
 
         perfil.setVerificado(true);

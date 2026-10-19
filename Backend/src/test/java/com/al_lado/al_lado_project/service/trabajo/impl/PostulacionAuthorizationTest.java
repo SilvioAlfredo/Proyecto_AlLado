@@ -13,6 +13,7 @@ import com.al_lado.al_lado_project.repository.comunidad.ValoracionRepository;
 import com.al_lado.al_lado_project.repository.trabajo.OportunidadLaboralRepository;
 import com.al_lado.al_lado_project.repository.trabajo.PostulacionRepository;
 import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
+import com.al_lado.al_lado_project.service.comunidad.NotificacionService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +49,8 @@ class PostulacionAuthorizationTest {
     private ValoracionRepository valoracionRepository;
     @Mock
     private PostulacionMapper mapper;
+    @Mock
+    private NotificacionService notificacionService;
 
     @AfterEach
     void limpiarContexto() {
@@ -88,7 +91,7 @@ class PostulacionAuthorizationTest {
 
     private PostulacionServiceImpl service() {
         return new PostulacionServiceImpl(postulacionRepository, trabajadorRepository,
-                oportunidadLaboralRepository, valoracionRepository, mapper);
+                oportunidadLaboralRepository, valoracionRepository, mapper, notificacionService);
     }
 
     @Test

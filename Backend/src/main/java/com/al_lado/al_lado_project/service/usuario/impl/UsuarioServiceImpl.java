@@ -88,4 +88,32 @@ public class UsuarioServiceImpl implements UsuarioService {
             throw new ResourceNotFoundException("Usuario no encontrado con ID: " + id);
         }
     }
+
+    @Override
+    @Transactional
+    public UsuarioDTO deshabilitar(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
+        usuario.setHabilitado(false);
+        return toDTO(usuarioRepository.save(usuario));
+    }
+
+    @Override
+    @Transactional
+    public UsuarioDTO habilitar(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
+        usuario.setHabilitado(true);
+        return toDTO(usuarioRepository.save(usuario));
+    }
+
+    private UsuarioDTO toDTO(Usuario usuario) {
+        if (usuario instanceof Trabajador trabajador) {
+            return trabajadorMapper.toDTO(trabajador);
+        }
+        if (usuario instanceof Empleador empleador) {
+            return empleadorMapper.toDTO(empleador);
+        }
+        throw new IllegalArgumentException("Tipo de usuario no soportado");
+    }
 }

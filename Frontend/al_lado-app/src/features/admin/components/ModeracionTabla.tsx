@@ -1,6 +1,13 @@
 'use client';
 
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
 
@@ -19,7 +26,11 @@ interface ModeracionTablaProps {
 
 export function ModeracionTabla({ items, onAccion }: ModeracionTablaProps) {
   if (items.length === 0) {
-    return <p className="text-gray-500 text-sm py-4">No hay publicaciones pendientes de moderación.</p>;
+    return (
+      <p className="text-gray-500 text-sm py-4">
+        No hay publicaciones pendientes de moderación.
+      </p>
+    );
   }
 
   return (
@@ -41,10 +52,18 @@ export function ModeracionTabla({ items, onAccion }: ModeracionTablaProps) {
             <TableCell className="text-red-600">{item.motivoReporte}</TableCell>
             <TableCell>{formatDate(item.createdAt)}</TableCell>
             <TableCell className="text-right space-x-2">
-              <Button size="sm" variant="outline" onClick={() => onAccion(item.id, 'APROBAR')}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onAccion(item.id, 'APROBAR')}
+              >
                 Ignorar
               </Button>
-              <Button size="sm" variant="destructive" onClick={() => onAccion(item.id, 'ELIMINAR')}>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => onAccion(item.id, 'ELIMINAR')}
+              >
                 Eliminar
               </Button>
             </TableCell>

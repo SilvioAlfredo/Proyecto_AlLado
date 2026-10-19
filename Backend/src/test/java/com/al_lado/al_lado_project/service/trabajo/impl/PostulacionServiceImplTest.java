@@ -53,6 +53,9 @@ class PostulacionServiceImplTest {
     @Mock
     private ValoracionRepository valoracionRepository;
 
+    @Mock
+    private com.al_lado.al_lado_project.service.comunidad.NotificacionService notificacionService;
+
     private final PostulacionMapper mapper = new PostulacionMapper(new UsuarioResumenMapper(), new OportunidadLaboralResumenMapper());
 
     private PostulacionServiceImpl service;
@@ -65,7 +68,8 @@ class PostulacionServiceImplTest {
                 trabajadorRepository,
                 oportunidadLaboralRepository,
                 valoracionRepository,
-                mapper);
+                mapper,
+                notificacionService);
         // Las operaciones exigen titularidad: autenticar como trabajador 1
         Trabajador auth = new Trabajador();
         auth.setId(1L);

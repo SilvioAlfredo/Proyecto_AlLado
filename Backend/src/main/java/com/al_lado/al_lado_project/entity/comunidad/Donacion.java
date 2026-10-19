@@ -31,7 +31,7 @@ public class Donacion {
     private String moneda = MONEDA_POR_DEFECTO; // Ej: "ARS", "USD"
 
     @Column(name = "mecanismo_pago", length = 50)
-    private String mecanismoPago; // Ej: "MERCADO_PAGO", "TRANSFERENCIA", "STRIPE"
+    private String mecanismoPago; //  "TRANSFERENCIA
 
     @Column(name = "fecha_donacion", nullable = false, updatable = false)
     private LocalDateTime fechaDonacion;

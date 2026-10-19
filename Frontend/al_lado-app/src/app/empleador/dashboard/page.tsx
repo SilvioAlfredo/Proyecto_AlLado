@@ -1,56 +1,148 @@
 'use client';
-
-import { useOportunidades } from '@/features/oportunidades/hooks/useOportunidades';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-
+import { Zap, Wrench, PaintRoller, Leaf } from 'lucide-react';
+import { useEmpleador } from '@/features/empleador/hooks/useEmpleador';
+import { panel, QueryStatus } from '@/features/empleador/components/EmployerUI';
+import { PageHeader, StatCard, Empty } from '@/components/ui/shared';
+import { Button } from '@/components/ui/button';
 export default function EmpleadorDashboardPage() {
-  const { oportunidades, loading } = useOportunidades();
-
-  const oportunidadesActivas = oportunidades.filter(op => op.activa).length;
-  const oportunidadesCerradas = oportunidades.filter(op => !op.activa).length;
-
+  const { perfil, solicitudes, propuestas, favoritos } = useEmpleador();
+  const items = solicitudes.data ?? [];
+  const posts = propuestas.data ?? [];
+  const activas = items.filter((o) => o.activa);
+  const curso = posts.filter((p) => p.estado === 'SELECCIONADA');
+  const completas = posts.filter((p) => p.estado === 'COMPLETADA');
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-extrabold text-white">Panel de Empleador</h1>
-        <Link href="/empleador/oportunidades">
-          <Button className="bg-[#ffc107] text-black hover:bg-[#eab308]">+ Nueva Oferta</Button>
-        </Link>
+      <PageHeader
+        eyebrow="Tu espacio · Empleador"
+        title={`Hola${perfil.data?.nombre ? `, ${perfil.data.nombre.split(' ')[0]}` : ''} 👋`}
+        subtitle="¿Qué necesitás resolver hoy?"
+        action={
+          <Link href="/empleador/trabajadores">
+            <Button variant="outline">Buscar trabajadores</Button>
+          </Link>
+        }
+      />
+      <QueryStatus
+        pending={solicitudes.isPending || propuestas.isPending}
+        error={solicitudes.error || propuestas.error || favoritos.error}
+      />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          [
+            'Solicitudes activas',
+            activas.length,
+            `${items.length} publicaciones en total`,
+          ],
+          [
+            'Propuestas recibidas',
+            posts.length,
+            `${posts.filter((p) => p.estado === 'PENDIENTE').length} pendientes`,
+          ],
+          ['Trabajos en curso', curso.length, `${completas.length} completados`],
+          [
+            'Profesionales guardados',
+            favoritos.data?.length ?? 0,
+            'Tu gente de confianza',
+          ],
+        ].map(([label, value, hint]) => (
+          <StatCard
+            key={label}
+            label={String(label)}
+            value={String(value)}
+            hint={String(hint)}
+          />
+        ))}
       </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="bg-[#1a1a1c] p-6 rounded-2xl border border-[#2e2e33]">
-          <p className="text-sm text-zinc-500">Oportunidades Activas</p>
-          <p className="text-2xl font-bold text-emerald-400">{oportunidadesActivas}</p>
-        </div>
-        <div className="bg-[#1a1a1c] p-6 rounded-2xl border border-[#2e2e33]">
-          <p className="text-sm text-zinc-500">Oportunidades Cerradas</p>
-          <p className="text-2xl font-bold text-zinc-400">{oportunidadesCerradas}</p>
-        </div>
-      </div>
-
-      <div className="bg-[#1a1a1c] p-6 rounded-2xl border border-[#2e2e33]">
-        <h2 className="text-lg font-bold text-white mb-4">Tus Ofertas Activas</h2>
-        {loading ? (
-          <p className="text-zinc-500">Cargando ofertas...</p>
-        ) : (
-          <ul className="divide-y divide-[#2e2e33]">
-            {oportunidades.map((item, index) => (
-              <li key={item.id ?? index} className="py-4 flex justify-between items-center">
-                <div>
-                  <p className="font-medium text-white">{item.titulo}</p>
-                  <p className="text-xs text-zinc-500">{item.rangoSalarial}</p>
-                </div>
-                <Link href={`/empleador/candidatos?oportunidadId=${item.id}`}>
-                  <Button size="sm" variant="outline" className="border-[#2e2e33] text-zinc-300 hover:border-[#ffc107] hover:text-[#ffc107]">
-                    Ver Candidatos
-                  </Button>
+      <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
+        <section className={panel}>
+          <span className="rounded-lg bg-[#ffc107]/10 px-3 py-2 text-xs font-bold text-[#ffc107]">
+            UNA NECESIDAD, MUCHAS SOLUCIONES
+          </span>
+          <h2 className="my-5 text-2xl font-bold">El profesional indicado, a un paso.</h2>
+          <p className="mb-4 text-sm text-zinc-400">
+            Contá qué necesitás y recibí propuestas para tu trabajo.
+          </p>
+          <Link href="/empleador/solicitudes/nueva">
+            <Button>+ Publicar una solicitud</Button>
+          </Link>
+        </section>
+        <section className={panel}>
+          <h2 className="mb-4 text-xl font-bold">Explorá especialidades</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              [Zap, 'Electricidad'],
+              [Wrench, 'Plomería'],
+              [PaintRoller, 'Pintura'],
+              [Leaf, 'Jardinería'],
+            ].map(([Icon, label]) => {
+              const I = Icon as typeof Zap;
+              return (
+                <Link
+                  key={String(label)}
+                  href={`/empleador/trabajadores?especialidad=${encodeURIComponent(String(label))}`}
+                  className="flex flex-col items-center gap-4 rounded-xl border border-[#3a3a3f] bg-white/5 px-2 py-5 text-xs hover:border-[#ffc107]"
+                >
+                  <I size={26} className="text-[#ffc107]" />
+                  {String(label)}
                 </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+              );
+            })}
+          </div>
+        </section>
+        <section className={panel}>
+          <h2 className="mb-4 text-xl font-bold">Mis solicitudes activas</h2>
+          {!solicitudes.isPending && !activas.length && (
+            <Empty mensaje="Publicá tu primera solicitud para recibir propuestas." />
+          )}
+          {activas.slice(0, 3).map((o) => (
+            <article key={o.id} className="space-y-2 border-b border-[#30302f] py-4">
+              <h3 className="font-bold">{o.titulo}</h3>
+              <p className="line-clamp-2 text-sm text-zinc-400">{o.contenido}</p>
+              <Link
+                className="inline-block text-sm font-bold text-[#ffc107]"
+                href={`/empleador/solicitudes/${o.id}`}
+              >
+                Gestionar solicitud →
+              </Link>
+            </article>
+          ))}
+          <Link
+            href="/empleador/solicitudes"
+            className="mt-4 inline-block text-sm text-[#ffc107]"
+          >
+            Ver todas las solicitudes →
+          </Link>
+        </section>
+        <section className={panel}>
+          <h2 className="mb-4 text-xl font-bold">Tus trabajos</h2>
+          {curso.length === 0 && !propuestas.isPending && (
+            <p className="text-sm text-zinc-400">
+              Cuando selecciones una propuesta, encontrarás el trabajo acá.
+            </p>
+          )}
+          {curso.slice(0, 2).map((p) => (
+            <article key={p.id} className="mb-4 space-y-2">
+              <p className="font-bold">{p.autor?.nombre}</p>
+              <p className="text-sm text-zinc-400">{p.oportunidadLaboral.titulo}</p>
+              <Link
+                href={`/empleador/solicitudes/${p.oportunidadLaboral.id}`}
+                className="text-sm text-[#ffc107]"
+              >
+                Ver trabajo →
+              </Link>
+            </article>
+          ))}
+          {completas.length > 0 && (
+            <Link
+              href="/empleador/contratos"
+              className="mt-5 block border-t border-[#30302f] pt-4 text-sm text-[#ffc107]"
+            >
+              Un trabajo terminado, una opinión útil. Valorar →
+            </Link>
+          )}
+        </section>
       </div>
     </div>
   );

@@ -1,31 +1,57 @@
-@startuml
+@startuml CasosDeUso1
+
 left to right direction
 skinparam packageStyle rectangle
 skinparam roundcorner 20
 
+title AlLado - Casos de uso: contratación vecinal
+
+actor "Visitante" as V
 actor "Empleador" as E
 actor "Trabajador" as T
 
 rectangle "Sistema AlLado - Operaciones" {
-    usecase "Publicar Necesidad\n(Postulación Inversa)" as UC1
-    usecase "Ver Perfil de Trabajadores" as UC2
-    usecase "Postularse a Oferta" as UC3
-    usecase "Recibir Notificación de Trabajo" as UC4
-    usecase "Calificar Servicio" as UC5
-    usecase "Gestionar Favoritos" as UC6
-    usecase "Validar Identidad\n(Sello de Confianza)" as UC7
-    
-    ' Extensiones y dependencias
-    UC1 ..> UC4 : <<include>>
-    UC3 ..> UC7 : <<extension>> : Solo usuarios PRO
+    usecase "Registrarse" as UC1
+    usecase "Iniciar sesión /\nrecuperar contraseña" as UC2
+    usecase "Explorar directorio\nde profesionales" as UC3
+    usecase "Publicar oportunidad\n(Postulación Inversa)" as UC4
+    usecase "Postularse a oportunidad" as UC5
+    usecase "Gestionar postulaciones\n(seleccionar / rechazar /\ncompletar)" as UC6
+    usecase "Valorar trabajador" as UC7
+    usecase "Gestionar favoritos" as UC8
+    usecase "Destacar oferta" as UC9
+    usecase "Ver Propuestas PRO" as UC10
+    usecase "Armar portafolio" as UC11
+
+    ' Extensiones reservadas al plan PRO
+    UC4 ..> UC9 : <<extend>>\n(solo PRO)
+    UC5 ..> UC10 : <<extend>>\n(solo PRO)
 }
 
-E --> UC1
-E --> UC2
-E --> UC5
+V --> UC1
+V --> UC2
+V --> UC3
+
+E --> UC3
+E --> UC4
 E --> UC6
+E --> UC7
+E --> UC8
 
 T --> UC3
-T --> UC4
-T --> UC7
+T --> UC5
+T --> UC11
+
+note right of UC4
+  Nivel Básico: hasta 3 ofertas
+  activas por mes.
+  PRO: ofertas ilimitadas.
+end note
+
+note bottom of UC6
+  Estados: PENDIENTE, SELECCIONADA,
+  RECHAZADA, COMPLETADA, RETIRADA.
+  Genera notificaciones al Trabajador.
+end note
+
 @enduml

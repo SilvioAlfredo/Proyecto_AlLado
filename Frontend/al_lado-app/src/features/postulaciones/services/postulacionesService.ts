@@ -32,4 +32,9 @@ export const postulacionesService = {
     const { data } = await api.patch<PostulacionDTO>(`/postulaciones/${id}/completar`);
     return data;
   },
+
+  async retirar(id: number): Promise<PostulacionDTO> {
+    const { data } = await api.patch<PostulacionDTO>(`/postulaciones/${id}/retirar`);
+    return data;
+  },
 };

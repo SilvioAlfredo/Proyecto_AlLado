@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { authService } from '@/features/auth/services/authService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -9,15 +10,21 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [enviado, setEnviado] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Aquí iría la llamada al backend: POST /auth/forgot-password
-    setTimeout(() => {
+    setError(null);
+    try {
+      // Backend: POST /auth/password/forgot {email}
+      await authService.forgotPassword(email);
       setEnviado(true);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'No se pudo enviar el email.');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -50,6 +57,11 @@ export default function ForgotPasswordPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
+          {error && (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-2">Email</label>
             <Input

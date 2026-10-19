@@ -9,4 +9,5 @@ public class FiltrosOportunidadesDTO {
     private String filtro;
     private String modalidad;
     private List<String> etiquetas;
+    private Boolean soloDestacadas;
 }

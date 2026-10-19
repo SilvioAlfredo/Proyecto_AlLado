@@ -29,6 +29,12 @@ public class OportunidadLaboral extends PostBase {
     @Column(nullable = false)
     private boolean activa = true;
 
+    // HU empleador "Oportunidad laboral pro": las destacadas (solo plan PRO)
+    // se muestran primero en listados y propuestas. El default a nivel DDL
+    // evita que ddl-auto=update falle en tablas con filas existentes.
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean destacada = false;
+
     // Postulaciones asociadas
     @OneToMany(mappedBy = "oportunidadLaboral")
     private Set<Postulacion> postulaciones = new HashSet<>();

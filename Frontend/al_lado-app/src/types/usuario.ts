@@ -17,13 +17,16 @@ export interface UsuarioDTO {
   id: number;
   nombre: string;
   email: string;
+  telefono?: string;
+  password?: string;
+  habilitado?: boolean;
 }
 
 export interface PortafolioItemDTO {
   id?: number;
   titulo: string;
   descripcion?: string;
-  urlImagen?: string;
+  urlArchivo?: string;
 }
 
 export interface HorarioDisponibilidadDTO {
@@ -37,6 +40,8 @@ export interface PreferenciaNotificacionDTO {
   id?: number;
   notificarEmail: boolean;
   notificarPush: boolean;
+  alertasNuevasOfertas?: boolean;
+  alertasNuevasPostulaciones?: boolean;
 }
 
 export interface EstadisticasTrabajadorDTO {
@@ -66,11 +71,10 @@ export interface EstadisticasTrabajadorDTO {
 }
 
 export interface TrabajadorDTO extends UsuarioDTO {
+  sector?: string;
+  fotografia?: string;
   biografia?: string;
   certificados?: string;
-  sector?: string;
-  suscripcionActiva?: boolean;
-  perfilCompleto?: boolean;
   postulaciones?: PostulacionResumenDTO[];
   especialidades?: EtiquetaDTO[];
   portafolioItems?: PortafolioItemDTO[];
@@ -79,7 +83,6 @@ export interface TrabajadorDTO extends UsuarioDTO {
 }
 
 export interface EmpleadorDTO extends UsuarioDTO {
-  perfilCompleto?: boolean;
   perfilEmpresarial?: PerfilEmpresarialDTO;
   oportunidades?: OportunidadLaboralResumenDTO[];
 }

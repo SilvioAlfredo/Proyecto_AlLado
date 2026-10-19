@@ -6,11 +6,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 
 @Repository
-public interface ReporteRepository extends JpaRepository<Reporte, Long> {
+public interface ReporteRepository extends JpaRepository<Reporte, Long>, JpaSpecificationExecutor<Reporte> {
+
+    @EntityGraph(attributePaths = {"reportante", "reportado", "moderador"})
+    Page<Reporte> findAll(Specification<Reporte> specification, Pageable pageable);
 
     @EntityGraph(attributePaths = {"reportante", "reportado", "moderador"})
     Page<Reporte> findByEstadoIgnoreCase(String estado, Pageable pageable);

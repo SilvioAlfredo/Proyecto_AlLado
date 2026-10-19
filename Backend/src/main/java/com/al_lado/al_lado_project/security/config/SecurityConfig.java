@@ -53,6 +53,20 @@ public class SecurityConfig {
                         // 3. Endpoints públicos de lectura (catálogos/foro)
                         .requestMatchers(HttpMethod.GET, "/oportunidades/**", "/comunicados/**", "/publicidades/**", "/foro/**").permitAll()
 
+                        // 3b. Búsqueda y catálogos que el frontend consume sin JWT
+                        // (home pública usa POST /oportunidades/filtrar; los GET son
+                        // solo lectura de directorio, las mutaciones siguen protegidas
+                        // por @PreAuthorize). Los patrones de un segmento NO alcanzan
+                        // a /{id}/estadisticas ni /por-email/estadisticas.
+                        .requestMatchers(HttpMethod.POST, "/oportunidades/filtrar").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/etiquetas/**",
+                                "/trabajadores", "/trabajadores/{id}",
+                                "/empleadores", "/empleadores/{id}",
+                                "/valoraciones/**", "/horarios/**",
+                                "/portafolio-items/**", "/preferencias/**",
+                                "/perfiles-empresariales/**", "/favoritos/**").permitAll()
+
                         // 4. Panel de administración REST (protegido para ROLE_ADMIN)
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/administradores/**").hasRole("ADMIN")

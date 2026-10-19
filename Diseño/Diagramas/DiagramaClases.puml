@@ -1,69 +1,255 @@
-@startuml
+@startuml DiagramaClases
 skinparam style strictuml
 skinparam roundcorner 5
+skinparam linetype ortho
 
-' Configuración de colores para distinguir a simple vista
+' Paleta para distinguir grupos de entidades
 skinparam class {
     BackgroundColor<<Entity>> #E3F2FD
-    BackgroundColor<<Interface>> #F1F8E9
-    BackgroundColor<<Enum>> #FFF3E0
-    BackgroundColor<<Service>> #F3E5F5
+    BackgroundColor<<Abstract>> #E1F5FE
+    BackgroundColor<<Security>> #FCE4EC
     BorderColor black
+    ArrowColor #37474F
 }
 
-package "Core Domain (Entities)" {
-    class Usuario <<Entity>> {
+title AlLado - Diagrama de Clases (Modelo de dominio implementado)
+
+package "Core Domain - Usuarios" {
+    abstract class Usuario <<Abstract>> {
         - Long id
-        - String nombreCompleto
+        - String nombre
         - String email
+        - String telefono
+        - String password
+        - boolean habilitado
+        - boolean emailVerificado
+        - String passwordResetToken
+        - LocalDateTime passwordResetTokenExpiry
+    }
+
+    class Empleador <<Entity>> {
     }
 
     class Trabajador <<Entity>> {
-        - List<String> etiquetas
-        - Boolean identidadValidada
-        - Double promedioValoracion
+        - String fotografia
+        - String biografia
+        - String certificados
+        - String sector
+        - String tokenPush
     }
 
-    class Publicacion <<Entity>> {
+    class Administrador <<Entity>> {
+        - String nivelAcceso
+    }
+
+    class Suscripcion <<Entity>> {
         - Long id
+        - String nivel
+        - LocalDate fechaInicio
+        - LocalDate fechaFin
+        - boolean activa
+    }
+}
+
+package "Core Domain - Trabajo" {
+    abstract class PostBase <<Abstract>> {
+        - Long id
+        - String titulo
+        - String contenido
+        - LocalDateTime fechaCreacion
+    }
+
+    class OportunidadLaboral <<Entity>> {
+        - Long id
+        - String ubicacion
+        - String modalidad
+        - String rangoSalarial
+        - boolean activa
+        - boolean destacada
+    }
+
+    class Postulacion <<Entity>> {
+        - Long id
+        - String estado
+        - Double remuneracionPretendida
+    }
+
+    class Etiqueta <<Entity>> {
+        - Long id
+        - String nombre
+    }
+}
+
+package "Core Domain - Comunidad" {
+    class Valoracion <<Entity>> {
+        - Long id
+        - Integer puntuacion
+        - String comentario
+        - LocalDateTime fechaCreacion
+    }
+
+    class Favorito <<Entity>> {
+        - Long id
+        - LocalDateTime fechaGuardado
+    }
+
+    class Notificacion <<Entity>> {
+        - Long id
+        - String titulo
+        - String mensaje
+        - String tipo
+        - Long referenciaId
+        - boolean leida
+        - LocalDateTime fechaCreacion
+    }
+
+    class Reporte <<Entity>> {
+        - Long id
+        - String motivo
         - String descripcion
-        - Boolean esUrgente
+        - String estado
+        - LocalDateTime fechaCreacion
+    }
+
+    class Publicidad <<Entity>> {
+        - Long id
+        - String titulo
+        - String contenido
+        - String urlImagen
+        - String urlDestino
+        - LocalDate fechaInicio
+        - LocalDate fechaFin
+        - boolean activa
+    }
+
+    class Comunicado <<Entity>> {
+        - Long id
+        - String titulo
+        - String contenido
+        - String alcance
+        - LocalDateTime fechaEmision
+    }
+
+    class PublicacionForo <<Entity>> {
+        - Long id
+        - String titulo
+        - String contenido
+        - LocalDateTime fechaCreacion
+    }
+
+    class Donacion <<Entity>> {
+        - Long id
+        - BigDecimal monto
+        - String moneda
+        - String mecanismoPago
+        - String estado
+        - String banco
+        - String tipoTransferencia
+        - String asuntoTransferencia
+        - LocalDateTime fechaDonacion
+    }
+
+    class PerfilEmpresarial <<Entity>> {
+        - Long id
+        - String nombreEmpresa
+        - String cuit
+        - String descripcion
+        - String sitioWeb
+        - String urlLogo
+        - boolean verificado
     }
 }
 
-package "Persistence (Spring Data JPA)" {
-    interface PublicacionRepository <<Interface>> {
-        + findByEtiquetasIn()
-        + findByUbicacion()
+package "Core Domain - Perfil" {
+    class PortafolioItem <<Entity>> {
+        - Long id
+        - String titulo
+        - String descripcion
+        - String urlArchivo
+    }
+
+    class HorarioDisponibilidad <<Entity>> {
+        - Long id
+        - String diaSemana
+        - LocalTime horaInicio
+        - LocalTime horaFin
+    }
+
+    class PreferenciaNotificacion <<Entity>> {
+        - Long id
+        - boolean notificarEmail
+        - boolean notificarPush
+        - boolean alertasNuevasOfertas
+        - boolean alertasNuevasPostulaciones
     }
 }
 
-package "Business Logic (Spring Services)" {
-    interface INotificacionService <<Interface>> {
-        + alertarTrabajadoresCercanos()
-    }
-    
-    class NotificacionServiceImpl <<Service>> {
-        + alertarTrabajadoresCercanos()
-    }
-}
-
-package "Constants (Enums)" {
-    enum NivelSuscripcion <<Enum>> {
-        BASICO
-        PRO
-    }
-    
-    enum Rol <<Enum>> {
-        EMPLEADOR
-        TRABAJADOR
+package "Seguridad" {
+    class TokenRevocado <<Security>> {
+        - Long id
+        - String jti
+        - String sujeto
+        - LocalDateTime expira
     }
 }
 
-' Relaciones principales
+' ===== Herencia =====
+Usuario <|-- Empleador
 Usuario <|-- Trabajador
-Trabajador o-- NivelSuscripcion
-NotificacionServiceImpl ..|> INotificacionService
-PublicacionRepository ..> Publicacion : "gestiona"
+Usuario <|-- Administrador
+PostBase <|-- OportunidadLaboral
+PostBase <|-- Postulacion
+
+' ===== Usuario y sus relaciones =====
+Usuario "1" -- "0..1" Suscripcion : posee >
+Usuario "1" o-- "0..*" Donacion : realiza >
+Usuario "1" o-- "0..*" PublicacionForo : escribe >
+Usuario "1" o-- "0..*" Notificacion : recibe >
+Usuario "1" o-- "0..*" Reporte : reporta / es reportado >
+
+' ===== Empleador =====
+Empleador "1" *-- "0..1" PerfilEmpresarial : mantiene >
+Empleador "1" o-- "0..*" OportunidadLaboral : publica >
+Empleador "1" o-- "0..*" Valoracion : otorga >
+Empleador "1" o-- "0..*" Favorito : guarda >
+Empleador "1" o-- "0..*" Publicidad : anuncia >
+
+' ===== Trabajador =====
+Trabajador "1" o-- "0..*" Postulacion : presenta >
+Trabajador "1" *-- "0..*" PortafolioItem : incluye >
+Trabajador "1" *-- "0..*" HorarioDisponibilidad : define >
+Trabajador "1" *-- "0..1" PreferenciaNotificacion : configura >
+Trabajador "1" o-- "0..*" Valoracion : recibe >
+Trabajador "*" -- "*" Etiqueta : especialidades >
+
+' ===== Trabajo =====
+OportunidadLaboral "1" o-- "0..*" Postulacion : recibe >
+OportunidadLaboral "*" -- "*" Etiqueta : requiere >
+PostBase "*" --> "1" Usuario : autor
+
+' ===== Comunidad =====
+Valoracion "*" --> "1" Empleador : autor
+Valoracion "*" --> "1" Trabajador : valorado
+Favorito "*" --> "1" Empleador
+Favorito "*" --> "1" Trabajador
+Administrador "1" o-- "0..*" Comunicado : emite >
+Administrador "1" o-- "0..*" Reporte : modera >
+Administrador "1" o-- "0..*" PerfilEmpresarial : supervisa >
+Publicidad "*" --> "1" Empleador : anunciante
+
+note right of Usuario
+  Herencia JOINED: Usuario y PostBase
+  usan una tabla por subtipo.
+  El rol se resuelve por tipo de
+  clase (ROLE_EMPLEADOR,
+  ROLE_TRABAJADOR, ROLE_ADMIN).
+end note
+
+note bottom of Donacion
+  estado: PENDIENTE / VERIFICADO /
+  RECHAZADO. mecanismoPago
+  SUSCRIPCION activa el nivel PRO
+  por 1 año al ser verificado.
+end note
 
 @enduml

@@ -1,15 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { authService } from '@/features/auth/services/authService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get('token') ?? '';
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,11 +23,16 @@ export default function ResetPasswordPage() {
       return;
     }
     setLoading(true);
-    // Aquí iría la llamada al backend: POST /auth/reset-password
-    setTimeout(() => {
+    setError(null);
+    try {
+      // Backend: POST /auth/password/reset {token, newPassword} (token viene en ?token= del email)
+      await authService.resetPassword(token, password);
       setSuccess(true);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'No se pudo actualizar la contraseña.');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -55,6 +65,11 @@ export default function ResetPasswordPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
+          {error && (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+              {error}
+            </div>
+          )}
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-2">Nueva contraseña</label>
             <Input
@@ -62,6 +77,7 @@ export default function ResetPasswordPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={8}
               placeholder="Mínimo 8 caracteres"
             />
           </div>
@@ -81,5 +97,13 @@ export default function ResetPasswordPage() {
         </form>
       )}
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<p className="text-zinc-500">Cargando...</p>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

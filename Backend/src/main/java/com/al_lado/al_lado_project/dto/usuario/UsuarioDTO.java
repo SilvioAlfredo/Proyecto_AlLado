@@ -24,6 +24,9 @@ public abstract class UsuarioDTO {
     @Size(max = 20, message = "El teléfono no puede superar los 20 caracteres.")
     private String telefono; // RF-01, HU-04: campo teléfono obligatorio con código de país
 
+    // Solo lectura administrativa: indica si la cuenta está suspendida.
+    private boolean habilitado;
+
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 }

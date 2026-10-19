@@ -1,135 +1,158 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { TrabajadorDTO } from '@/types/usuario';
+import { useState, type FormEvent } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { trabajadorService } from '@/features/usuario/services/trabajadorService';
+import { useTrabajadorQuery } from '@/features/usuario/hooks/useTrabajadorQuery';
+import { useEstadisticasTrabajador } from '@/features/usuario/hooks/useEstadisticasTrabajador';
+import {
+  TrabajadorPage,
+  EstadoTrabajador,
+  campoTrabajador,
+  panelTrabajador,
+} from '@/features/usuario/components/TrabajadorPage';
+import { Button } from '@/components/ui/button';
+import { errorMessage } from '@/lib/errors';
+import type { TrabajadorDTO } from '@/types/usuario';
 
-export default function TrabajadorPerfilPage() {
-  const { user } = useAuth();
-  const [perfil, setPerfil] = useState<TrabajadorDTO | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [guardando, setGuardando] = useState(false);
-  const [biografia, setBiografia] = useState('');
-  const [certificados, setCertificados] = useState('');
-  const [sector, setSector] = useState('');
-
-  useEffect(() => {
-    cargarPerfil();
-  }, []);
-
-  const cargarPerfil = async () => {
-    try {
-      const data = await trabajadorService.obtenerPerfil();
-      setPerfil(data);
-      setBiografia(data.biografia || '');
-      setCertificados(data.certificados || '');
-      setSector(data.sector || '');
-    } catch (error) {
-      console.error('Error al cargar perfil:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const guardarPerfil = async () => {
-    setGuardando(true);
-    try {
-      const actualizado = await trabajadorService.actualizarPerfil({
-        biografia,
-        certificados,
-        sector,
-      });
-      setPerfil(actualizado);
-    } catch (error) {
-      console.error('Error al guardar perfil:', error);
-    } finally {
-      setGuardando(false);
-    }
-  };
-
-  if (loading) {
-    return <p className="text-zinc-500">Cargando perfil...</p>;
-  }
-
+export default function MiPerfilPage() {
+  const consulta = useTrabajadorQuery('perfil', (id) =>
+    trabajadorService.obtenerPorId(id),
+  );
+  const estadisticas = useEstadisticasTrabajador();
   return (
-    <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-extrabold text-white">Mi Perfil Profesional</h1>
-      
-      <div className="bg-[#1a1a1c] p-6 rounded-2xl border border-[#2e2e33] space-y-4">
-        <div>
-          <label className="text-xs text-zinc-500 block uppercase font-bold mb-1">Correo Electrónico</label>
-          <p className="text-white font-medium">{user?.email || 'Cargando...'}</p>
-        </div>
-        <div>
-          <label className="text-xs text-zinc-500 block uppercase font-bold mb-1">Roles de Cuenta</label>
-          <p className="text-white font-medium">{user?.roles?.join(', ')}</p>
-        </div>
-        <div>
-          <label className="text-xs text-zinc-500 block uppercase font-bold mb-1">Especialidades</label>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {perfil?.especialidades?.map((esp) => (
-              <Badge key={esp.id} variant="default">{esp.nombre}</Badge>
-            )) || <span className="text-zinc-500">Sin especialidades</span>}
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-[#1a1a1c] p-6 rounded-2xl border border-[#2e2e33] space-y-4">
-        <h2 className="text-lg font-bold text-white">Información Profesional</h2>
-        
-        <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-2">Biografía</label>
-          <textarea
-            rows={4}
-            value={biografia}
-            onChange={(e) => setBiografia(e.target.value)}
-            className="w-full rounded-xl bg-[#0b0b0c] border border-[#2e2e33] p-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#ffc107] focus:ring-1 focus:ring-[#ffc107] transition"
-            placeholder="Describe tu experiencia y habilidades..."
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-2">Certificados</label>
-          <textarea
-            rows={3}
-            value={certificados}
-            onChange={(e) => setCertificados(e.target.value)}
-            className="w-full rounded-xl bg-[#0b0b0c] border border-[#2e2e33] p-3 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#ffc107] focus:ring-1 focus:ring-[#ffc107] transition"
-            placeholder="Lista tus certificados y títulos..."
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-2">Sector / Zona</label>
-          <Input
-            value={sector}
-            onChange={(e) => setSector(e.target.value)}
-            placeholder="Ej: Barrio Centro, Zona Norte"
-          />
-        </div>
-
-        <Button onClick={guardarPerfil} disabled={guardando} className="bg-[#ffc107] text-black hover:bg-[#eab308]">
-          {guardando ? 'Guardando...' : 'Guardar Cambios'}
-        </Button>
-      </div>
-
-      {perfil?.portafolioItems && perfil.portafolioItems.length > 0 && (
-        <div className="bg-[#1a1a1c] p-6 rounded-2xl border border-[#2e2e33] space-y-4">
-          <h2 className="text-lg font-bold text-white">Portafolio</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {perfil.portafolioItems.map((item) => (
-              <div key={item.id} className="border border-[#2e2e33] rounded-xl p-4 bg-[#0b0b0c]">
-                <h3 className="font-medium text-white">{item.titulo}</h3>
-                <p className="text-sm text-zinc-400">{item.descripcion}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+    <TrabajadorPage titulo="Mi perfil">
+      <EstadoTrabajador consulta={consulta} />
+      {consulta.data && <Perfil key={consulta.data.id} trabajador={consulta.data} />}
+      <EstadoTrabajador consulta={estadisticas} />
+      {estadisticas.data && (
+        <section className={panelTrabajador}>
+          <p>
+            Valoración: {estadisticas.data.promedioValoraciones}/5 (
+            {estadisticas.data.valoracionesCount} valoraciones)
+          </p>
+          <p>Trabajos completados: {estadisticas.data.postulacionesCompletadas}</p>
+          <p>
+            Suscripción PRO:{' '}
+            {estadisticas.data.suscripcionActiva ? 'Activa' : 'Sin suscripción activa'}
+          </p>
+        </section>
       )}
-    </div>
+    </TrabajadorPage>
+  );
+}
+
+function Perfil({ trabajador }: { trabajador: TrabajadorDTO }) {
+  const [editando, setEditando] = useState(false);
+  const [guardado, setGuardado] = useState(false);
+  const cache = useQueryClient();
+  const guardar = useMutation({
+    mutationFn: (cambios: Partial<TrabajadorDTO>) =>
+      trabajadorService.actualizarPerfil(trabajador.email, cambios),
+    onSuccess: async () => {
+      await cache.invalidateQueries({ queryKey: ['trabajador'] });
+      setEditando(false);
+      setGuardado(true);
+    },
+  });
+  function enviar(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const campos = new FormData(event.currentTarget);
+    guardar.mutate({
+      nombre: String(campos.get('nombre')).trim(),
+      telefono: String(campos.get('telefono')).trim(),
+      sector: String(campos.get('sector')).trim(),
+      biografia: String(campos.get('biografia')).trim(),
+      fotografia: String(campos.get('fotografia')).trim(),
+      certificados: String(campos.get('certificados')).trim(),
+    });
+  }
+  return (
+    <section className={panelTrabajador}>
+      {guardado && (
+        <p role="status" className="mb-4 text-emerald-300">
+          Perfil guardado.
+        </p>
+      )}
+      {guardar.error && (
+        <p role="alert" className="text-red-300">
+          {errorMessage(guardar.error)}
+        </p>
+      )}
+      {!editando ? (
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold">{trabajador.nombre}</h2>
+          <p>{trabajador.sector || 'Sector sin completar'}</p>
+          <p>{trabajador.email}</p>
+          <p>{trabajador.telefono || 'Teléfono sin completar'}</p>
+          <p className="whitespace-pre-wrap">
+            {trabajador.biografia || 'Biografía sin completar'}
+          </p>
+          <p>
+            Especialidades:{' '}
+            {trabajador.especialidades?.map((e) => e.nombre).join(', ') ||
+              'Sin especialidades registradas'}
+          </p>
+          <p>Certificados: {trabajador.certificados || 'Sin certificados registrados'}</p>
+          <Button
+            className="bg-allado-yellow text-black"
+            onClick={() => {
+              setEditando(true);
+              setGuardado(false);
+              guardar.reset();
+            }}
+          >
+            Editar perfil
+          </Button>
+        </div>
+      ) : (
+        <form onSubmit={enviar} className="space-y-4">
+          {[
+            ['nombre', 'Nombre completo', trabajador.nombre],
+            ['telefono', 'Teléfono', trabajador.telefono],
+            ['sector', 'Sector', trabajador.sector],
+            ['fotografia', 'URL de fotografía', trabajador.fotografia],
+            ['certificados', 'Certificados', trabajador.certificados],
+          ].map(([nombre, etiqueta, valor]) => (
+            <label key={nombre} className="block space-y-1">
+              <span>{etiqueta}</span>
+              <input
+                name={nombre}
+                defaultValue={valor ?? ''}
+                required={nombre === 'nombre' || nombre === 'telefono'}
+                type={nombre === 'fotografia' ? 'url' : 'text'}
+                className={campoTrabajador}
+              />
+            </label>
+          ))}
+          <label className="block space-y-1">
+            <span>Biografía</span>
+            <textarea
+              name="biografia"
+              rows={4}
+              defaultValue={trabajador.biografia ?? ''}
+              className={campoTrabajador}
+            />
+          </label>
+          <div className="flex gap-3">
+            <Button
+              type="submit"
+              className="bg-allado-yellow text-black"
+              disabled={guardar.isPending}
+            >
+              {guardar.isPending ? 'Guardando…' : 'Guardar cambios'}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={guardar.isPending}
+              onClick={() => setEditando(false)}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      )}
+    </section>
   );
 }

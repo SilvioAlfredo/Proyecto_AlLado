@@ -43,6 +43,23 @@ public class TrabajadorServiceImpl implements TrabajadorService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<TrabajadorDTO> filtrar(String etiqueta, String sector) {
+        List<Trabajador> base;
+        if (etiqueta != null && !etiqueta.isBlank()) {
+            base = repository.findByEspecialidadNombreIgnoreCase(etiqueta.trim());
+        } else {
+            base = repository.findAll();
+        }
+        String sectorNormalizado = sector != null ? sector.trim().toLowerCase() : null;
+        return base.stream()
+                .filter(t -> sectorNormalizado == null || sectorNormalizado.isEmpty()
+                        || (t.getSector() != null && t.getSector().toLowerCase().contains(sectorNormalizado)))
+                .map(mapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public TrabajadorDTO obtenerPorId(Long id) {
         Trabajador trabajador = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Trabajador no encontrado con ID: " + id));
@@ -84,6 +101,7 @@ public class TrabajadorServiceImpl implements TrabajadorService {
         trabajador.setFotografia(dto.getFotografia());
         trabajador.setBiografia(dto.getBiografia());
         trabajador.setCertificados(dto.getCertificados());
+        trabajador.setSector(dto.getSector());
 
         // Especialidades siempre como entidades gestionadas (evita
         // duplicados por unique y re-inserciones en lote).

@@ -24,6 +24,7 @@ public class EmpleadorMapper {
         dto.setNombre(entity.getNombre());
         dto.setEmail(entity.getEmail());
         dto.setTelefono(entity.getTelefono());
+        dto.setHabilitado(entity.isHabilitado());
 
         if (entity.getPerfilEmpresarial() != null) {
             dto.setPerfilEmpresarial(perfilEmpresarialMapper.toDTO(entity.getPerfilEmpresarial()));

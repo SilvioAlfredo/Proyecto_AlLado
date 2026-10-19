@@ -1,21 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { DashboardMetricsDTO } from '@/types/admin';
+import { useQuery } from '@tanstack/react-query';
 import { adminService } from '../services/adminService';
 
+/**
+ * Gestiona la consulta y caché de métricas del panel con React Query.
+ *
+ * Se utiliza dentro del panel protegido; conserva estados de carga, error
+ * y reintento en lugar de ocultar fallos detrás de métricas en cero.
+ */
 export function useAdminMetrics() {
-  const [metrics, setMetrics] = useState<DashboardMetricsDTO | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    adminService
-      .getMetrics()
-      .then(setMetrics)
-      .catch((err) => setError(err?.response?.data?.message || 'Error al obtener métricas'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  return { metrics, loading, error };
+  return useQuery({
+    queryKey: ['admin-metrics'],
+    queryFn: () => adminService.getMetrics(),
+  });
 }

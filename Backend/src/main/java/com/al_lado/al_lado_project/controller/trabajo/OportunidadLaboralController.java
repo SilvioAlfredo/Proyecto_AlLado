@@ -65,4 +65,11 @@ public class OportunidadLaboralController {
         List<OportunidadLaboralDTO> resultado = service.listarConFiltros(filtros);
         return ResponseEntity.ok(resultado);
     }
+
+    @PreAuthorize("hasRole('TRABAJADOR')")
+    @GetMapping("/propuestas-pro")
+    public ResponseEntity<List<OportunidadLaboralDTO>> propuestasPro(
+            @RequestParam Long trabajadorId) {
+        return ResponseEntity.ok(service.propuestasProParaTrabajador(trabajadorId));
+    }
 }

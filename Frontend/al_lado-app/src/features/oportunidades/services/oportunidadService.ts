@@ -42,4 +42,11 @@ export const oportunidadesService = {
     const { data } = await api.post<OportunidadLaboralDTO[]>('/oportunidades/filtrar', filtros || {});
     return data;
   },
+
+  async propuestasPro(trabajadorId: number): Promise<OportunidadLaboralDTO[]> {
+    const { data } = await api.get<OportunidadLaboralDTO[]>(
+      `/oportunidades/propuestas-pro?trabajadorId=${trabajadorId}`
+    );
+    return data;
+  },
 };

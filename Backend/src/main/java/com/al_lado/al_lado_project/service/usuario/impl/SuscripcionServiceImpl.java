@@ -68,7 +68,16 @@ public class SuscripcionServiceImpl implements SuscripcionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + usuarioId));
 
         if (repository.existsByUsuarioId(usuarioId)) {
-            throw new DuplicateResourceException("Este usuario ya tiene una suscripción cargada.");
+            // Sincronía con el frontend ("Mi plan" re-activa PRO): en lugar de
+            // rechazar con duplicado se reactiva la suscripción existente.
+            Suscripcion existente = repository.findByUsuarioId(usuarioId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Suscripción no encontrada para el usuario con ID: " + usuarioId));
+            SecurityUtils.requireSelfOrAdmin(usuarioId);
+            existente.setNivel(dto.getNivel());
+            existente.setFechaInicio(dto.getFechaInicio());
+            existente.setFechaFin(dto.getFechaFin());
+            existente.setActiva(true);
+            return mapper.toDTO(repository.save(existente));
         }
 
         Suscripcion suscripcion = mapper.toEntity(dto);
@@ -102,6 +111,12 @@ public class SuscripcionServiceImpl implements SuscripcionService {
         repository.deleteById(id);
     }
 
+    /**
+     * Cuenta ofertas activas creadas en el mes actual.
+     *
+     * <p>El período va del día 1 a las 00:00:00 al último día a las 23:59:59. El bloqueo del
+     * empleador se adquiere al guardar una oferta; este método no lo adquiere por separado.</p>
+     */
     @Override
     @Transactional(readOnly = true)
     public boolean puedePublicarOferta(Long usuarioId) {
@@ -128,6 +143,21 @@ public class SuscripcionServiceImpl implements SuscripcionService {
 
     private boolean estaVencida(Suscripcion suscripcion) {
         return suscripcion.getFechaFin() != null && suscripcion.getFechaFin().isBefore(LocalDate.now());
+    }
+
+    /**
+     * Comprueba nivel PRO, activa y fecha de fin.
+     *
+     * <p>Una fecha de fin igual a hoy sigue vigente. No comprueba fechaInicio.</p>
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public boolean esProVigente(Long usuarioId) {
+        return repository.findByUsuarioId(usuarioId)
+                .filter(s -> "PRO".equalsIgnoreCase(s.getNivel()))
+                .filter(Suscripcion::isActiva)
+                .filter(s -> !estaVencida(s))
+                .isPresent();
     }
 
     private long contarOfertasPorMes(Long usuarioId, Suscripcion suscripcion) {

@@ -38,7 +38,7 @@ Flujo de request: Controller (valida con `@Valid`) → Service (reglas + titular
 - **Polimorfismo Jackson** (`@JsonTypeInfo/@JsonSubTypes`, propiedad `type`) en entidades y DTOs base.
 - **Titularidad**: todo recurso de usuario exige ser titular o `ADMIN` (`SecurityUtils.requireSelfOrAdmin`); roles vía `@PreAuthorize`.
 - **Ofertas**: límite 3/mes plan Básico (con bloqueo pesimista), Pro ilimitado; no se transfieren entre empleadores.
-- **Postulaciones inmutables**: sin borrado físico (`DELETE` siempre 400); máquina de estados `PENDIENTE → SELECCIONADA → COMPLETADA` (rechazo desde `PENDIENTE`/`SELECCIONADA`).
+- **Postulaciones inmutables**: sin borrado físico; máquina de estados `PENDIENTE → SELECCIONADA → COMPLETADA` (rechazo desde `PENDIENTE`/`SELECCIONADA`, retiro por el trabajador desde `PENDIENTE`/`SELECCIONADA` → `RETIRADA`).
 - **Reportes**: `PENDIENTE/EN_REVISION/RESUELTO/DESCARTADO`; `resolver` no reabre finales.
 - **Etiquetas**: se resuelven contra el repositorio (sin duplicados por `unique`); `obtenerOCrearPorNombre` con trim y retry ante carrera.
 - **Módulo de notificaciones push/WhatsApp eliminado**: solo existe la consulta `obtenerTrabajadoresPorEtiqueta`.
@@ -75,11 +75,12 @@ Leyenda: 🔓 público · 🔒 solo autenticado · 👑 `ADMIN` · 💼 `EMPLEAD
 | GET | `/usuarios/{id}` | 🔒 |
 | PUT | `/usuarios/{id}` | 🔒🧑 (el `id` del path prevalece) |
 | DELETE | `/usuarios/{id}` | 👑 |
+| PUT | `/usuarios/{id}/deshabilitar` · `/usuarios/{id}/habilitar` | 👑 (suspender/rehabilitar sin borrar) |
 
 ### Trabajadores — `/trabajadores` (idem `/empleadores`; `/administradores` todo 👑 por URL)
 | Método | Ruta | Auth |
 |---|---|---|
-| GET | `/` · `/{id}` | 🔒 |
+| GET | `/` · `/{id}` · `/filtrar?etiqueta=&sector=` | 🔒 |
 | POST | `/` | 🔓 (registro) |
 | PUT | `/{id}` | 🔒🧑 |
 | DELETE | `/{id}` | 👑 |
@@ -99,9 +100,10 @@ Leyenda: 🔓 público · 🔒 solo autenticado · 👑 `ADMIN` · 💼 `EMPLEAD
 |---|---|---|
 | GET | `/` (`?filtro=&page=0&size=10`) · `/{id}` | 🔓 (solo activas) |
 | POST | `/filtrar` | 🔒 `{filtro, modalidad, etiquetas[]}` |
-| POST | `/` | 💼👑🧑 (Básico: máx 3/mes; nueva siempre `activa=true`) |
+| POST | `/` | 💼👑🧑 (Básico: máx 3/mes; nueva siempre `activa=true`; `destacada` exige PRO) |
 | PUT | `/{id}` | 💼👑🧑 (dueño; no transferible) |
 | DELETE | `/{id}` | 💼👑🧑 (falla si tiene postulaciones) |
+| GET | `/propuestas-pro?trabajadorId=` | 🔧🧑 PRO (compatibles con especialidades, destacadas primero) |
 
 ### Postulaciones — `/postulaciones`
 | Método | Ruta | Auth |
@@ -111,6 +113,7 @@ Leyenda: 🔓 público · 🔒 solo autenticado · 👑 `ADMIN` · 💼 `EMPLEAD
 | PATCH | `/{id}/seleccionar` | 💼👑 dueño (solo desde `PENDIENTE`) |
 | PATCH | `/{id}/rechazar` | 💼👑 dueño (desde `PENDIENTE`/`SELECCIONADA`) |
 | PATCH | `/{id}/completar` | 💼👑 dueño (solo desde `SELECCIONADA`) |
+| PATCH | `/{id}/retirar` | 🔧🧑 autor (desde `PENDIENTE`/`SELECCIONADA` → `RETIRADA`) |
 | DELETE | `/{id}` | ❌ eliminado (historial inmutable; antes siempre 400) |
 
 ### Etiquetas — `/etiquetas`
@@ -128,6 +131,9 @@ Leyenda: 🔓 público · 🔒 solo autenticado · 👑 `ADMIN` · 💼 `EMPLEAD
 | POST | `/portafolio-items/trabajador/{id}` · `/horarios/trabajador/{id}` | 🔧👑🧑 (`diaSemana: LUNES..DOMINGO`, `horaInicio < horaFin`, sin solapes) |
 | DELETE | `/portafolio-items/{id}` · `/horarios/{id}` | 🔧👑🧑 (dueño) |
 
+| GET | `/notificaciones/usuario/{id}` · `/notificaciones/usuario/{id}/no-leidas` | 🔒🧑 |
+| PATCH | `/notificaciones/{id}/leer` · `/notificaciones/usuario/{id}/leer-todas` | 🔒🧑 (dueño) |
+
 ### Comunidad
 | Método | Ruta | Auth |
 |---|---|---|
@@ -138,12 +144,12 @@ Leyenda: 🔓 público · 🔒 solo autenticado · 👑 `ADMIN` · 💼 `EMPLEAD
 | POST | `/donaciones` | 🔒🧑 (nace `PENDIENTE`; `monto>0`) |
 | POST | `/donaciones/{id}/verificar?asunto=&monto=` | 👑 (marca `VERIFICADO`; `SUSCRIPCION` otorga PRO 1 año) |
 | GET · POST · DELETE | `/favoritos/empleador/{empleadorId}[/trabajador/{trabajadorId}]` | 💼👑🧑 |
-| GET · PUT | `/perfiles-empresariales/empleador/{empleadorId}` | 🔒🧑 (`cuit` único) |
+| GET · PUT | `/perfiles-empresariales/empleador/{empleadorId}` | 🔒🧑 (`cuit` único; guardar exige PRO) |
 | PUT | `/perfiles-empresariales/{id}/verificar?supervisorId=` | 👑 (idempotente) |
 | GET | `/foro` · `/foro/{id}` · `/foro/autor/{autorId}` (`?page=&size=`) | 🔓 |
 | POST · DELETE | `/foro` · `/foro/{id}` | 🔒 (crear titular; borrar dueño) |
 | GET | `/publicidades` · `/publicidades/{id}` · `/publicidades/anunciante/{id}` · `/publicidades/vigentes` | 🔓 |
-| POST · PUT · DELETE | `/publicidades` · `/publicidades/{id}` | 💼👑🧑 (nueva siempre activa; `inicio<=fin`) |
+| POST · PUT · DELETE | `/publicidades` · `/publicidades/{id}` | 💼👑🧑 (nueva siempre activa; `inicio<=fin`; crear exige PRO) |
 | GET | `/reportes` · `/reportes/{id}` · `/reportes/estado/{estado}` (`?page=&size=`) | 👑 |
 | POST | `/reportes` | 🔒🧑 (nace `PENDIENTE`) |
 | PUT | `/reportes/{id}/resolver?moderadorId=&estado=` | 👑 (`EN_REVISION\|RESUELTO\|DESCARTADO`; finales no reabren) |
@@ -154,10 +160,14 @@ Leyenda: 🔓 público · 🔒 solo autenticado · 👑 `ADMIN` · 💼 `EMPLEAD
 ### Admin — `/api/admin` (👑)
 | Método | Ruta | Notas |
 |---|---|---|
-| GET | `/api/admin/dashboard/metrics` | `{totalIngresos, metricContratos, metricTrabajadores, metricAvg, dineroComunidad, trabajosCompletados, tendencias[5]}` con agregaciones SQL |
+| GET | `/api/admin/dashboard/metrics` | `{totalIngresos, metricContratos, metricTrabajadores, metricAvg, dineroComunidad, trabajosCompletados, tendencias[5], usuariosActivos, usuariosInactivos, postulacionesPorEstado}` con agregaciones SQL |
+
+### Funciones PRO (requieren suscripción `PRO` activa y vigente)
+Perfil empresarial, publicidades, portafolio, ofertas destacadas y propuestas pro.
+Sin PRO → `400` con mensaje que indica el plan requerido.
 
 ### Valores cerrados (validados con `@Pattern`)
-`rol`: `TRABAJADOR|EMPLEADOR` · `nivel`: `BASICO|PRO` · `modalidad`: `PRESENCIAL|REMOTO|HIBRIDO` · `diaSemana`: `LUNES..DOMINGO` · postulación: `PENDIENTE|SELECCIONADA|RECHAZADA|COMPLETADA` · reporte: `PENDIENTE|EN_REVISION|RESUELTO|DESCARTADO` · donación: `PENDIENTE|VERIFICADO|RECHAZADO`. Las fechas generadas por servidor (`fechaCreacion`, `fechaEmision`, `fechaDonacion`, `fechaGuardado`) son `READ_ONLY`: si se envían, se ignoran.
+`rol`: `TRABAJADOR|EMPLEADOR` · `nivel`: `BASICO|PRO` · `modalidad`: `PRESENCIAL|REMOTO|HIBRIDO` · `diaSemana`: `LUNES..DOMINGO` · postulación: `PENDIENTE|SELECCIONADA|RECHAZADA|COMPLETADA|RETIRADA` · reporte: `PENDIENTE|EN_REVISION|RESUELTO|DESCARTADO` · donación: `PENDIENTE|VERIFICADO|RECHAZADO`. Las fechas generadas por servidor (`fechaCreacion`, `fechaEmision`, `fechaDonacion`, `fechaGuardado`) son `READ_ONLY`: si se envían, se ignoran.
 
 ### Swagger
 - `/swagger-ui.html`, `/v3/api-docs` (sin anotaciones `@Operation` en controllers)

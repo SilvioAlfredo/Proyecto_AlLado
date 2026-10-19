@@ -8,6 +8,13 @@ import org.springframework.stereotype.Component;
 
 import java.util.stream.Collectors;
 
+/**
+ * Convierte ofertas y sus datos relacionados entre entidad y DTO.
+ *
+ * <p>Al DTO agrega autor, etiquetas y postulaciones. Al crear una entidad convierte las
+ * etiquetas, pero el servicio debe resolverlas contra el repositorio y asignar el autor. No
+ * copia fecha de creación ni postulaciones desde el DTO.</p>
+ */
 @Component
 @RequiredArgsConstructor
 public class OportunidadLaboralMapper extends PostBaseMapper {
@@ -16,6 +23,14 @@ public class OportunidadLaboralMapper extends PostBaseMapper {
     private final PostulacionResumenMapper postulacionResumenMapper;
     private final UsuarioResumenMapper usuarioResumenMapper;
 
+    /**
+     * Copia la oferta, el autor resumido, las etiquetas y las postulaciones.
+     *
+     * <p>Las relaciones sin inicializar necesitan una sesión abierta y pueden generar consultas
+     * adicionales. En un listado esto puede causar N+1.</p>
+     *
+     * @param entity entidad a convertir, o {@code null}
+     */
     public OportunidadLaboralDTO toDTO(OportunidadLaboral entity) {
         if (entity == null) return null;
 
@@ -30,6 +45,7 @@ public class OportunidadLaboralMapper extends PostBaseMapper {
         dto.setModalidad(entity.getModalidad());
         dto.setRangoSalarial(entity.getRangoSalarial());
         dto.setActiva(entity.isActiva());
+        dto.setDestacada(entity.isDestacada());
 
         if (entity.getEtiquetas() != null) {
             dto.setEtiquetas(entity.getEtiquetas().stream()
@@ -46,6 +62,13 @@ public class OportunidadLaboralMapper extends PostBaseMapper {
         return dto;
     }
 
+    /**
+     * Crea una entidad con los datos del DTO y sus etiquetas.
+     *
+     * <p>Las etiquetas son instancias nuevas, no entidades obtenidas del repositorio. El
+     * servicio debe resolverlas antes de guardar para evitar duplicados. No asigna autor, fecha
+     * de creación ni postulaciones.</p>
+     */
     public OportunidadLaboral toEntity(OportunidadLaboralDTO dto) {
         if (dto == null) return null;
 
@@ -56,6 +79,7 @@ public class OportunidadLaboralMapper extends PostBaseMapper {
         entity.setModalidad(dto.getModalidad());
         entity.setRangoSalarial(dto.getRangoSalarial());
         entity.setActiva(dto.isActiva());
+        entity.setDestacada(dto.isDestacada());
 
         if (dto.getEtiquetas() != null) {
             entity.setEtiquetas(dto.getEtiquetas().stream()

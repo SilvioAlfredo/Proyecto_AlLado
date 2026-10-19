@@ -51,4 +51,10 @@ public class PostulacionController {
     public ResponseEntity<PostulacionDTO> completarPostulacion(@PathVariable Long id) {
         return ResponseEntity.ok(service.completarPostulacion(id));
     }
+
+    @PreAuthorize("hasRole('TRABAJADOR')")
+    @PatchMapping("/{id}/retirar")
+    public ResponseEntity<PostulacionDTO> retirarPostulacion(@PathVariable Long id) {
+        return ResponseEntity.ok(service.retirarPostulacion(id));
+    }
 }

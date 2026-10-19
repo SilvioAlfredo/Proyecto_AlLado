@@ -38,3 +38,15 @@ export interface PublicacionForoDTO {
   fechaCreacion?: string;
   autor?: UsuarioResumenDTO;
 }
+
+export interface PublicidadDTO {
+  activa?: boolean;
+  id?: number;
+  titulo: string;
+  contenido?: string;
+  urlImagen?: string;
+  urlDestino?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  anunciante?: UsuarioResumenDTO;
+}

@@ -9,4 +9,7 @@ public interface TrabajadorService {
     TrabajadorDTO obtenerPorId(Long id);
     TrabajadorDTO guardar(TrabajadorDTO trabajadorDTO);
     void eliminar(Long id);
+
+    // HU empleador "Filtrar trabajadores": por especialidad (etiqueta) y/o sector barrial.
+    List<TrabajadorDTO> filtrar(String etiqueta, String sector);
 }

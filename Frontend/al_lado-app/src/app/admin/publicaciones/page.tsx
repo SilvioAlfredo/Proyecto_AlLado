@@ -1,7 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { comunidadService } from '@/features/comunidad/services/comunidadService';
@@ -37,7 +44,7 @@ export default function AdminPublicacionesPage() {
             createdAt: r.fechaCreacion || new Date().toISOString(),
             autorNombre: r.autor?.nombre || 'Anónimo',
             estatus: r.estado || 'PENDIENTE',
-          }))
+          })),
         );
       } catch (err: any) {
         setError(err?.response?.data?.message || 'Error al cargar reportes');
@@ -48,13 +55,17 @@ export default function AdminPublicacionesPage() {
     cargar();
   }, []);
 
-  const filtrados = filtroEstatus ? reportes.filter((r) => r.estatus === filtroEstatus) : reportes;
+  const filtrados = filtroEstatus
+    ? reportes.filter((r) => r.estatus === filtroEstatus)
+    : reportes;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold text-white">Panel de Moderación</h1>
-        <p className="text-sm text-zinc-500">Gestión de reportes · GET /reportes · PUT /reportes/{'{id}'}/resolver (ADMIN)</p>
+        <p className="text-sm text-zinc-500">
+          Gestión de reportes · GET /reportes · PUT /reportes/{'{id}'}/resolver (ADMIN)
+        </p>
       </div>
 
       {error && (
@@ -67,7 +78,10 @@ export default function AdminPublicacionesPage() {
         <select
           value={filtroEstatus}
           onChange={(e) => setFiltroEstatus(e.target.value)}
-          className="h-11 w-full rounded-full border border-[#3a3a3f] bg-[#26262a] px-4 text-sm text-white"
+          className={
+            'h-11 w-full rounded-full border border-[#3a3a3f] ' +
+            'bg-[#26262a] px-4 text-sm text-white'
+          }
         >
           <option value="">Todos</option>
           <option value="PENDIENTE">Pendientes</option>
@@ -84,11 +98,17 @@ export default function AdminPublicacionesPage() {
               <tr className="border-b border-[#2e2e33]">
                 <th className="text-left p-4 text-sm font-medium text-zinc-500">ID</th>
                 <th className="text-left p-4 text-sm font-medium text-zinc-500">Tipo</th>
-                <th className="text-left p-4 text-sm font-medium text-zinc-500">Contenido</th>
-                <th className="text-left p-4 text-sm font-medium text-zinc-500">Motivo</th>
+                <th className="text-left p-4 text-sm font-medium text-zinc-500">
+                  Contenido
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-zinc-500">
+                  Motivo
+                </th>
                 <th className="text-left p-4 text-sm font-medium text-zinc-500">Autor</th>
                 <th className="text-left p-4 text-sm font-medium text-zinc-500">Fecha</th>
-                <th className="text-left p-4 text-sm font-medium text-zinc-500">Estatus</th>
+                <th className="text-left p-4 text-sm font-medium text-zinc-500">
+                  Estatus
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -101,7 +121,9 @@ export default function AdminPublicacionesPage() {
                   <td className="p-4 text-zinc-300">{reporte.autorNombre}</td>
                   <td className="p-4 text-zinc-400">{formatDate(reporte.createdAt)}</td>
                   <td className="p-4">
-                    <Badge variant={reporte.estatus === 'PENDIENTE' ? 'warning' : 'default'}>
+                    <Badge
+                      variant={reporte.estatus === 'PENDIENTE' ? 'warning' : 'default'}
+                    >
                       {reporte.estatus}
                     </Badge>
                   </td>

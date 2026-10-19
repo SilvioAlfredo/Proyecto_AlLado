@@ -15,6 +15,7 @@ public class AdministradorMapper {
         dto.setNombre(entity.getNombre());
         dto.setEmail(entity.getEmail());
         dto.setTelefono(entity.getTelefono());
+        dto.setHabilitado(entity.isHabilitado());
         dto.setNivelAcceso(entity.getNivelAcceso());
         return dto;
     }

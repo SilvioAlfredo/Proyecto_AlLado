@@ -23,7 +23,11 @@ export function OportunidadCard({ oportunidad, onPostularse, onVerPostulantes }:
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-bold text-white leading-tight truncate">{oportunidad.titulo}</h3>
-          {postulados > 0 ? (
+          <div className="flex shrink-0 gap-1">
+            {oportunidad.destacada && (
+              <Badge variant="warning" className="rounded-lg">⭐ PRO</Badge>
+            )}
+            {postulados > 0 ? (
             <Badge variant="warning" className="shrink-0 rounded-lg">
               {postulados} postulados
             </Badge>
@@ -32,6 +36,7 @@ export function OportunidadCard({ oportunidad, onPostularse, onVerPostulantes }:
               {oportunidad.activa ? 'ACTIVA' : 'CERRADA'}
             </Badge>
           )}
+          </div>
         </div>
 
         <p className="mt-1 text-sm text-zinc-400 line-clamp-2">{oportunidad.contenido}</p>
