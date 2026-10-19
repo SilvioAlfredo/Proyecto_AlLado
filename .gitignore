@@ -17,3 +17,7 @@ target/
 .hg/
 .hgignore
 .hgtags
+
+# Carpetas ignoradas
+Testing/
+**/node_modules/
