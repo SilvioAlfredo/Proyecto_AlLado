@@ -28,8 +28,11 @@ public class Reporte {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String descripcion;
 
+    @Column(length = 100)
+    private String sector;
+
     @Column(length = 30, nullable = false)
-    private String estado = "PENDIENTE"; // Ej: "PENDIENTE", "EN_REVISION", "RESUELTO", "DESCARTADO"
+    private String estado = "PENDIENTE";
 
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
@@ -56,9 +59,10 @@ public class Reporte {
         }
     }
 
-    public Reporte(String motivo, String descripcion, Usuario reportante, Usuario reportado) {
+    public Reporte(String motivo, String descripcion, String sector, Usuario reportante, Usuario reportado) {
         this.motivo = motivo;
         this.descripcion = descripcion;
+        this.sector = sector;
         this.reportante = reportante;
         this.reportado = reportado;
     }

@@ -23,7 +23,7 @@ public class PostulacionController {
         return ResponseEntity.ok(service.obtenerTodas());
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:[0-9]+}")
     public ResponseEntity<PostulacionDTO> obtenerPostulacion(@PathVariable Long id) {
         return ResponseEntity.ok(service.obtenerPorId(id));
     }
@@ -35,25 +35,25 @@ public class PostulacionController {
     }
 
     @PreAuthorize("hasAnyRole('EMPLEADOR', 'ADMIN')")
-    @PatchMapping("/{id}/seleccionar")
+    @PatchMapping("/{id:[0-9]+}/seleccionar")
     public ResponseEntity<PostulacionDTO> seleccionarPostulacion(@PathVariable Long id) {
         return ResponseEntity.ok(service.seleccionarPostulacion(id));
     }
 
     @PreAuthorize("hasAnyRole('EMPLEADOR', 'ADMIN')")
-    @PatchMapping("/{id}/rechazar")
+    @PatchMapping("/{id:[0-9]+}/rechazar")
     public ResponseEntity<PostulacionDTO> rechazarPostulacion(@PathVariable Long id) {
         return ResponseEntity.ok(service.rechazarPostulacion(id));
     }
 
     @PreAuthorize("hasAnyRole('EMPLEADOR', 'ADMIN')")
-    @PatchMapping("/{id}/completar")
+    @PatchMapping("/{id:[0-9]+}/completar")
     public ResponseEntity<PostulacionDTO> completarPostulacion(@PathVariable Long id) {
         return ResponseEntity.ok(service.completarPostulacion(id));
     }
 
     @PreAuthorize("hasRole('TRABAJADOR')")
-    @PatchMapping("/{id}/retirar")
+    @PatchMapping("/{id:[0-9]+}/retirar")
     public ResponseEntity<PostulacionDTO> retirarPostulacion(@PathVariable Long id) {
         return ResponseEntity.ok(service.retirarPostulacion(id));
     }

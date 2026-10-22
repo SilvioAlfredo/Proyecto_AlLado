@@ -21,6 +21,9 @@ public class PublicacionForoDTO {
     @NotBlank(message = "El contenido no puede estar vacío.")
     private String contenido;
 
+    @Size(max = 100, message = "El sector no debe exceder los 100 caracteres.")
+    private String sector;
+
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime fechaCreacion;
 

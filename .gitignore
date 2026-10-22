@@ -1,23 +1,37 @@
-# Ignorar la carpeta de compilación de Maven
-target/
-
-# Ignorar archivos de configuración del IDE (IntelliJ, Eclipse, VS Code)
-.idea/
-*.iml
-.classpath
-.project
-.settings/
-.vscode/
-
-# Ignorar archivos de sistema o logs
-*.log
-.DS_Store
-
-# Ignorar repositorio y metadatos de Mercurial
+# Control de versiones local (Mercurial)
 .hg/
 .hgignore
 .hgtags
 
-# Carpetas ignoradas
-Testing/
-**/node_modules/
+# IDEs y editores
+.idea/
+*.iml
+.vscode/
+.qodo/
+
+# Compilados de Backend
+target/
+Backend/target/
+build/
+*.class
+
+# Dependencias y compilados de Frontend
+node_modules/
+Frontend/*/node_modules/
+FrontPrueba/
+Frontend/frontend-web/
+.next/
+Frontend/al_lado-app/.next/
+out/
+dist/
+*.tsbuildinfo
+
+# Mobile / Expo
+.expo/
+Frontend/al-lado-mobile/.expo/
+mini-app-android/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+*.log

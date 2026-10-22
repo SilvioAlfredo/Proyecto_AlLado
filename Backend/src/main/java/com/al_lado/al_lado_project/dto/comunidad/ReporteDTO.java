@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -20,8 +21,12 @@ public class ReporteDTO {
     @NotBlank(message = "La descripción del reporte es obligatoria.")
     private String descripcion;
 
+    @Size(max = 100, message = "El sector no debe exceder los 100 caracteres.")
+    private String sector;
+
     @Pattern(regexp = "PENDIENTE|EN_REVISION|RESUELTO|DESCARTADO", message = "Estado inválido. Valores permitidos: PENDIENTE, EN_REVISION, RESUELTO, DESCARTADO.")
     private String estado;
+
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime fechaCreacion;
 

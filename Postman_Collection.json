@@ -661,6 +661,293 @@
           "raw": "{\n  \"nombre\": \"Empresa ABC\",\n  \"email\": \"empleador@test.com\",\n  \"telefono\": \"+5491198765432\"\n}"
         }
       }
+    },
+    {
+      "name": "Comunidad",
+      "item": [
+        {
+          "name": "Favoritos - Agregar Favorito",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usuarioId\": {{userId}},\n  \"trabajadorId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/favoritos",
+              "host": ["{{baseUrl}}"],
+              "path": ["favoritos"]
+            }
+          }
+        },
+        {
+          "name": "Favoritos - Listar por Usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response is an array', function () {",
+                  "    var data = pm.response.json();",
+                  "    pm.expect(data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/favoritos/usuario/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["favoritos", "usuario", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Valoraciones - Crear Valoración",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"puntuacion\": 5,\n  \"comentario\": \"Excelente servicio profesional\",\n  \"autorId\": {{userId}},\n  \"destinatarioId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/valoraciones",
+              "host": ["{{baseUrl}}"],
+              "path": ["valoraciones"]
+            }
+          }
+        },
+        {
+          "name": "Valoraciones - Listar por Destinatario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/valoraciones/usuario/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["valoraciones", "usuario", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Suscripciones - Consultar Estado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 404', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/suscripciones/usuario/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["suscripciones", "usuario", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Donaciones - Registrar Donación",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monto\": 1500.0,\n  \"metodoPago\": \"MERCADO_PAGO\",\n  \"usuarioId\": {{userId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/donaciones",
+              "host": ["{{baseUrl}}"],
+              "path": ["donaciones"]
+            }
+          }
+        },
+        {
+          "name": "Reportes - Crear Reporte con Sector",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 or 201', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"motivo\": \"Spam comercial\",\n  \"descripcion\": \"Publicación reiterada fuera de tema\",\n  \"sector\": \"Norte\",\n  \"reportanteId\": {{userId}},\n  \"reportadoId\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/reportes",
+              "host": ["{{baseUrl}}"],
+              "path": ["reportes"]
+            }
+          }
+        },
+        {
+          "name": "Moderación - Listar y Filtrar Reportes por Sector",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reportes?sector=Norte",
+              "host": ["{{baseUrl}}"],
+              "path": ["reportes"],
+              "query": [
+                {
+                  "key": "sector",
+                  "value": "Norte"
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
   ],
   "event": [
