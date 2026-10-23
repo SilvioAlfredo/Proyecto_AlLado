@@ -12,10 +12,13 @@ import com.al_lado.al_lado_project.repository.usuario.UsuarioRepository;
 import com.al_lado.al_lado_project.repository.trabajo.OportunidadLaboralRepository;
 import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.usuario.SuscripcionService;
+import com.al_lado.al_lado_project.service.usuario.SuscripcionVigencia;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
@@ -29,6 +32,7 @@ public class SuscripcionServiceImpl implements SuscripcionService {
     private final UsuarioRepository usuarioRepository;
     private final OportunidadLaboralRepository oportunidadLaboralRepository;
     private final SuscripcionMapper mapper;
+    private final Clock clock;
 
     @Override
     @Transactional(readOnly = true)
@@ -67,21 +71,39 @@ public class SuscripcionServiceImpl implements SuscripcionService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + usuarioId));
 
+        // AL-SEC-007: PRO se concede únicamente al verificar una transferencia.
+        boolean admin = SecurityUtils.isAdmin();
+        String nivelSolicitado = dto.getNivel() != null ? dto.getNivel().toUpperCase() : "BASICO";
+        if (!"BASICO".equals(nivelSolicitado) && !"PRO".equals(nivelSolicitado)) {
+            throw new BusinessRuleException("Nivel inválido. Valores permitidos: BASICO, PRO.");
+        }
+        if ("PRO".equals(nivelSolicitado) && !admin) {
+            throw new AccessDeniedException(
+                    "El plan PRO solo puede activarlo un administrador después de verificar el aporte.");
+        }
+        if ("PRO".equals(nivelSolicitado)) {
+            throw new BusinessRuleException(
+                    "El plan PRO solo se activa al verificar una transferencia de suscripción.");
+        }
+
         if (repository.existsByUsuarioId(usuarioId)) {
-            // Sincronía con el frontend ("Mi plan" re-activa PRO): en lugar de
-            // rechazar con duplicado se reactiva la suscripción existente.
+            // En vez de duplicar el registro, reactiva la suscripción existente.
             Suscripcion existente = repository.findByUsuarioId(usuarioId)
                     .orElseThrow(() -> new ResourceNotFoundException("Suscripción no encontrada para el usuario con ID: " + usuarioId));
-            SecurityUtils.requireSelfOrAdmin(usuarioId);
-            existente.setNivel(dto.getNivel());
-            existente.setFechaInicio(dto.getFechaInicio());
-            existente.setFechaFin(dto.getFechaFin());
+            existente.setNivel(nivelSolicitado);
+            existente.setFechaInicio(admin && dto.getFechaInicio() != null
+                    ? dto.getFechaInicio() : hoy());
+            existente.setFechaFin(admin ? dto.getFechaFin() : null);
             existente.setActiva(true);
             return mapper.toDTO(repository.save(existente));
         }
 
         Suscripcion suscripcion = mapper.toEntity(dto);
         suscripcion.setUsuario(usuario);
+        suscripcion.setNivel(nivelSolicitado);
+        suscripcion.setFechaInicio(admin && dto.getFechaInicio() != null
+                ? dto.getFechaInicio() : hoy());
+        suscripcion.setFechaFin(admin ? dto.getFechaFin() : null);
         suscripcion.setActiva(true);
 
         return mapper.toDTO(repository.save(suscripcion));
@@ -120,53 +142,43 @@ public class SuscripcionServiceImpl implements SuscripcionService {
     @Override
     @Transactional(readOnly = true)
     public boolean puedePublicarOferta(Long usuarioId) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
+        usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + usuarioId));
 
-        Suscripcion suscripcion = repository.findByUsuarioId(usuarioId)
-                .orElseGet(() -> {
-                    // El usuario no tiene suscripción -> es Nivel Básico (limitado a 3/mes)
-                    return null;
-                });
-
-        if (suscripcion == null || suscripcion.getNivel() == null
-                || !suscripcion.isActiva() || estaVencida(suscripcion)
-                || "BASICO".equalsIgnoreCase(suscripcion.getNivel())) {
-            // Nivel Básico (o PRO inactiva/vencida): límite de 3 ofertas por mes
+        Suscripcion suscripcion = repository.findByUsuarioId(usuarioId).orElse(null);
+        if (suscripcion == null || !esProVigente(suscripcion)) {
             long ofertasMes = contarOfertasPorMes(usuarioId, suscripcion);
             return ofertasMes < 3;
-        } else {
-            // Nivel Pro vigente: ofertas ilimitadas
-            return true;
         }
+        return true;
     }
 
-    private boolean estaVencida(Suscripcion suscripcion) {
-        return suscripcion.getFechaFin() != null && suscripcion.getFechaFin().isBefore(LocalDate.now());
+    private LocalDate hoy() {
+        return LocalDate.now(clock);
     }
 
-    /**
-     * Comprueba nivel PRO, activa y fecha de fin.
-     *
-     * <p>Una fecha de fin igual a hoy sigue vigente. No comprueba fechaInicio.</p>
-     */
+    private boolean esVigente(Suscripcion suscripcion) {
+        return SuscripcionVigencia.esVigente(suscripcion, hoy());
+    }
+
+    private boolean esProVigente(Suscripcion suscripcion) {
+        return "PRO".equalsIgnoreCase(suscripcion.getNivel()) && esVigente(suscripcion);
+    }
+
+    /** Comprueba nivel PRO, activa y fechas inclusivas de vigencia. */
     @Override
     @Transactional(readOnly = true)
     public boolean esProVigente(Long usuarioId) {
         return repository.findByUsuarioId(usuarioId)
-                .filter(s -> "PRO".equalsIgnoreCase(s.getNivel()))
-                .filter(Suscripcion::isActiva)
-                .filter(s -> !estaVencida(s))
+                .filter(this::esProVigente)
                 .isPresent();
     }
 
     private long contarOfertasPorMes(Long usuarioId, Suscripcion suscripcion) {
-        // Contar ofertas publicadas en el mes actual
-        YearMonth currentMonth = YearMonth.now();
+        YearMonth currentMonth = YearMonth.now(clock);
         return oportunidadLaboralRepository.countByAutorIdAndActivaAndFechaCreacionBetween(
                 usuarioId, true,
                 currentMonth.atDay(1).atStartOfDay(),
-                // YearMonth no tiene atEndOfDay(): se toma el último día del mes
                 currentMonth.atEndOfMonth().atTime(23, 59, 59));
     }
 }

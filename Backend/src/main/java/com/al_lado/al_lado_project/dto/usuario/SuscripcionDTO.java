@@ -24,4 +24,6 @@ public class SuscripcionDTO {
 
     private LocalDate fechaFin;
     private boolean activa;
+    /** Estado temporal, independiente del indicador administrativo {@code activa}. */
+    private boolean vigente;
 }

@@ -245,6 +245,11 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
                     "Actualiza a Nivel Pro para publicar ofertas ilimitadas.");
             }
         } else {
+            boolean reactivando = !oportunidad.isActiva() && dto.isActiva();
+            if (reactivando && !suscripcionService.puedePublicarOferta(autorId)) {
+                throw new BusinessRuleException("Límite mensual de ofertas alcanzado. " +
+                    "Actualiza a Nivel Pro para publicar ofertas ilimitadas.");
+            }
             oportunidad.setActiva(dto.isActiva());
         }
 

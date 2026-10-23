@@ -33,9 +33,7 @@ export default function SuscripcionAportesPage() {
   );
   const aportes = useTrabajadorQuery('aportes', (id) => donacionesService.porUsuario(id));
   const sub = consulta.data;
-  const vigente =
-    !!sub?.activa &&
-    (!sub.fechaFin || sub.fechaFin >= new Date().toLocaleDateString('sv-SE'));
+  const vigente = !!sub?.vigente;
   const cancelar = useMutation({
     mutationFn: (id: number) => suscripcionesService.cancelar(id),
     onSuccess: async () => {
@@ -95,7 +93,14 @@ export default function SuscripcionAportesPage() {
           </h2>
           {sub && (
             <>
-              <p>Estado: {vigente ? 'Activa' : 'Inactiva o vencida'}</p>
+              <p>
+                Estado:{' '}
+                {vigente
+                  ? 'Activa y vigente'
+                  : sub.activa
+                    ? 'Activa, fuera de vigencia'
+                    : 'Inactiva o vencida'}
+              </p>
               <p>Desde: {formatDate(sub.fechaInicio)}</p>
               <p>
                 Hasta:{' '}

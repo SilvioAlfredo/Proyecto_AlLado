@@ -13,6 +13,9 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -25,7 +28,8 @@ class TransferenciaVerificacionTest {
     DonacionServiceImpl service;
     Donacion record;
     @BeforeEach void setup() {
-        service = new DonacionServiceImpl(repository, usuarios, subs, mapper);
+        service = new DonacionServiceImpl(repository, usuarios, subs, mapper,
+                Clock.fixed(Instant.parse("2025-05-10T12:00:00Z"), ZoneOffset.UTC));
         record = new Donacion(); record.setEstado("PENDIENTE"); record.setAsuntoTransferencia("REF-123"); record.setMonto(new BigDecimal("12000.00")); record.setUsuario(new Trabajador()); record.getUsuario().setId(3L);
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(record));
     }
@@ -46,7 +50,7 @@ class TransferenciaVerificacionTest {
         service.verificarTransferencia(1L,"REF-123",new BigDecimal("12000"));
         var captor = ArgumentCaptor.forClass(Suscripcion.class); verify(subs).save(captor.capture());
         assertEquals("PRO",captor.getValue().getNivel()); assertTrue(captor.getValue().isActiva());
-        assertEquals(LocalDate.now().plusYears(1),captor.getValue().getFechaFin());
+        assertEquals(LocalDate.of(2026, 5, 10),captor.getValue().getFechaFin());
         assertThrows(BusinessRuleException.class, () -> service.verificarTransferencia(1L,"REF-123",new BigDecimal("12000")));
         verify(repository,times(1)).save(record); verify(subs,times(1)).save(any());
     }

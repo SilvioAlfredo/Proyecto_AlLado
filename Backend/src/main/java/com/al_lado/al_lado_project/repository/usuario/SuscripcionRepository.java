@@ -57,8 +57,8 @@ public interface SuscripcionRepository extends JpaRepository<Suscripcion, Long>,
     List<Suscripcion> findByActivaTrueAndFechaFinBefore(LocalDate fecha);
 
     /**
-     * Suscripción vigente de un usuario: {@code activa} y {@code fechaFin} nula o
-     * {@code ≥ :hoy} (incluye la fecha final). No filtra por nivel.
+     * Suscripción vigente de un usuario: {@code activa}, {@code fechaInicio ≤ hoy},
+     * y {@code fechaFin} nula o {@code ≥ hoy} (incluye ambas fechas). No filtra por nivel.
      *
      * <p>La consulta no exige nivel PRO; esa comprobación adicional corresponde
      * a {@code SuscripcionServiceImpl#esProVigente}.</p>
@@ -66,17 +66,15 @@ public interface SuscripcionRepository extends JpaRepository<Suscripcion, Long>,
      * @param usuarioId ID del usuario
      * @param hoy       fecha de referencia
      */
-    @Query("SELECT s FROM Suscripcion s WHERE s.usuario.id = :usuarioId AND s.activa = true AND (s.fechaFin IS NULL OR s.fechaFin >= :hoy)")
+    @Query("SELECT s FROM Suscripcion s WHERE s.usuario.id = :usuarioId AND s.activa = true AND s.fechaInicio <= :hoy AND (s.fechaFin IS NULL OR s.fechaFin >= :hoy)")
     Optional<Suscripcion> findSuscripcionVigentePorUsuarioId(@Param("usuarioId") Long usuarioId, @Param("hoy") LocalDate hoy);
 
     /**
-     * Cantidad de suscripciones con nivel PRO y {@code activa=true}, <b>sin mirar
-     * {@code fechaFin}</b>: un plan PRO vencido pero aún marcado como activo también
-     * se cuenta. Base del cálculo de ingresos del dashboard (15.000 por unidad), que
-     * por eso es una estimación.
+     * Cantidad de suscripciones PRO vigentes para una fecha: activa, iniciada y no vencida.
+     * Base del cálculo estimado de ingresos del dashboard (15.000 por unidad).
      *
      * <p>Usada por {@code AdministradorServiceImpl#obtenerMetricasDashboard}.</p>
      */
-    @Query("SELECT COUNT(s) FROM Suscripcion s WHERE s.activa = true AND UPPER(s.nivel) = 'PRO'")
-    long countActivasPro();
+    @Query("SELECT COUNT(s) FROM Suscripcion s WHERE s.activa = true AND UPPER(s.nivel) = 'PRO' AND s.fechaInicio <= :hoy AND (s.fechaFin IS NULL OR s.fechaFin >= :hoy)")
+    long countProVigentes(@Param("hoy") LocalDate hoy);
 }

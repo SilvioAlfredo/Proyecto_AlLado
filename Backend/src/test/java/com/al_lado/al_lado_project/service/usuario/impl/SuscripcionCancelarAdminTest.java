@@ -10,6 +10,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import java.time.LocalDate;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,7 +30,8 @@ class SuscripcionCancelarAdminTest {
         var end = LocalDate.now().plusYears(1);
         var sub = new Suscripcion(owner,"PRO",LocalDate.now(),end,true); sub.setId(44L);
         when(repository.findById(44L)).thenReturn(Optional.of(sub)); when(repository.save(sub)).thenReturn(sub);
-        new SuscripcionServiceImpl(repository,usuarios,ofertas,mapper).cancelar(44L);
+        new SuscripcionServiceImpl(repository,usuarios,ofertas,mapper,
+                Clock.fixed(Instant.parse("2025-05-10T12:00:00Z"), ZoneOffset.UTC)).cancelar(44L);
         assertFalse(sub.isActiva()); assertEquals(44L,sub.getId()); assertEquals(end,sub.getFechaFin());
         verify(repository).save(sub); verify(repository,never()).deleteById(any());
     }
