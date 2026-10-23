@@ -3,3 +3,8 @@ podman run --name al_lado_db \
   -e POSTGRES_DB=al_lado_db \
   -p 5432:5432 \
   -d postgres:18
+# Perfil de desarrollo local para el backend (configurarlo en la ejecucion de Spring Boot):
+#   SPRING_PROFILES_ACTIVE=dev
+#   DB_PASSWORD=1234 (coincide con el contenedor de desarrollo de arriba)
+# En produccion usar SPRING_PROFILES_ACTIVE=prod y definir DB_URL, DB_USERNAME,
+# DB_PASSWORD y JWT_SECRET en el entorno de despliegue. No usar la clave del contenedor.
