@@ -57,6 +57,12 @@ public class Trabajador extends Usuario {
     @Column(length = 100)
     private String sector; // sector barrial o zona (HU-13 CA-02, RF-13)
 
+    @Column(name = "latitud")
+    private Double latitud;
+
+    @Column(name = "longitud")
+    private Double longitud;
+
     @Column(length = 255)
     private String tokenPush; // Token para notificaciones push (FCM/APNs)
 

@@ -1,6 +1,7 @@
 package com.al_lado.al_lado_project.service.trabajo.impl;
 
 import com.al_lado.al_lado_project.dto.trabajo.FiltrosOportunidadesDTO;
+import com.al_lado.al_lado_project.dto.trabajo.CandidatoMatchingDTO;
 import com.al_lado.al_lado_project.dto.trabajo.OportunidadLaboralDTO;
 import com.al_lado.al_lado_project.entity.trabajo.OportunidadLaboral;
 import com.al_lado.al_lado_project.entity.usuario.Empleador;
@@ -224,6 +225,11 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
         oportunidad.setUbicacion(dto.getUbicacion());
         oportunidad.setModalidad(dto.getModalidad());
         oportunidad.setRangoSalarial(dto.getRangoSalarial());
+        oportunidad.setLatitud(dto.getLatitud());
+        oportunidad.setLongitud(dto.getLongitud());
+        oportunidad.setDiaSemanaRequerido(dto.getDiaSemanaRequerido());
+        oportunidad.setHoraInicioRequerida(dto.getHoraInicioRequerida());
+        oportunidad.setHoraFinRequerida(dto.getHoraFinRequerida());
         oportunidad.setAutor(empleador);
 
         // Las etiquetas se resuelven contra el repositorio para trabajar
@@ -352,5 +358,129 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
         return buscarPorFiltros(null, null, especialidades).stream()
                 .sorted(Comparator.comparing(OportunidadLaboralDTO::isDestacada).reversed())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Ordena candidatos por especialidades coincidentes, distancia real y horario.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<CandidatoMatchingDTO> candidatosParaOportunidad(Long oportunidadId, double radioKm) {
+        if (!Double.isFinite(radioKm) || radioKm <= 0 || radioKm > 200) {
+            throw new BusinessRuleException("El radio debe ser mayor que 0 y no superar 200 km.");
+        }
+        OportunidadLaboral oportunidad = repository.findById(oportunidadId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Oportunidad no encontrada con ID: " + oportunidadId));
+        Long propietarioId = oportunidad.getAutor() != null ? oportunidad.getAutor().getId() : null;
+        SecurityUtils.requireSelfOrAdmin(propietarioId);
+        if (!oportunidad.isActiva()) {
+            return List.of();
+        }
+
+        boolean esRemota = "REMOTO".equalsIgnoreCase(oportunidad.getModalidad());
+        if (!esRemota && (oportunidad.getLatitud() == null || oportunidad.getLongitud() == null)) {
+            throw new BusinessRuleException("La oportunidad debe tener coordenadas para buscar candidatos por radio.");
+        }
+
+        Set<String> etiquetasOferta = oportunidad.getEtiquetas() == null ? Set.of()
+                : oportunidad.getEtiquetas().stream()
+                        .map(Etiqueta::getNombre)
+                        .map(this::normalizarTexto)
+                        .filter(nombre -> !nombre.isEmpty())
+                        .collect(Collectors.toSet());
+        return trabajadorRepository.findAllHabilitadosParaMatching().stream()
+                .map(trabajador -> puntuarCandidato(trabajador, oportunidad, etiquetasOferta,
+                        radioKm, esRemota))
+                .filter(Objects::nonNull)
+                .filter(candidato -> !etiquetasOferta.isEmpty()
+                        && !candidato.getEspecialidadesCoincidentes().isEmpty())
+                .filter(candidato -> !candidato.isHorarioRequerido()
+                        || candidato.isDisponibilidadCoincidente())
+                .sorted(Comparator.comparingInt(CandidatoMatchingDTO::getPuntuacion).reversed()
+                        .thenComparingDouble(CandidatoMatchingDTO::getDistanciaKm)
+                        .thenComparing(CandidatoMatchingDTO::getNombre,
+                                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(CandidatoMatchingDTO::getTrabajadorId))
+                .collect(Collectors.toList());
+    }
+
+    private CandidatoMatchingDTO puntuarCandidato(Trabajador trabajador,
+                                                   OportunidadLaboral oportunidad,
+                                                   Set<String> etiquetasOferta,
+                                                   double radioKm,
+                                                   boolean esRemota) {
+        List<String> coincidentes = trabajador.getEspecialidades() == null ? List.of()
+                : trabajador.getEspecialidades().stream()
+                        .filter(etiqueta -> etiquetasOferta.contains(normalizarTexto(etiqueta.getNombre())))
+                        .map(Etiqueta::getNombre)
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .sorted(String.CASE_INSENSITIVE_ORDER)
+                        .collect(Collectors.toList());
+
+        double distanciaKm;
+        if (esRemota) {
+            distanciaKm = 0;
+        } else if (trabajador.getLatitud() == null || trabajador.getLongitud() == null) {
+            return null;
+        } else {
+            distanciaKm = distanciaKm(oportunidad.getLatitud(), oportunidad.getLongitud(),
+                    trabajador.getLatitud(), trabajador.getLongitud());
+            if (distanciaKm > radioKm) {
+                return null;
+            }
+        }
+        boolean disponibilidadDeclarada = trabajador.getHorarios() != null
+                && !trabajador.getHorarios().isEmpty();
+        boolean horarioRequerido = oportunidad.getDiaSemanaRequerido() != null
+                && oportunidad.getHoraInicioRequerida() != null
+                && oportunidad.getHoraFinRequerida() != null;
+        boolean disponibilidadCoincidente = !horarioRequerido || (trabajador.getHorarios() != null
+                && trabajador.getHorarios().stream().anyMatch(h ->
+                    oportunidad.getDiaSemanaRequerido().equalsIgnoreCase(h.getDiaSemana())
+                    && h.getHoraInicio().isBefore(oportunidad.getHoraFinRequerida())
+                    && oportunidad.getHoraInicioRequerida().isBefore(h.getHoraFin())));
+
+        int puntuacionHabilidades = etiquetasOferta.isEmpty() ? 0
+                : (int) Math.round(60.0 * coincidentes.size() / etiquetasOferta.size());
+        int puntuacionDistancia = esRemota ? 25
+                : (int) Math.round(25.0 * Math.max(0, 1.0 - distanciaKm / radioKm));
+        int puntuacionDisponibilidad = horarioRequerido && disponibilidadCoincidente ? 15 : 0;
+
+        CandidatoMatchingDTO candidato = new CandidatoMatchingDTO();
+        candidato.setTrabajadorId(trabajador.getId());
+        candidato.setNombre(trabajador.getNombre());
+        candidato.setSector(trabajador.getSector());
+        candidato.setEspecialidadesCoincidentes(coincidentes);
+        candidato.setDistanciaKm(Math.round(distanciaKm * 100.0) / 100.0);
+        candidato.setDentroDelRadio(true);
+        candidato.setDisponibilidadDeclarada(disponibilidadDeclarada);
+        candidato.setDisponibilidadCoincidente(disponibilidadCoincidente);
+        candidato.setHorarioRequerido(horarioRequerido);
+        candidato.setPuntuacion(Math.min(100,
+                puntuacionHabilidades + puntuacionDistancia + puntuacionDisponibilidad));
+        return candidato;
+    }
+
+    private double distanciaKm(double lat1, double lon1, double lat2, double lon2) {
+        final double radioTierraKm = 6371.0088;
+        double diferenciaLatitud = Math.toRadians(lat2 - lat1);
+        double diferenciaLongitud = Math.toRadians(lon2 - lon1);
+        double a = Math.pow(Math.sin(diferenciaLatitud / 2), 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.pow(Math.sin(diferenciaLongitud / 2), 2);
+        a = Math.max(0, Math.min(1, a));
+        return 2 * radioTierraKm * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    private String normalizarTexto(String texto) {
+        if (texto == null) {
+            return "";
+        }
+        return java.text.Normalizer.normalize(texto.trim(), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase()
+                .replaceAll("\\s+", " ");
     }
 }

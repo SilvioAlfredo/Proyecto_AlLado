@@ -44,6 +44,11 @@ public class OportunidadLaboralMapper extends PostBaseMapper {
         dto.setUbicacion(entity.getUbicacion());
         dto.setModalidad(entity.getModalidad());
         dto.setRangoSalarial(entity.getRangoSalarial());
+        dto.setLatitud(entity.getLatitud());
+        dto.setLongitud(entity.getLongitud());
+        dto.setDiaSemanaRequerido(entity.getDiaSemanaRequerido());
+        dto.setHoraInicioRequerida(entity.getHoraInicioRequerida());
+        dto.setHoraFinRequerida(entity.getHoraFinRequerida());
         dto.setActiva(entity.isActiva());
         dto.setDestacada(entity.isDestacada());
 
@@ -78,6 +83,11 @@ public class OportunidadLaboralMapper extends PostBaseMapper {
         entity.setUbicacion(dto.getUbicacion());
         entity.setModalidad(dto.getModalidad());
         entity.setRangoSalarial(dto.getRangoSalarial());
+        entity.setLatitud(dto.getLatitud());
+        entity.setLongitud(dto.getLongitud());
+        entity.setDiaSemanaRequerido(dto.getDiaSemanaRequerido());
+        entity.setHoraInicioRequerida(dto.getHoraInicioRequerida());
+        entity.setHoraFinRequerida(dto.getHoraFinRequerida());
         entity.setActiva(dto.isActiva());
         entity.setDestacada(dto.isDestacada());
 

@@ -52,6 +52,8 @@ public class TrabajadorMapper {
         dto.setBiografia(entity.getBiografia());
         dto.setCertificados(entity.getCertificados());
         dto.setSector(entity.getSector());
+        dto.setLatitud(entity.getLatitud());
+        dto.setLongitud(entity.getLongitud());
 
         if (entity.getEspecialidades() != null) {
             dto.setEspecialidades(entity.getEspecialidades().stream()
@@ -106,6 +108,8 @@ public class TrabajadorMapper {
         entity.setBiografia(dto.getBiografia());
         entity.setCertificados(dto.getCertificados());
         entity.setSector(dto.getSector());
+        entity.setLatitud(dto.getLatitud());
+        entity.setLongitud(dto.getLongitud());
 
         if (dto.getEspecialidades() != null) {
             entity.setEspecialidades(dto.getEspecialidades().stream()

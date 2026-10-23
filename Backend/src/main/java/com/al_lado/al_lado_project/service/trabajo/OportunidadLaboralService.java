@@ -1,6 +1,7 @@
 package com.al_lado.al_lado_project.service.trabajo;
 
 import com.al_lado.al_lado_project.dto.trabajo.FiltrosOportunidadesDTO;
+import com.al_lado.al_lado_project.dto.trabajo.CandidatoMatchingDTO;
 import com.al_lado.al_lado_project.dto.trabajo.OportunidadLaboralDTO;
 import com.al_lado.al_lado_project.entity.usuario.Trabajador;
 import org.springframework.data.domain.Page;
@@ -140,4 +141,7 @@ public interface OportunidadLaboralService {
      *     si actúa un tercero sin rol ADMIN
      */
     List<OportunidadLaboralDTO> propuestasProParaTrabajador(Long trabajadorId);
+
+    /** Devuelve trabajadores compatibles con una oportunidad, ordenados por puntuación. */
+    List<CandidatoMatchingDTO> candidatosParaOportunidad(Long oportunidadId, double radioKm);
 }

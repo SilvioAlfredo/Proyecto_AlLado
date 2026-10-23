@@ -1,6 +1,7 @@
 package com.al_lado.al_lado_project.controller.trabajo;
 
 import com.al_lado.al_lado_project.dto.trabajo.FiltrosOportunidadesDTO;
+import com.al_lado.al_lado_project.dto.trabajo.CandidatoMatchingDTO;
 import com.al_lado.al_lado_project.dto.trabajo.OportunidadLaboralDTO;
 import com.al_lado.al_lado_project.service.trabajo.OportunidadLaboralService;
 import jakarta.validation.Valid;
@@ -36,6 +37,14 @@ public class OportunidadLaboralController {
     @GetMapping("/{id}")
     public ResponseEntity<OportunidadLaboralDTO> obtenerOportunidad(@PathVariable Long id) {
         return ResponseEntity.ok(service.obtenerPorId(id));
+    }
+
+    @PreAuthorize("hasAnyRole('EMPLEADOR', 'ADMIN')")
+    @GetMapping("/{id}/matching")
+    public ResponseEntity<List<CandidatoMatchingDTO>> candidatosMatching(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "10") double radioKm) {
+        return ResponseEntity.ok(service.candidatosParaOportunidad(id, radioKm));
     }
 
     @PreAuthorize("hasAnyRole('EMPLEADOR', 'ADMIN')")

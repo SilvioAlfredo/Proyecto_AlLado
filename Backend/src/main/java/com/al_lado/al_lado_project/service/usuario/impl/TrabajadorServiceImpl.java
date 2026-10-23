@@ -102,6 +102,8 @@ public class TrabajadorServiceImpl implements TrabajadorService {
         trabajador.setBiografia(dto.getBiografia());
         trabajador.setCertificados(dto.getCertificados());
         trabajador.setSector(dto.getSector());
+        trabajador.setLatitud(dto.getLatitud());
+        trabajador.setLongitud(dto.getLongitud());
 
         // Especialidades siempre como entidades gestionadas (evita
         // duplicados por unique y re-inserciones en lote).
