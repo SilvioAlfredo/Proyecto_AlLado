@@ -32,3 +32,8 @@ Frontend/*/test-results/
 # Bytecode compilado de Python (scripts de pruebas E2E)
 __pycache__/
 *.pyc
+
+# Frontend al_lado-app (Next.js) - artefactos de construccion (no versionar)
+Frontend/al_lado-app/node_modules/
+Frontend/al_lado-app/.next/
+Frontend/al_lado-app/tsconfig.tsbuildinfo
