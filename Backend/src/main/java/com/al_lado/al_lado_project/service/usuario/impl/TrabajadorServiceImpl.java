@@ -46,16 +46,9 @@ public class TrabajadorServiceImpl implements TrabajadorService {
     @Override
     @Transactional(readOnly = true)
     public List<TrabajadorDTO> filtrar(String etiqueta, String sector) {
-        List<Trabajador> base;
-        if (etiqueta != null && !etiqueta.isBlank()) {
-            base = repository.findByEspecialidadNombreIgnoreCase(etiqueta.trim());
-        } else {
-            base = repository.findAll();
-        }
-        String sectorNormalizado = sector != null ? sector.trim().toLowerCase() : null;
-        return base.stream()
-                .filter(t -> sectorNormalizado == null || sectorNormalizado.isEmpty()
-                        || (t.getSector() != null && t.getSector().toLowerCase().contains(sectorNormalizado)))
+        String etiquetaNormalizada = etiqueta == null || etiqueta.isBlank() ? null : etiqueta.trim();
+        String sectorNormalizado = sector == null || sector.isBlank() ? null : sector.trim();
+        return repository.filtrarPorEtiquetaYSector(etiquetaNormalizada, sectorNormalizado).stream()
                 .map(this::proyectar)
                 .collect(Collectors.toList());
     }

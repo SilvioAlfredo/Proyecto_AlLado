@@ -22,12 +22,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -89,6 +91,14 @@ class TrabajadorProyeccionTest {
         return t;
     }
 
+    @Test
+    void filtrar_delegaEtiquetaYSectorNormalizadosAlRepositorio() {
+        when(repository.filtrarPorEtiquetaYSector("Electricidad", "Villa Crespo")).thenReturn(List.of());
+
+        assertTrue(service.filtrar("  Electricidad  ", "  Villa Crespo  ").isEmpty());
+
+        verify(repository).filtrarPorEtiquetaYSector("Electricidad", "Villa Crespo");
+    }
     @Test
     void toDTOPublic_noDebeExponerEmailNiTelefono() {
         TrabajadorDTO dto = mapper.toDTOPublic(trabajador(1L));
