@@ -1,21 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { obtenerRefPorEmail } from '@/lib/usuarioRef';
 import { NotificacionesList } from '@/features/notificaciones/components/NotificacionesList';
 
-// Endpoints: GET /notificaciones/usuario/{id} (titular)
+// Endpoints: GET /notificaciones/usuario/{id} (titular). El id sale de la
+// sesión (AL-API-005), no de listar el directorio de usuarios.
 export default function EmpleadorNotificacionesPage() {
-  const { user } = useAuth();
-  const [usuarioId, setUsuarioId] = useState<number | null>(null);
+  const { userId } = useAuth();
 
-  useEffect(() => {
-    if (user?.email) {
-      obtenerRefPorEmail(user.email).then((ref) => setUsuarioId(ref?.id ?? null)).catch(() => {});
-    }
-  }, [user?.email]);
-
-  if (!usuarioId) return <p className="text-sm text-zinc-500">Cargando notificaciones...</p>;
-  return <NotificacionesList usuarioId={usuarioId} />;
+  if (!userId) return <p className="text-sm text-zinc-500">Cargando notificaciones...</p>;
+  return <NotificacionesList usuarioId={userId} />;
 }

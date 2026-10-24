@@ -1,34 +1,16 @@
-import api from '@/lib/api';
-import { TrabajadorDTO, EmpleadorDTO, UsuarioResumenDTO } from '@/types/usuario';
+import { UsuarioResumenDTO } from '@/types/usuario';
 
-// Resuelve {id, nombre, email} del usuario en sesión buscando por email.
-// El backend exige autor/usuario/emisor/reportante/anunciante @NotNull en los POST,
-// pero el JWT solo guarda email/roles: hay que resolver el id contra cada tabla
-// (trabajadores, empleadores y administradores, según el rol en sesión).
-export async function obtenerRefPorEmail(email: string): Promise<UsuarioResumenDTO | null> {
-  const mail = email.toLowerCase();
-  try {
-    const { data } = await api.get<TrabajadorDTO[]>('/trabajadores');
-    const t = data.find((u) => u.email?.toLowerCase() === mail);
-    if (t?.id) return { id: t.id, nombre: t.nombre, email: t.email };
-  } catch {
-    /* sigue a empleadores */
-  }
-  try {
-    const { data } = await api.get<EmpleadorDTO[]>('/empleadores');
-    const e = data.find((u) => u.email?.toLowerCase() === mail);
-    if (e?.id) return { id: e.id, nombre: e.nombre, email: e.email };
-  } catch {
-    /* sigue a administradores */
-  }
-  try {
-    const { data } = await api.get<UsuarioResumenDTO[]>('/administradores');
-    const a = data.find((u) => u.email?.toLowerCase() === mail);
-    if (a?.id) return { id: a.id, nombre: a.nombre, email: a.email };
-  } catch {
-    return null;
-  }
-  return null;
+// AL-API-005: la referencia {id, nombre, email} del usuario en sesión sale de lo
+// guardado en el navegador (login/registro o rehidratación con GET /auth/me),
+// nunca de listar el directorio de usuarios y comparando emails.
+export function obtenerRefSesion(): UsuarioResumenDTO | null {
+  if (typeof window === 'undefined') return null;
+  const email = localStorage.getItem('user_email');
+  if (!email) return null;
+  const idGuardado = localStorage.getItem('user_id');
+  // Sesión anterior a AL-API-005 sin id: queda en 0 hasta rehidratarlo
+  const id = idGuardado && Number.isFinite(Number(idGuardado)) ? Number(idGuardado) : 0;
+  return { id, nombre: localStorage.getItem('user_nombre') ?? '', email };
 }
 
 export function emailSesion(): string | null {

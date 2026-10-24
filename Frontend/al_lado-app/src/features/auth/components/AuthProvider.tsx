@@ -3,12 +3,16 @@ import { useSyncExternalStore, type ReactNode } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import type { UsuarioDTO } from '@/types/usuario';
-import type { AuthRequestDTO, RegisterCredentials } from '@/types/auth';
+import { userIdFromToken } from '@/lib/jwt';
+import type { AuthRequestDTO, AuthResponseDTO, RegisterCredentials } from '@/types/auth';
 import { AuthContext, type UserSession } from '../hooks/useAuth';
 import { authService } from '../services/authService';
 import { loginDestination } from '../lib/access';
 const SESSION_EVENT = 'allado-session';
+// Claves de la sesión completa en el navegador (AL-API-005)
+const SESSION_KEYS = ['auth_token', 'user_email', 'user_roles', 'user_id', 'user_nombre'];
+// El snapshot incluye user_id para exponer el identificador en el primer render
+const SNAPSHOT_KEYS = ['auth_token', 'user_email', 'user_roles', 'user_id'];
 function subscribe(callback: () => void) {
   window.addEventListener('storage', callback);
   window.addEventListener(SESSION_EVENT, callback);
@@ -18,27 +22,28 @@ function subscribe(callback: () => void) {
   };
 }
 function snapshot() {
-  return JSON.stringify(
-    ['auth_token', 'user_email', 'user_roles'].map((key) => localStorage.getItem(key)),
-  );
+  return JSON.stringify(SNAPSHOT_KEYS.map((key) => localStorage.getItem(key)));
 }
-function readSession(raw: string): UserSession | null {
+function readSession(raw: string): { user: UserSession | null; userId: number | null } {
   try {
-    const [token, email, roles] = JSON.parse(raw);
+    const [token, email, roles, userIdGuardado] = JSON.parse(raw);
     const parsed = JSON.parse(roles || '[]');
-    return token &&
-      email &&
-      Array.isArray(parsed) &&
-      parsed.every((role) => typeof role === 'string')
-      ? { email, roles: parsed }
-      : null;
+    const user =
+      token && email && Array.isArray(parsed) && parsed.every((role) => typeof role === 'string')
+        ? { email, roles: parsed }
+        : null;
+    // AL-API-005: el id se lee de lo guardado o del claim uid del token, en el
+    // navegador; no hace falta esperar a la API para conocerlo
+    const guardado =
+      userIdGuardado && Number.isFinite(Number(userIdGuardado)) ? Number(userIdGuardado) : null;
+    return { user, userId: user ? guardado ?? userIdFromToken(token) : null };
   } catch {
-    return null;
+    return { user: null, userId: null };
   }
 }
 export function AuthProvider({ children }: { children: ReactNode }) {
   const raw = useSyncExternalStore(subscribe, snapshot, () => '');
-  const user = readSession(raw);
+  const { user, userId: userIdSincronico } = readSession(raw);
   const router = useRouter();
   const queryClient = useQueryClient();
   const identity = useQuery({
@@ -47,23 +52,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     staleTime: Infinity,
     retry: false,
     queryFn: async () => {
-      const path = user?.roles.includes('ROLE_ADMIN')
-        ? '/administradores'
-        : user?.roles.includes('ROLE_EMPLEADOR')
-          ? '/empleadores'
-          : '/trabajadores';
-      const { data } = await api.get<UsuarioDTO[]>(path);
-      return (
-        data.find((person) => person.email.toLowerCase() === user?.email.toLowerCase())
-          ?.id ?? null
-      );
+      // AL-API-005: el identificador sale de lo guardado en el navegador o del
+      // claim uid del token; solo si no está se pide GET /auth/me. Nunca se
+      // lista el directorio de usuarios.
+      const guardado = localStorage.getItem('user_id');
+      if (guardado && Number.isFinite(Number(guardado))) return Number(guardado);
+      const uid = userIdFromToken(localStorage.getItem('auth_token'));
+      if (uid !== null) {
+        localStorage.setItem('user_id', String(uid));
+        return uid;
+      }
+      const { data } = await api.get<{ id: number }>('/auth/me');
+      localStorage.setItem('user_id', String(data.id));
+      return data.id;
     },
   });
-  const persist = (data: { token: string; email: string; roles: string[] }) => {
+  const persist = (data: AuthResponseDTO) => {
     queryClient.clear();
     localStorage.setItem('auth_token', data.token);
     localStorage.setItem('user_email', data.email);
     localStorage.setItem('user_roles', JSON.stringify(data.roles));
+    // Identidad mínima que ya devuelve el backend en login/registro
+    const id = data.id ?? userIdFromToken(data.token);
+    if (id !== null && id !== undefined) localStorage.setItem('user_id', String(id));
+    if (data.nombre) localStorage.setItem('user_nombre', data.nombre);
     window.dispatchEvent(new Event(SESSION_EVENT));
   };
   const login = async (
@@ -82,9 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   const logout = async () => {
     await authService.logout();
-    ['auth_token', 'user_email', 'user_roles'].forEach((key) =>
-      localStorage.removeItem(key),
-    );
+    SESSION_KEYS.forEach((key) => localStorage.removeItem(key));
     queryClient.clear();
     window.dispatchEvent(new Event(SESSION_EVENT));
     router.replace('/login');
@@ -93,8 +103,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        userId: identity.data ?? null,
-        loading: raw === '' || (!!user && identity.isPending),
+        userId: userIdSincronico ?? identity.data ?? null,
+        loading: raw === '' || (!!user && identity.isPending && userIdSincronico === null),
         login,
         register,
         logout,

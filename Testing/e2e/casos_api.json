@@ -1,0 +1,137 @@
+{
+  "_comentario": "Metadatos estaticos de los casos de API anadidos en la semana 1 (seguridad) y de los que el plan IEEE 829 prometia sin caso. Los usa el ejecutor (generar_evidencias.py) y el alta automatica de filas en la planilla (actualizar_planilla.py), para que la definicion y su registro no divergan.",
+  "casos": {
+    "TC-SEC-010": {
+      "trazabilidad": "RF-01 / HU-04 CA-01 (AL-API-005)",
+      "tipo": "Seguridad",
+      "tecnica": "Positivo",
+      "precondiciones": "Trabajador autenticado con token valido.",
+      "datos": "GET /auth/me con Authorization: Bearer <token_trabajador>",
+      "pasos": "1. Autenticarse como trabajador.\n2. Consultar GET /auth/me con el token.\n3. Verificar que la respuesta trae id, email y roles.",
+      "esperado": "HTTP 200 OK con {id, email, nombre, roles} del usuario autenticado.",
+      "prioridad": "Critica",
+      "titulo": "GET /auth/me devuelve la identidad de la sesion",
+      "codigo_esperado": 200
+    },
+    "TC-SEC-011": {
+      "trazabilidad": "RF-01 / HU-04 (AL-API-005)",
+      "tipo": "Seguridad",
+      "tecnica": "Negativa (RBAC)",
+      "precondiciones": "Sin sesion.",
+      "datos": "GET /auth/me sin cabecera Authorization",
+      "pasos": "1. Consultar GET /auth/me sin token.\n2. Verificar el codigo de respuesta.",
+      "esperado": "HTTP 401 Unauthorized.",
+      "prioridad": "Critica",
+      "titulo": "GET /auth/me sin token responde 401",
+      "codigo_esperado": 401
+    },
+    "TC-SEC-012": {
+      "trazabilidad": "RF-01 / HU-04 CA-02 (AL-SEC-005)",
+      "tipo": "Seguridad",
+      "tecnica": "Negativa",
+      "precondiciones": "Sin sesion. Se comparan las dos respuestas.",
+      "datos": "POST /auth/password/forgot {email}",
+      "pasos": "1. Pedir la recuperacion para un email registrado.\n2. Pedir la recuperacion para un email inexistente.\n3. Comparar ambos cuerpos: deben ser identicos.",
+      "esperado": "HTTP 200 OK en ambos casos y respuestas identicas.",
+      "prioridad": "Critica",
+      "titulo": "La recuperacion de contrasena no enumera cuentas",
+      "codigo_esperado": 200
+    },
+    "TC-SEC-013": {
+      "trazabilidad": "RF-01 / HU-04 CA-02 (AL-SEC-004)",
+      "tipo": "Seguridad",
+      "tecnica": "Negativa",
+      "precondiciones": "Token de sesion de un trabajador.",
+      "datos": "GET /auth/verify-email?token=<token_de_sesion>",
+      "pasos": "1. Autenticarse como trabajador.\n2. Usar ese token en GET /auth/verify-email.\n3. Verificar el codigo de respuesta.",
+      "esperado": "HTTP 400 Bad Request con mensaje de token invalido.",
+      "prioridad": "Critica",
+      "titulo": "Un token de sesion no verifica un correo",
+      "codigo_esperado": 400
+    },
+    "TC-SEC-014": {
+      "trazabilidad": "RF-09 / HU-12 CA-02 (AL-SEC-007)",
+      "tipo": "Seguridad",
+      "tecnica": "Negativa (RBAC)",
+      "precondiciones": "Empleador autenticado sin rol ADMIN.",
+      "datos": "POST /suscripciones {usuario, nivel: PRO, fechaInicio}",
+      "pasos": "1. Autenticarse como empleador.\n2. Intentar crear una suscripcion de nivel PRO a su nombre.\n3. Verificar el codigo de respuesta.",
+      "esperado": "HTTP 403 Forbidden: el plan PRO lo concede un administrador.",
+      "prioridad": "Critica",
+      "titulo": "Un usuario no puede auto-otorgarse el plan PRO",
+      "codigo_esperado": 403
+    },
+    "TC-SEC-015": {
+      "trazabilidad": "RF-04 / HU-01 (AL-SEC-006)",
+      "tipo": "Seguridad",
+      "tecnica": "Negativa",
+      "precondiciones": "Sin sesion.",
+      "datos": "GET /oportunidades/{id}/contacto sin Authorization",
+      "pasos": "1. Consultar el contacto de la oferta sin token.\n2. Verificar el codigo de respuesta.",
+      "esperado": "HTTP 401 Unauthorized.",
+      "prioridad": "Critica",
+      "titulo": "El contacto del empleador exige sesion",
+      "codigo_esperado": 401
+    },
+    "TC-SEC-016": {
+      "trazabilidad": "RF-02 / RF-03 (AL-SEC-006)",
+      "tipo": "Seguridad",
+      "tecnica": "Positivo y negativa",
+      "precondiciones": "Sin sesion.",
+      "datos": "GET /trabajadores",
+      "pasos": "1. Consultar el listado publico de trabajadores.\n2. Verificar que ningun elemento trae email ni telefono.",
+      "esperado": "HTTP 200 OK y ningun elemento con email ni telefono.",
+      "prioridad": "Critica",
+      "titulo": "El directorio publico no expone el email de los trabajadores",
+      "codigo_esperado": 200
+    },
+    "TC-SEC-017": {
+      "trazabilidad": "RF-12 / HU-12 (AL-SEC-006)",
+      "tipo": "Seguridad",
+      "tecnica": "Negativa",
+      "precondiciones": "Sin sesion.",
+      "datos": "GET /preferencias/trabajador/{id} sin Authorization",
+      "pasos": "1. Consultar las preferencias sin token.\n2. Verificar el codigo de respuesta.",
+      "esperado": "HTTP 401 Unauthorized.",
+      "prioridad": "Critica",
+      "titulo": "Las preferencias de notificacion ya no son publicas",
+      "codigo_esperado": 401
+    },
+    "TC-NEG-001": {
+      "trazabilidad": "RF-04 / HU-01 CA-01 (AL-SEC-003)",
+      "tipo": "Seguridad",
+      "tecnica": "Negativa (RBAC)",
+      "precondiciones": "La oportunidad pertenece a otro empleador.",
+      "datos": "PUT /oportunidades/{id} como empleador no titular",
+      "pasos": "1. Autenticarse como empleador.\n2. Editar una oferta que no es suya.\n3. Verificar el codigo de respuesta.",
+      "esperado": "HTTP 403 Forbidden.",
+      "prioridad": "Critica",
+      "titulo": "No se puede editar una oportunidad de otro empleador",
+      "codigo_esperado": 403
+    },
+    "TC-LIM-004": {
+      "trazabilidad": "RF-05 / HU-06 CA-01",
+      "tipo": "Integracion API",
+      "tecnica": "Valor limite",
+      "precondiciones": "Empleador y trabajador autenticados.",
+      "datos": "POST /valoraciones {puntuacion: 0, autor, trabajador}",
+      "pasos": "1. Autenticarse como empleador.\n2. Crear una valoracion con puntuacion 0.\n3. Verificar el codigo de respuesta.",
+      "esperado": "HTTP 400 Bad Request por puntuacion fuera de rango.",
+      "prioridad": "Alta",
+      "titulo": "Una valoracion con puntuacion fuera de rango se rechaza",
+      "codigo_esperado": 400
+    },
+    "TC-LIM-001": {
+      "trazabilidad": "RF-13 / HU-01 CA-02 (TC-LIM-001)",
+      "tipo": "Integracion API",
+      "tecnica": "Valor limite",
+      "precondiciones": "Empleador con plan basico y 3 ofertas creadas en el mes.",
+      "datos": "POST /oportunidades con un empleador de cuota agotada",
+      "pasos": "1. Crear 3 ofertas con un empleador nuevo.\n2. Intentar crear una cuarta.\n3. Verificar el codigo de respuesta.",
+      "esperado": "HTTP 400 Bad Request con el mensaje de limite mensual.",
+      "prioridad": "Alta",
+      "titulo": "El plan basico permite 3 ofertas por mes y bloquea la cuarta",
+      "codigo_esperado": 400
+    }
+  }
+}

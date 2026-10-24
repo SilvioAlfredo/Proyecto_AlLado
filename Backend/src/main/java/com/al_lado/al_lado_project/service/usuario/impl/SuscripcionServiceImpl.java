@@ -71,7 +71,9 @@ public class SuscripcionServiceImpl implements SuscripcionService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + usuarioId));
 
-        // AL-SEC-007: PRO se concede únicamente al verificar una transferencia.
+        // AL-SEC-007 (MEJ-002): el nivel PRO solo lo concede un administrador, tras
+        // verificar el aporte. Un usuario no puede auto-otorgarse PRO ni cambiar un
+        // plan existente a PRO por su cuenta.
         boolean admin = SecurityUtils.isAdmin();
         String nivelSolicitado = dto.getNivel() != null ? dto.getNivel().toUpperCase() : "BASICO";
         if (!"BASICO".equals(nivelSolicitado) && !"PRO".equals(nivelSolicitado)) {
@@ -81,16 +83,16 @@ public class SuscripcionServiceImpl implements SuscripcionService {
             throw new AccessDeniedException(
                     "El plan PRO solo puede activarlo un administrador después de verificar el aporte.");
         }
-        if ("PRO".equals(nivelSolicitado)) {
-            throw new BusinessRuleException(
-                    "El plan PRO solo se activa al verificar una transferencia de suscripción.");
-        }
+
 
         if (repository.existsByUsuarioId(usuarioId)) {
             // En vez de duplicar el registro, reactiva la suscripción existente.
             Suscripcion existente = repository.findByUsuarioId(usuarioId)
                     .orElseThrow(() -> new ResourceNotFoundException("Suscripción no encontrada para el usuario con ID: " + usuarioId));
+            SecurityUtils.requireSelfOrAdmin(usuarioId);
             existente.setNivel(nivelSolicitado);
+            // Sin ADMIN, el alta propia es siempre un plan básico sin vencimiento:
+            // las fechas las fija el administrador al conceder PRO.
             existente.setFechaInicio(admin && dto.getFechaInicio() != null
                     ? dto.getFechaInicio() : hoy());
             existente.setFechaFin(admin ? dto.getFechaFin() : null);

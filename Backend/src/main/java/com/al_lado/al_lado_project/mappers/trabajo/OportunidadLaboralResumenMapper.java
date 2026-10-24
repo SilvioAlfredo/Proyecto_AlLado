@@ -24,7 +24,10 @@ public class OportunidadLaboralResumenMapper {
     public OportunidadLaboral toEntity(OportunidadLaboralResumenDTO dto) {
         if (dto == null) return null;
         OportunidadLaboral entity = new OportunidadLaboral();
-        entity.setId(dto.getId());
+        // MEJ-003 / AL-SEC-008: el ID que manda el cliente no se copia en un alta.
+        // Sólo la base de datos asigna IDs, de modo que ninguna petición puede
+        // apuntar el alta a un registro existente y sobrescribirlo.
+        entity.setId(null);
         entity.setTitulo(dto.getTitulo());
         entity.setContenido(dto.getContenido());
         entity.setUbicacion(dto.getUbicacion());

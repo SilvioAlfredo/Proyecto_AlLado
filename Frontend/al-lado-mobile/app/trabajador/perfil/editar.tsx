@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Text, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Brand, Title, AppInput, AppButton } from '../../../src/components/ui';
-import { trabajadorService, resolveIdByEmail, etiquetasService } from '../../../src/api/services';
+import { trabajadorService, etiquetasService } from '../../../src/api/services';
 import { errMsg } from '../../../src/api/client';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function EditarPerfil() {
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [id, setId] = useState<number | null>(userId);
   const [nombre, setNombre] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -17,7 +17,7 @@ export default function EditarPerfil() {
 
   useEffect(() => {
     (async () => {
-      const rid = userId ?? (await resolveIdByEmail(email, 'TRABAJADOR'));
+      const rid = userId;
       setId(rid);
       if (!rid) return;
       const p = await trabajadorService.detalle(rid).catch(() => null);

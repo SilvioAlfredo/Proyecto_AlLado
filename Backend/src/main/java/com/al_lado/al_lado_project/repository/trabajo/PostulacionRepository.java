@@ -28,6 +28,12 @@ public interface PostulacionRepository extends JpaRepository<Postulacion, Long> 
 
     List<Postulacion> findByAutorId(Long autorId);
 
+    /**
+     * Postulaciones recibidas por las ofertas de un empleador (AL-SEC-006): es el
+     * alcance de lectura que le corresponde a un empleador sobre {@code GET /postulaciones}.
+     */
+    List<Postulacion> findByOportunidadLaboralAutorId(Long autorId);
+
     Optional<Postulacion> findByOportunidadLaboralIdAndAutorId(Long oportunidadId, Long autorId);
 
     boolean existsByOportunidadLaboralIdAndAutorId(Long oportunidadId, Long autorId);

@@ -32,7 +32,7 @@ public class PublicidadServiceImpl implements PublicidadService {
     @Transactional(readOnly = true)
     public List<PublicidadDTO> obtenerTodas() {
         return repository.findAll().stream()
-                .map(mapper::toDTO)
+                .map(this::proyectar)
                 .collect(Collectors.toList());
     }
 
@@ -41,14 +41,14 @@ public class PublicidadServiceImpl implements PublicidadService {
     public PublicidadDTO obtenerPorId(Long id) {
         Publicidad publicidad = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Publicidad no encontrada con ID: " + id));
-        return mapper.toDTO(publicidad);
+        return proyectar(publicidad);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<PublicidadDTO> obtenerPorAnunciante(Long anuncianteId) {
         return repository.findByAnuncianteId(anuncianteId).stream()
-                .map(mapper::toDTO)
+                .map(this::proyectar)
                 .collect(Collectors.toList());
     }
 
@@ -56,8 +56,20 @@ public class PublicidadServiceImpl implements PublicidadService {
     @Transactional(readOnly = true)
     public List<PublicidadDTO> obtenerVigentes() {
         return repository.buscarPublicidadesVigentes(LocalDate.now()).stream()
-                .map(mapper::toDTO)
+                .map(this::proyectar)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * El anuncio es de lectura pública, el email de su anunciante no: lo conserva
+     * sólo el propio anunciante o un administrador (AL-SEC-006).
+     */
+    private PublicidadDTO proyectar(Publicidad publicidad) {
+        if (publicidad == null) return null;
+        Long anuncianteId = publicidad.getAnunciante() != null ? publicidad.getAnunciante().getId() : null;
+        return SecurityUtils.canViewPrivateDataOf(anuncianteId)
+                ? mapper.toDTO(publicidad)
+                : mapper.toDTOPublic(publicidad);
     }
 
     @Override

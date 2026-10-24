@@ -48,6 +48,23 @@ public class ReporteServiceImpl implements ReporteService {
         return repository.findByEstadoIgnoreCase(estado, pageable).map(mapper::toDTO);
     }
 
+    /**
+     * GH-56 (HU-13): reportes de un sector concreto, para la bandeja de moderación.
+     *
+     * @param sector   sector a filtrar, sin distinguir mayúsculas; vacío o {@code null}
+     *                 devuelve todos
+     * @param pageable página y orden
+     * @return reportes de ese sector; vacío si no hay coincidencias
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReporteDTO> obtenerPorSector(String sector, Pageable pageable) {
+        if (sector == null || sector.isBlank()) {
+            return repository.findAll(pageable).map(mapper::toDTO);
+        }
+        return repository.findBySectorIgnoreCase(sector.trim(), pageable).map(mapper::toDTO);
+    }
+
     @Override
     @Transactional
     public ReporteDTO crear(ReporteDTO dto) {

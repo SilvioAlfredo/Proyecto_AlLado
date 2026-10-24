@@ -39,6 +39,17 @@ public class PublicacionForoController {
         return ResponseEntity.ok(service.obtenerPorAutor(autorId, PageRequest.of(page, size)).getContent());
     }
 
+    /**
+     * GH-56 (HU-13): navegación del foro por sector.
+     */
+    @GetMapping("/sector/{sector}")
+    public ResponseEntity<List<PublicacionForoDTO>> obtenerPorSector(
+            @PathVariable String sector,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+        return ResponseEntity.ok(service.obtenerPorSector(sector, PageRequest.of(page, size)).getContent());
+    }
+
     @PostMapping
     public ResponseEntity<PublicacionForoDTO> crear(@Valid @RequestBody PublicacionForoDTO publicacionDTO) {
         return new ResponseEntity<>(service.crear(publicacionDTO), HttpStatus.CREATED);

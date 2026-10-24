@@ -39,6 +39,13 @@ export function CandidatosList({
               </span>
               <div>
                 <p className="font-bold text-white">{p.autor?.nombre || 'Postulante'}</p>
+                {/* AL-SEC-006: la lista de postulantes de la propia oferta sí trae el
+                    contacto; es parte de la relación laboral */}
+                {p.autor?.email && (
+                  <a className="text-sm text-[#ffc107]" href={`mailto:${p.autor.email}`}>
+                    {p.autor.email}
+                  </a>
+                )}
               </div>
             </div>
           </div>

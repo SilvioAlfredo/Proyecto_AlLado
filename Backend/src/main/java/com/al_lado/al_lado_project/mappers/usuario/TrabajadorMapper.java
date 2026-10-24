@@ -87,6 +87,40 @@ public class TrabajadorMapper {
     }
 
     /**
+     * Proyección pública del directorio de trabajadores (AL-SEC-006).
+     *
+     * <p>Conserva lo que el directorio muestra a cualquiera: nombre, estado de la
+     * cuenta, ficha de perfil (fotografía, biografía, certificados y sector) y
+     * especialidades. No expone el email ni el teléfono (datos de contacto) ni las
+     * colecciones privadas: postulaciones, portafolio, horarios y preferencias.</p>
+     *
+     * @param entity entidad a convertir, o {@code null}
+     * @return DTO con la proyección pública, o {@code null}
+     */
+    public TrabajadorDTO toDTOPublic(Trabajador entity) {
+        if (entity == null) return null;
+
+        TrabajadorDTO dto = new TrabajadorDTO();
+        dto.setId(entity.getId());
+        dto.setNombre(entity.getNombre());
+        dto.setHabilitado(entity.isHabilitado());
+
+        // RF-02, HU-03: ficha pública del perfil trabajador
+        dto.setFotografia(entity.getFotografia());
+        dto.setBiografia(entity.getBiografia());
+        dto.setCertificados(entity.getCertificados());
+        dto.setSector(entity.getSector());
+
+        if (entity.getEspecialidades() != null) {
+            dto.setEspecialidades(entity.getEspecialidades().stream()
+                    .map(etiquetaMapper::toDTO)
+                    .collect(Collectors.toSet()));
+        }
+
+        return dto;
+    }
+
+    /**
      * Crea una entidad con los datos del DTO, su ID y sus especialidades.
      *
      * <p>No busca las etiquetas en la base. El servicio debe resolverlas y codificar la
@@ -97,7 +131,11 @@ public class TrabajadorMapper {
         if (dto == null) return null;
 
         Trabajador entity = new Trabajador();
-        entity.setId(dto.getId());
+        // MEJ-003 / AL-SEC-008: el ID que manda el cliente no se copia en un alta.
+        // Sólo la base de datos asigna IDs, de modo que ninguna petición puede
+        // apuntar el alta a un registro existente y sobrescribirlo. En edición el
+        // servicio recarga la entidad existente y no pasa por aquí.
+        entity.setId(null);
         entity.setNombre(dto.getNombre());
         entity.setEmail(dto.getEmail());
         entity.setPassword(dto.getPassword());

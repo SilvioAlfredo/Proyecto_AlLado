@@ -9,6 +9,7 @@ import type {
   Etiqueta,
   ForoPost,
   Horario,
+  Identidad,
   Notificacion,
   Oportunidad,
   PortafolioItem,
@@ -32,6 +33,8 @@ export const authService = {
     rol: Rol;
   }): Promise<AuthResponse> => api.post<AuthResponse>('/auth/register', input),
   logout: (): Promise<unknown> => api.post('/auth/logout').catch(() => null),
+  /** Identidad de la sesión (AL-API-005): id, email, nombre y roles del token. */
+  me: (): Promise<Identidad> => api.get<Identidad>('/auth/me'),
   forgot: (email: string): Promise<unknown> =>
       api.post('/auth/password/forgot', { email }),
   reset: (token: string, newPassword: string): Promise<unknown> =>
@@ -122,7 +125,7 @@ export const perfilService = {
 
 export const comunidadService = {
   foro: (): Promise<ForoPost[]> => api.get<ForoPost[]>('/foro'),
-  publicar: (dto: { titulo: string; contenido: string; autorId?: number; etiquetas?: Array<{ id: number; nombre: string } | string> }): Promise<ForoPost> =>
+  publicar: (dto: { titulo: string; contenido: string; autor: { id: number }; etiquetas?: Array<{ id: number; nombre: string } | string> }): Promise<ForoPost> =>
       api.post<ForoPost>('/foro', dto),
   eliminarPost: (id: string | number): Promise<unknown> => api.del(`/foro/${id}`),
   reportar: (dto: {
@@ -259,28 +262,3 @@ export const adminService = {
   eliminarComunicado: (id: string | number): Promise<unknown> =>
       api.del(`/comunicados/${id}`),
 };
-
-export async function resolveIdByEmail(
-    email: string | null,
-    role?: Rol,
-): Promise<number | null> {
-  if (!email) return null;
-  const lists: Array<() => Promise<Array<{ id: number; email?: string }>>> =
-      role === 'EMPLEADOR'
-          ? [() => empleadorService.listar()]
-          : role === 'TRABAJADOR'
-              ? [() => trabajadorService.listar()]
-              : [() => trabajadorService.listar(), () => empleadorService.listar()];
-  for (const fn of lists) {
-    try {
-      const arr = await fn();
-      const found = (Array.isArray(arr) ? arr : []).find(
-          (u) => u.email?.toLowerCase() === email.toLowerCase(),
-      );
-      if (found) return found.id;
-    } catch {
-      // sigue
-    }
-  }
-  return null;
-}

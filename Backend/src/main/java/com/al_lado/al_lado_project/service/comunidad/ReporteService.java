@@ -29,6 +29,16 @@ public interface ReporteService {
     Page<ReporteDTO> obtenerPorEstado(String estado, Pageable pageable);
 
     /**
+     * GH-56 (HU-13): reportes de un sector.
+     *
+     * @param sector   filtro por sector, sin distinguir mayúsculas; vacío o {@code null}
+     *                 devuelve todos
+     * @param pageable página y orden
+     * @return reportes de ese sector; vacío si no hay coincidencias
+     */
+    Page<ReporteDTO> obtenerPorSector(String sector, Pageable pageable);
+
+    /**
      * Registra un reporte PENDIENTE, aunque se reciba otro estado.
      *
      * <p>El reportante debe ser el usuario de la sesión o actuar bajo ADMIN. El usuario

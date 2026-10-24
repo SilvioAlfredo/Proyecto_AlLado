@@ -3,7 +3,7 @@ import { Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import type { Href } from 'expo-router';
 import { Screen, Brand, Title, AppInput, AppButton, AppCard } from '../../../src/components/ui';
-import { empleadorService, resolveIdByEmail, authService } from '../../../src/api/services';
+import { empleadorService, authService } from '../../../src/api/services';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
@@ -18,7 +18,7 @@ export default function Cuenta() {
 
   useEffect(() => {
     (async () => {
-      const rid = userId ?? (await resolveIdByEmail(email, 'EMPLEADOR'));
+      const rid = userId;
       setId(rid);
       if (!rid) return;
       const p = await empleadorService.detalle(rid).catch(() => null);

@@ -48,7 +48,7 @@ function Perfil({ trabajador }: { trabajador: TrabajadorDTO }) {
   const cache = useQueryClient();
   const guardar = useMutation({
     mutationFn: (cambios: Partial<TrabajadorDTO>) =>
-      trabajadorService.actualizarPerfil(trabajador.email, cambios),
+      trabajadorService.actualizarPerfil(trabajador.id, cambios),
     onSuccess: async () => {
       await cache.invalidateQueries({ queryKey: ['trabajador'] });
       setEditando(false);

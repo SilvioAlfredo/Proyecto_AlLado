@@ -2,14 +2,14 @@ import React, { useCallback, useState } from 'react';
 import { Text, ScrollView, StyleSheet } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Screen, Brand, Title, AppCard, AppInput, AppButton, Note } from '../../../src/components/ui';
-import { suscripcionService, resolveIdByEmail } from '../../../src/api/services';
+import { suscripcionService } from '../../../src/api/services';
 import type { Suscripcion } from '../../../src/types';
 import type { Donacion } from '../../../src/types';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function Suscripcion() {
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [uid, setUid] = useState<number | null>(userId);
   const [subs, setSubs] = useState<Suscripcion[]>([]);
   const [dons, setDons] = useState<Donacion[]>([]);
@@ -19,7 +19,7 @@ export default function Suscripcion() {
   const [msg, setMsg] = useState('');
 
   const cargarDatos = useCallback(async () => {
-    const id = userId ?? (await resolveIdByEmail(email));
+    const id = userId;
     setUid(id);
     if (!id) return;
     const [s, d] = await Promise.all([
@@ -28,7 +28,7 @@ export default function Suscripcion() {
     ]);
     setSubs(s ? [s] : []);
     setDons(Array.isArray(d) ? d : []);
-  }, [email, userId]);
+  }, [userId]);
 
   useFocusEffect(useCallback(() => {
     cargarDatos();

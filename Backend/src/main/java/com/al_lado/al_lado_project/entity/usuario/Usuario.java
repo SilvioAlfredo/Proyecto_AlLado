@@ -174,12 +174,42 @@ public abstract class Usuario implements UserDetails {
     @Column(name = "email_verificado", nullable = false)
     private boolean emailVerificado = false;
 
-    // Campo para recuperación de contraseña
+    // Token de recuperación de contraseña (AL-SEC-004).
+    // Se guarda el jti del token emitido, nunca el token completo: con el jti
+    // alcanza para invalidarlo, y una copia de la base no permite resets.
     @Column(name = "password_reset_token", length = 100)
     private String passwordResetToken;
 
     @Column(name = "password_reset_token_expiry")
     private LocalDateTime passwordResetTokenExpiry;
+
+    // Token de verificación de correo (AL-SEC-004): mismo criterio que el de
+    // recuperación (se guarda el jti) y se invalida al consumirse.
+    @Column(name = "email_verification_token", length = 100)
+    private String emailVerificationToken;
+
+    @Column(name = "email_verification_token_expiry")
+    private LocalDateTime emailVerificationTokenExpiry;
+
+    /**
+     * Invalida el token de recuperación: deja la cuenta sin token pendiente.
+     *
+     * <p>Se llama tras consumir el token, de modo que no pueda reutilizarse.</p>
+     */
+    public void clearPasswordResetToken() {
+        this.passwordResetToken = null;
+        this.passwordResetTokenExpiry = null;
+    }
+
+    /**
+     * Invalida el token de verificación de correo: deja la cuenta sin token pendiente.
+     *
+     * <p>Se llama tras consumir el token, de modo que no pueda reutilizarse.</p>
+     */
+    public void clearEmailVerificationToken() {
+        this.emailVerificationToken = null;
+        this.emailVerificationTokenExpiry = null;
+    }
 
     @Override
     public boolean isEnabled() {

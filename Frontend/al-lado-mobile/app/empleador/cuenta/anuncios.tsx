@@ -2,27 +2,27 @@ import React, { useCallback, useState } from 'react';
 import { Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Screen, Brand, Title, AppCard, AppButton, Empty, AppInput, Note } from '../../../src/components/ui';
-import { publicidadService, resolveIdByEmail } from '../../../src/api/services';
+import { publicidadService } from '../../../src/api/services';
 import type { Publicidad } from '../../../src/types';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function Anuncios() {
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [items, setItems] = useState<Publicidad[]>([]);
   const [titulo, setTitulo] = useState('');
   const [contenido, setContenido] = useState('');
 
   const load = async () => {
     const all = await publicidadService.listar().catch(() => []);
-    const eid = userId ?? (await resolveIdByEmail(email, 'EMPLEADOR'));
+    const eid = userId;
     setItems((Array.isArray(all) ? all : []).filter((a) => !eid || String(a.anunciante?.id) === String(eid)));
   };
   useFocusEffect(useCallback(() => { load(); }, []));
 
   const crear = async () => {
-    const eid = userId ?? (await resolveIdByEmail(email, 'EMPLEADOR'));
-    await publicidadService.crear({ titulo, contenido, activa: true, anunciante: { id: eid } });
+    if (userId == null) return;
+    await publicidadService.crear({ titulo, contenido, activa: true, anunciante: { id: userId } });
     setTitulo(''); setContenido('');
     load();
   };
