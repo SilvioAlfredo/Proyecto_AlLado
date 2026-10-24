@@ -49,6 +49,7 @@ public class TrabajadorServiceImpl implements TrabajadorService {
         String etiquetaNormalizada = etiqueta == null || etiqueta.isBlank() ? null : etiqueta.trim();
         String sectorNormalizado = sector == null || sector.isBlank() ? null : sector.trim();
         return repository.filtrarPorEtiquetaYSector(etiquetaNormalizada, sectorNormalizado).stream()
+                .filter(t -> t.getHorarios() != null && !t.getHorarios().isEmpty())
                 .map(this::proyectar)
                 .collect(Collectors.toList());
     }

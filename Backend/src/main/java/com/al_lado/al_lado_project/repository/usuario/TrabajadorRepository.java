@@ -23,10 +23,11 @@ public interface TrabajadorRepository extends JpaRepository<Trabajador, Long> {
     List<Trabajador> findByEspecialidadNombreIgnoreCase(@Param("nombre") String nombre);
 
     /** Filtra por catálogo y sector desde la base para evitar recorrer todo el directorio. */
-    @EntityGraph(attributePaths = {"especialidades"})
+    @EntityGraph(attributePaths = {"especialidades", "horarios"})
     @Query("SELECT DISTINCT t FROM Trabajador t LEFT JOIN t.especialidades e " +
             "WHERE (:etiqueta IS NULL OR LOWER(e.nombre) = LOWER(:etiqueta)) " +
-            "AND (:sector IS NULL OR LOWER(COALESCE(t.sector, '')) LIKE LOWER(CONCAT('%', :sector, '%')))")
+            "AND (:sector IS NULL OR LOWER(COALESCE(t.sector, '')) LIKE LOWER(CONCAT('%', :sector, '%'))) " +
+            "AND EXISTS (SELECT h.id FROM HorarioDisponibilidad h WHERE h.trabajador.id = t.id)")
     List<Trabajador> filtrarPorEtiquetaYSector(@Param("etiqueta") String etiqueta,
                                                @Param("sector") String sector);
 

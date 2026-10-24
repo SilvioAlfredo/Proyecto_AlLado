@@ -1,6 +1,7 @@
 package com.al_lado.al_lado_project.service.usuario.impl;
 
 import com.al_lado.al_lado_project.dto.usuario.TrabajadorDTO;
+import com.al_lado.al_lado_project.entity.perfil.HorarioDisponibilidad;
 import com.al_lado.al_lado_project.entity.usuario.Empleador;
 import com.al_lado.al_lado_project.entity.usuario.Trabajador;
 import com.al_lado.al_lado_project.entity.usuario.Usuario;
@@ -22,6 +23,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.LocalTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -98,6 +101,22 @@ class TrabajadorProyeccionTest {
         assertTrue(service.filtrar("  Electricidad  ", "  Villa Crespo  ").isEmpty());
 
         verify(repository).filtrarPorEtiquetaYSector("Electricidad", "Villa Crespo");
+    }
+    @Test
+    void filtrar_excluyeTrabajadoresSinFranjasDeDisponibilidad() {
+        Trabajador disponible = trabajador(1L);
+        HorarioDisponibilidad franja = new HorarioDisponibilidad(
+                "LUNES", LocalTime.of(9, 0), LocalTime.of(17, 0), disponible);
+        disponible.setHorarios(new HashSet<>(List.of(franja)));
+        Trabajador sinDisponibilidad = trabajador(2L);
+        sinDisponibilidad.setHorarios(new HashSet<>());
+
+        when(repository.filtrarPorEtiquetaYSector(null, null))
+                .thenReturn(List.of(disponible, sinDisponibilidad));
+
+        List<TrabajadorDTO> resultado = service.filtrar(null, null);
+
+        assertEquals(List.of(1L), resultado.stream().map(TrabajadorDTO::getId).toList());
     }
     @Test
     void toDTOPublic_noDebeExponerEmailNiTelefono() {
