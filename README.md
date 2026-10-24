@@ -34,6 +34,22 @@ A diferencia de las bolsas de trabajo convencionales, AlLado implementa un model
 - **Sostenibilidad:** Al fomentar el trabajo local, reducimos los tiempos de desplazamiento y fortalecemos la microeconomía de la zona.
 
 ---
+## Aplicaciones del repositorio
+
+| Aplicación | Ruta | Stack | Alcance | Estado |
+|---|---|---|---|---|
+| Frontend web | `Frontend/al_lado-app` | Next.js 16 · React 19 · Tailwind 4 | Visitante, trabajador, empleador y admin | Soportada |
+| App móvil | `Frontend/al-lado-mobile` | Expo SDK 57 · React Native | Trabajador, empleador y admin | Soportada |
+| Backend | `Backend` | Spring Boot · PostgreSQL | API REST compartida | Soportado |
+
+`FrontPrueba` no forma parte del producto: quedó en la rama `origin/prueba_front`
+y no se mantiene.
+
+El alcance detallado por rol y plataforma, las funciones anunciadas que todavía no
+tienen recorrido y las decisiones de negocio pendientes están en
+[`Especificaciones/Alcance_Plataformas.md`](Especificaciones/Alcance_Plataformas.md).
+
+---
 ## Colaboradores del Proyecto 
 - Madera Chiara
 - Riveros Silvio
