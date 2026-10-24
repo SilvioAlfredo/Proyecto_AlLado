@@ -3,6 +3,49 @@ import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
 
 /**
+ * Relleno de almacenamiento para Node 26.
+ *
+ * Node 26 declara `localStorage` y `sessionStorage` en `globalThis` aunque no
+ * estén habilitados (quedan en `undefined` salvo que se pase
+ * `--localstorage-file`). Vitest no copia los de jsdom porque la clave ya existe
+ * en el global, así que `window.localStorage` llega `undefined` y los tests
+ * fallan al limpiar la sesión. Si jsdom ya los expone, este bloque no hace nada.
+ */
+class MemoryStorage implements Storage {
+  private readonly data = new Map<string, string>();
+
+  get length(): number {
+    return this.data.size;
+  }
+
+  clear(): void {
+    this.data.clear();
+  }
+
+  getItem(key: string): string | null {
+    return this.data.get(key) ?? null;
+  }
+
+  key(index: number): string | null {
+    return [...this.data.keys()][index] ?? null;
+  }
+
+  removeItem(key: string): void {
+    this.data.delete(key);
+  }
+
+  setItem(key: string, value: string): void {
+    this.data.set(key, String(value));
+  }
+}
+
+for (const name of ['localStorage', 'sessionStorage'] as const) {
+  if (!window[name]) {
+    Object.defineProperty(window, name, { value: new MemoryStorage(), configurable: true });
+  }
+}
+
+/**
  * Preparación común de la suite web.
  *
  * - Cada test arranca con el `localStorage` vacío: la sesión vive ahí y una sesión
