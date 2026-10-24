@@ -1,3 +1,16 @@
+-- =============================================================================
+-- OBSOLETO: no usar para levantar el entorno de pruebas.
+--
+-- Es la foto completa del 09/10/2026 y quedó desactualizada: le faltan columnas
+-- que las entidades ya declaran (latitud, longitud, dia_semana_requerido,
+-- hora_inicio_requerida, hora_fin_requerida en oportunidades_laborales;
+-- email_verification_token en usuarios).
+--
+-- Esquema vigente: datos/schema_al_lado_db.sql
+-- Seed de TC-DB-005: datos/seed_tc_db_005.sql
+-- Procedimiento: Especificaciones/Testing.md, "Entorno reproducible de TC-DB-005".
+-- =============================================================================
+
 --
 -- PostgreSQL database dump
 --

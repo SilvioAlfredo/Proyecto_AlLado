@@ -123,6 +123,35 @@ que es lo auditable; revisar numeración RF en `Requerimientos Funcionales.md`.
   decidió borrado lógico vs `409`, se reporta como **defecto del requerimiento**,
   no se escribe "o".
 
+### Entorno reproducible de TC-DB-005
+
+El seed quedó versionado en `datos/seed_tc_db_005.sql`, y el esquema vigente en
+`datos/schema_al_lado_db.sql`. `al_lado_db.sql` sigue en el repo como foto del
+09/10/2026, pero no sirve para levantar el entorno: le faltan columnas que las
+entidades ya declaran (`latitud`, `longitud`, `dia_semana_requerido`,
+`hora_inicio_requerida`, `hora_fin_requerida`, `email_verification_token`).
+
+```bash
+createdb al_lado_tc
+psql -d al_lado_tc -f datos/schema_al_lado_db.sql
+psql -d al_lado_tc -f datos/seed_tc_db_005.sql
+```
+
+El seed deja al `empleador id=2` como dueño de la oferta `id=1`, con 2
+postulaciones `PENDIENTE` de los trabajadores `id=3` e `id=4`. Las tres cuentas
+usan `Clave123!`. Es idempotente: se puede volver a correr sin limpiar la base.
+
+Dos hallazgos al armarlo, que se reportan como defecto en lugar de ajustar el
+oráculo:
+
+- **Estados:** el oráculo pide la postulación en `CANCELADA`, pero el modelo solo
+  define `PENDIENTE | SELECCIONADA | RECHAZADA | COMPLETADA | RETIRADA`.
+- **Borrado:** `OportunidadLaboralServiceImpl.eliminar` hace `DELETE` físico y
+  responde `BusinessRuleException` ("No se puede eliminar la oferta porque tiene
+  postulaciones asociadas") cuando la clave foránea lo impide. Con la
+  precondición de 2 postulaciones el caso espera `204`, así que la ejecución va a
+  fallar contra el código actual.
+
 ## 8. Gestión de defectos
 
 - **Herramienta:** GitHub Issues ( Kanban para tratamiento; link del Issue en la
