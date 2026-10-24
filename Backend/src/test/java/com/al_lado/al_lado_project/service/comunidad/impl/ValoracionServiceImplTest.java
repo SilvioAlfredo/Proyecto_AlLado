@@ -3,6 +3,7 @@ package com.al_lado.al_lado_project.service.comunidad.impl;
 import com.al_lado.al_lado_project.dto.comunidad.ValoracionDTO;
 import com.al_lado.al_lado_project.dto.usuario.UsuarioResumenDTO;
 import com.al_lado.al_lado_project.entity.comunidad.Valoracion;
+import com.al_lado.al_lado_project.entity.trabajo.Postulacion;
 import com.al_lado.al_lado_project.entity.usuario.Empleador;
 import com.al_lado.al_lado_project.entity.usuario.Trabajador;
 import com.al_lado.al_lado_project.exception.BusinessRuleException;
@@ -10,6 +11,7 @@ import com.al_lado.al_lado_project.exception.DuplicateResourceException;
 import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
 import com.al_lado.al_lado_project.mappers.comunidad.ValoracionMapper;
 import com.al_lado.al_lado_project.repository.comunidad.ValoracionRepository;
+import com.al_lado.al_lado_project.repository.trabajo.PostulacionRepository;
 import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
 import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -46,6 +48,9 @@ class ValoracionServiceImplTest {
     private ValoracionRepository repository;
 
     @Mock
+    private PostulacionRepository postulacionRepository;
+
+    @Mock
     private EmpleadorRepository empleadorRepository;
 
     @Mock
@@ -57,7 +62,7 @@ class ValoracionServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new ValoracionServiceImpl(repository, empleadorRepository, trabajadorRepository, mapper);
+        service = new ValoracionServiceImpl(repository, postulacionRepository, empleadorRepository, trabajadorRepository, mapper);
         // El autor de la valoracion es el empleador 2.
         Empleador auth = new Empleador();
         auth.setId(2L);
@@ -107,6 +112,8 @@ class ValoracionServiceImplTest {
     void crearValoracion_deberiaAceptarPuntuacionMinima() {
         // Dado
         ValoracionDTO dto = valoracionDTO(2L, 3L, 1);
+        when(postulacionRepository.existsByAutorIdAndOportunidadLaboralAutorIdAndEstadoIgnoreCase(
+                3L, 2L, Postulacion.ESTADO_COMPLETADA)).thenReturn(true);
         when(repository.existsByAutorIdAndTrabajadorId(2L, 3L)).thenReturn(false);
         when(empleadorRepository.findById(2L)).thenReturn(Optional.of(empleador(2L)));
         when(trabajadorRepository.findById(3L)).thenReturn(Optional.of(trabajador(3L)));
@@ -125,6 +132,8 @@ class ValoracionServiceImplTest {
     void crearValoracion_deberiaAceptarPuntuacionMaxima() {
         // Dado
         ValoracionDTO dto = valoracionDTO(2L, 3L, 5);
+        when(postulacionRepository.existsByAutorIdAndOportunidadLaboralAutorIdAndEstadoIgnoreCase(
+                3L, 2L, Postulacion.ESTADO_COMPLETADA)).thenReturn(true);
         when(repository.existsByAutorIdAndTrabajadorId(2L, 3L)).thenReturn(false);
         when(empleadorRepository.findById(2L)).thenReturn(Optional.of(empleador(2L)));
         when(trabajadorRepository.findById(3L)).thenReturn(Optional.of(trabajador(3L)));
@@ -136,6 +145,18 @@ class ValoracionServiceImplTest {
 
         // Entonces
         assertEquals(5, resultado.getPuntuacion());
+    }
+
+    @Test
+    void crearValoracion_deberiaRechazarTrabajoNoCompletado() {
+        ValoracionDTO dto = valoracionDTO(2L, 3L, 4);
+        when(postulacionRepository.existsByAutorIdAndOportunidadLaboralAutorIdAndEstadoIgnoreCase(
+                3L, 2L, Postulacion.ESTADO_COMPLETADA)).thenReturn(false);
+
+        assertThrows(BusinessRuleException.class, () -> service.crear(dto));
+
+        verify(repository, never()).save(any(Valoracion.class));
+        verify(empleadorRepository, never()).findById(any());
     }
 
     @Test
@@ -160,6 +181,8 @@ class ValoracionServiceImplTest {
     void crearValoracion_deberiaRechazarValoracionDuplicada() {
         // Dado
         ValoracionDTO dto = valoracionDTO(2L, 3L, 4);
+        when(postulacionRepository.existsByAutorIdAndOportunidadLaboralAutorIdAndEstadoIgnoreCase(
+                3L, 2L, Postulacion.ESTADO_COMPLETADA)).thenReturn(true);
         when(repository.existsByAutorIdAndTrabajadorId(2L, 3L)).thenReturn(true);
 
         // Cuando / Entonces
@@ -180,6 +203,8 @@ class ValoracionServiceImplTest {
     void crearValoracion_deberiaFallarSiElEmpleadorNoExiste() {
         // Dado
         ValoracionDTO dto = valoracionDTO(2L, 3L, 4);
+        when(postulacionRepository.existsByAutorIdAndOportunidadLaboralAutorIdAndEstadoIgnoreCase(
+                3L, 2L, Postulacion.ESTADO_COMPLETADA)).thenReturn(true);
         when(repository.existsByAutorIdAndTrabajadorId(2L, 3L)).thenReturn(false);
         when(empleadorRepository.findById(2L)).thenReturn(Optional.empty());
 

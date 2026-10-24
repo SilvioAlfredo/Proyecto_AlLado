@@ -17,6 +17,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.Optional;
 
@@ -65,7 +66,7 @@ class SuscripcionConcesionProTest {
 
     private SuscripcionServiceImpl service() {
         return new SuscripcionServiceImpl(repository, usuarioRepository,
-                oportunidadLaboralRepository, mapper);
+                oportunidadLaboralRepository, mapper, Clock.systemDefaultZone());
     }
 
     private SuscripcionDTO dto(String nivel) {

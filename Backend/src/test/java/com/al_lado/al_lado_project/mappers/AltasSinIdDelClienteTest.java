@@ -24,6 +24,8 @@ import com.al_lado.al_lado_project.mappers.usuario.TrabajadorMapper;
 import com.al_lado.al_lado_project.mappers.usuario.UsuarioResumenMapper;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -63,7 +65,7 @@ class AltasSinIdDelClienteTest {
         SuscripcionDTO dto = new SuscripcionDTO();
         dto.setId(99L);
 
-        assertNull(new SuscripcionMapper(resumen).toEntity(dto).getId());
+        assertNull(new SuscripcionMapper(resumen, Clock.systemDefaultZone()).toEntity(dto).getId());
     }
 
     @Test

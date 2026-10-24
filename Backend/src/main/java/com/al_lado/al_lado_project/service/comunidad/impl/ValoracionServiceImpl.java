@@ -2,6 +2,7 @@ package com.al_lado.al_lado_project.service.comunidad.impl;
 
 import com.al_lado.al_lado_project.dto.comunidad.ValoracionDTO;
 import com.al_lado.al_lado_project.entity.comunidad.Valoracion;
+import com.al_lado.al_lado_project.entity.trabajo.Postulacion;
 import com.al_lado.al_lado_project.entity.usuario.Empleador;
 import com.al_lado.al_lado_project.entity.usuario.Trabajador;
 import com.al_lado.al_lado_project.exception.BusinessRuleException;
@@ -9,6 +10,7 @@ import com.al_lado.al_lado_project.exception.DuplicateResourceException;
 import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
 import com.al_lado.al_lado_project.mappers.comunidad.ValoracionMapper;
 import com.al_lado.al_lado_project.repository.comunidad.ValoracionRepository;
+import com.al_lado.al_lado_project.repository.trabajo.PostulacionRepository;
 import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
 import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
 import com.al_lado.al_lado_project.security.SecurityUtils;
@@ -25,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 public class ValoracionServiceImpl implements ValoracionService {
 
     private final ValoracionRepository repository;
+    private final PostulacionRepository postulacionRepository;
     private final EmpleadorRepository empleadorRepository;
     private final TrabajadorRepository trabajadorRepository;
     private final ValoracionMapper mapper;
@@ -78,6 +81,14 @@ public class ValoracionServiceImpl implements ValoracionService {
         Long autorId = dto.getAutor().getId();
         Long trabajadorId = dto.getTrabajador().getId();
         SecurityUtils.requireSelfOrAdmin(autorId);
+
+        boolean trabajoCompletado = postulacionRepository
+                .existsByAutorIdAndOportunidadLaboralAutorIdAndEstadoIgnoreCase(
+                        trabajadorId, autorId, Postulacion.ESTADO_COMPLETADA);
+        if (!trabajoCompletado) {
+            throw new BusinessRuleException(
+                    "Solo se puede valorar un trabajo con una postulación COMPLETADA.");
+        }
 
         if (repository.existsByAutorIdAndTrabajadorId(autorId, trabajadorId)) {
             throw new DuplicateResourceException("Ya existe una valoración de este empleador a este trabajador.");

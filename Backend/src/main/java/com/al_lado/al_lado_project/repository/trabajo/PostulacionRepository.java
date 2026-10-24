@@ -39,6 +39,12 @@ public interface PostulacionRepository extends JpaRepository<Postulacion, Long> 
     boolean existsByOportunidadLaboralIdAndAutorId(Long oportunidadId, Long autorId);
 
     /**
+     * Indica si el trabajador completó una postulación a una oportunidad del empleador.
+     */
+    boolean existsByAutorIdAndOportunidadLaboralAutorIdAndEstadoIgnoreCase(
+            Long trabajadorId, Long empleadorId, String estado);
+
+    /**
      * Cantidad de postulaciones del autor, <b>sin importar el estado</b>: es la base
      * de {@code postulacionesEnviadas} de las estadísticas del trabajador.
      */
