@@ -4,6 +4,16 @@ export type JwtRol = 'ROLE_TRABAJADOR' | 'ROLE_EMPLEADOR' | 'ROLE_ADMIN';
 
 export interface AuthResponse {
   token: string;
+  id: number;
+  nombre?: string;
+  email: string;
+  roles: JwtRol[];
+}
+
+/** Identidad mínima de la sesión (AL-API-005): GET /auth/me. */
+export interface Identidad {
+  id: number;
+  nombre?: string;
   email: string;
   roles: JwtRol[];
 }

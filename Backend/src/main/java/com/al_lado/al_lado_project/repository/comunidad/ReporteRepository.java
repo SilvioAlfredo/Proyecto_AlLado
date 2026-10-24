@@ -20,9 +20,14 @@ public interface ReporteRepository extends JpaRepository<Reporte, Long>, JpaSpec
     @EntityGraph(attributePaths = {"reportante", "reportado", "moderador"})
     Page<Reporte> findByEstadoIgnoreCase(String estado, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"reportante", "reportado", "moderador"})
+    Page<Reporte> findBySectorIgnoreCase(String sector, Pageable pageable);
+
     List<Reporte> findByReportadoId(Long reportadoId);
 
     List<Reporte> findByReportanteId(Long reportanteId);
 
     List<Reporte> findByModeradorId(Long moderadorId);
+
+    List<Reporte> findBySectorIgnoreCase(String sector);
 }

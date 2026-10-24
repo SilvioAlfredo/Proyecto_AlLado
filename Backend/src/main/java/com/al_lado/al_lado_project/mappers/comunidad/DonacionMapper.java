@@ -1,7 +1,6 @@
 package com.al_lado.al_lado_project.mappers.comunidad;
 
 import com.al_lado.al_lado_project.mappers.usuario.UsuarioResumenMapper;
-
 import com.al_lado.al_lado_project.dto.comunidad.DonacionDTO;
 import com.al_lado.al_lado_project.entity.comunidad.Donacion;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +29,12 @@ public class DonacionMapper {
         return dto;
     }
 
+    // MEJ-003 / AL-SEC-008: Se ignora dto.getId() forzando null para evitar colisiones en altas
     public Donacion toEntity(DonacionDTO dto) {
         if (dto == null) return null;
 
         Donacion entity = new Donacion();
-        entity.setId(dto.getId());
+        entity.setId(null);
         entity.setMonto(dto.getMonto());
         entity.setMoneda(dto.getMoneda() != null ? dto.getMoneda() : Donacion.MONEDA_POR_DEFECTO);
         entity.setMecanismoPago(dto.getMecanismoPago());

@@ -1,30 +1,28 @@
 import api from '@/lib/api';
+import { userIdFromToken } from '@/lib/jwt';
+import { obtenerRefSesion } from '@/lib/usuarioRef';
 import { TrabajadorDTO } from '@/types/usuario';
 import { EstadisticasTrabajadorDTO } from '@/types/usuario';
 
-async function resolverIdPorEmail(email: string): Promise<number | null> {
-  try {
-    const { data } = await api.get<TrabajadorDTO[]>('/trabajadores');
-    const match = data.find((t) => t.email?.toLowerCase() === email.toLowerCase());
-    return match?.id ?? null;
-  } catch {
-    return null;
-  }
+// AL-API-005: el id de la sesión sale del claim uid del token (o de lo guardado
+// en el navegador); nunca se lista el directorio de trabajadores.
+function idSesion(): number | null {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  return userIdFromToken(token) ?? (obtenerRefSesion()?.id || null);
 }
 
 export const trabajadorService = {
-  // Backend no tiene /trabajadores/perfil: se resuelve id por email y usa /trabajadores/{id}
-  async obtenerPerfil(email?: string): Promise<TrabajadorDTO> {
-    if (!email) throw new Error('Sin email de sesión');
-    const id = await resolverIdPorEmail(email);
-    if (!id) throw new Error('Trabajador no encontrado para ' + email);
+  // Backend no tiene /trabajadores/perfil: se usa el id de la sesión con /trabajadores/{id}
+  async obtenerPerfil(): Promise<TrabajadorDTO> {
+    const id = idSesion();
+    if (!id) throw new Error('No se pudo identificar al trabajador: la sesión no tiene token válido.');
     return this.obtenerPorId(id);
   },
 
-  async actualizarPerfil(email: string, dto: Partial<TrabajadorDTO>): Promise<TrabajadorDTO> {
-    // PUT exige el DTO completo (nombre/email/telefono @NotBlank): se fusiona con el actual
-    const actual = await this.obtenerPerfil(email);
-    const { data } = await api.put<TrabajadorDTO>(`/trabajadores/${actual.id}`, { ...actual, ...dto });
+  // PUT exige el DTO completo (nombre/email/telefono @NotBlank): se fusiona con el actual
+  async actualizarPerfil(id: number, dto: Partial<TrabajadorDTO>): Promise<TrabajadorDTO> {
+    const actual = await this.obtenerPorId(id);
+    const { data } = await api.put<TrabajadorDTO>(`/trabajadores/${id}`, { ...actual, ...dto });
     return data;
   },
 

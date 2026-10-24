@@ -2,13 +2,13 @@ import React, { useCallback, useState } from 'react';
 import { Text, ScrollView, StyleSheet } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Screen, Brand, Title, AppCard, AppInput, AppButton, Note } from '../../../src/components/ui';
-import { suscripcionService, resolveIdByEmail } from '../../../src/api/services';
+import { suscripcionService } from '../../../src/api/services';
 import type { Suscripcion } from '../../../src/types';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function MiPlan() {
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [subs, setSubs] = useState<Suscripcion[]>([]);
   const [monto, setMonto] = useState('');
   const [msg, setMsg] = useState('');
@@ -16,13 +16,13 @@ export default function MiPlan() {
 
   useFocusEffect(useCallback(() => {
     (async () => {
-      const id = userId ?? (await resolveIdByEmail(email, 'EMPLEADOR'));
+      const id = userId;
       setUid(id);
       if (!id) return;
       const s = await suscripcionService.porUsuario(id).catch(() => []);
       setSubs(Array.isArray(s) ? s : [s].filter(Boolean));
     })();
-  }, [email, userId]));
+  }, [userId]));
 
   return (
     <Screen><ScrollView>
@@ -38,7 +38,7 @@ export default function MiPlan() {
         <Text style={styles.t}>Básico: límites (3 ofertas/mes). PRO: ilimitadas.</Text>
       </AppCard>
       <AppInput label="Monto transferencia" value={monto} onChangeText={setMonto} keyboardType="numeric" />
-      <AppButton title="Registrar transferencia" onPress={async () => { await suscripcionService.donar({ monto: Number(monto), usuario: { id: uid } }); setMsg('Registrada como Pendiente.'); setMonto(''); }} />
+      <AppButton title="Registrar transferencia" onPress={async () => { if (uid == null) return; await suscripcionService.donar({ monto: Number(monto), asunto: 'Transferencia plan de empleador', usuario: { id: uid } }); setMsg('Registrada como Pendiente.'); setMonto(''); }} />
       {msg ? <Text style={styles.ok}>{msg}</Text> : null}
       <Note>La suscripción PRO se activa al verificar transferencia SUSCRIPCION (admin).</Note>
     </ScrollView></Screen>

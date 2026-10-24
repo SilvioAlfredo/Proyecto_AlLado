@@ -13,6 +13,17 @@ target/
 *.log
 .DS_Store
 
+# Resultados JUnit generados por las suites de los frontends (se regeneran)
+Frontend/*/test-results/
+
+# Copias de seguridad de la planilla de pruebas (se regeneran)
+*.xlsx.bak
+
+# Ignorar secretos: solo se versiona el ejemplo .env.example (AL-SEC-001/002)
+.env
+.env.*
+!.env.example
+
 # Ignorar repositorio y metadatos de Mercurial
 .hg/
 .hgignore

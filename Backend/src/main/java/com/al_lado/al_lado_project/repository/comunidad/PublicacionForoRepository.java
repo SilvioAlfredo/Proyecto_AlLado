@@ -20,4 +20,7 @@ public interface PublicacionForoRepository extends JpaRepository<PublicacionForo
 
     @EntityGraph(attributePaths = {"autor"})
     Page<PublicacionForo> findAllByOrderByFechaCreacionDesc(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"autor"})
+    Page<PublicacionForo> findBySectorIgnoreCase(String sector, Pageable pageable);
 }

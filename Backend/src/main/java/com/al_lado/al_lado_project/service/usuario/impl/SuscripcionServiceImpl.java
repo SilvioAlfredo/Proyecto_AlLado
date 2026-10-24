@@ -13,6 +13,7 @@ import com.al_lado.al_lado_project.repository.trabajo.OportunidadLaboralReposito
 import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.usuario.SuscripcionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,21 +68,41 @@ public class SuscripcionServiceImpl implements SuscripcionService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + usuarioId));
 
+        // AL-SEC-007 (MEJ-002): el nivel PRO solo lo concede un administrador, tras
+        // verificar el aporte. Un usuario no puede auto-otorgarse PRO ni cambiar un
+        // plan existente a PRO por su cuenta.
+        boolean admin = SecurityUtils.isAdmin();
+        String nivelSolicitado = dto.getNivel() != null ? dto.getNivel().toUpperCase() : "BASICO";
+        if (!"BASICO".equals(nivelSolicitado) && !"PRO".equals(nivelSolicitado)) {
+            throw new BusinessRuleException("Nivel inválido. Valores permitidos: BASICO, PRO.");
+        }
+        if ("PRO".equals(nivelSolicitado) && !admin) {
+            throw new AccessDeniedException(
+                    "El plan PRO solo puede activarlo un administrador después de verificar el aporte.");
+        }
+
         if (repository.existsByUsuarioId(usuarioId)) {
             // Sincronía con el frontend ("Mi plan" re-activa PRO): en lugar de
             // rechazar con duplicado se reactiva la suscripción existente.
             Suscripcion existente = repository.findByUsuarioId(usuarioId)
                     .orElseThrow(() -> new ResourceNotFoundException("Suscripción no encontrada para el usuario con ID: " + usuarioId));
             SecurityUtils.requireSelfOrAdmin(usuarioId);
-            existente.setNivel(dto.getNivel());
-            existente.setFechaInicio(dto.getFechaInicio());
-            existente.setFechaFin(dto.getFechaFin());
+            existente.setNivel(nivelSolicitado);
+            // Sin ADMIN, el alta propia es siempre un plan básico sin vencimiento:
+            // las fechas las fija el administrador al conceder PRO.
+            existente.setFechaInicio(admin && dto.getFechaInicio() != null
+                    ? dto.getFechaInicio() : LocalDate.now());
+            existente.setFechaFin(admin ? dto.getFechaFin() : null);
             existente.setActiva(true);
             return mapper.toDTO(repository.save(existente));
         }
 
         Suscripcion suscripcion = mapper.toEntity(dto);
         suscripcion.setUsuario(usuario);
+        suscripcion.setNivel(nivelSolicitado);
+        suscripcion.setFechaInicio(admin && dto.getFechaInicio() != null
+                ? dto.getFechaInicio() : LocalDate.now());
+        suscripcion.setFechaFin(admin ? dto.getFechaFin() : null);
         suscripcion.setActiva(true);
 
         return mapper.toDTO(repository.save(suscripcion));

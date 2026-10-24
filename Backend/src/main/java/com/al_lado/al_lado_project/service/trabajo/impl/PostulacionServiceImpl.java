@@ -4,7 +4,9 @@ import com.al_lado.al_lado_project.dto.trabajo.PostulacionDTO;
 import com.al_lado.al_lado_project.entity.comunidad.Notificacion;
 import com.al_lado.al_lado_project.entity.trabajo.OportunidadLaboral;
 import com.al_lado.al_lado_project.entity.trabajo.Postulacion;
+import com.al_lado.al_lado_project.entity.usuario.Empleador;
 import com.al_lado.al_lado_project.entity.usuario.Trabajador;
+import com.al_lado.al_lado_project.entity.usuario.Usuario;
 import com.al_lado.al_lado_project.exception.BusinessRuleException;
 import com.al_lado.al_lado_project.exception.DuplicateResourceException;
 import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
@@ -17,6 +19,7 @@ import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.comunidad.NotificacionService;
 import com.al_lado.al_lado_project.service.trabajo.PostulacionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,20 +46,70 @@ public class PostulacionServiceImpl implements PostulacionService {
     private final PostulacionMapper mapper;
     private final NotificacionService notificacionService;
 
+    /**
+     * Alcance de lectura de {@code GET /postulaciones} (AL-SEC-006).
+     *
+     * <p>ADMIN ve todas las del sistema; un trabajador, las suyas; un empleador, las
+     * recibidas por sus ofertas. Quien no tenga una de esas relaciones no tiene nada
+     * que ver aquí y recibe 403 en lugar del listado completo de terceros.</p>
+     */
     @Override
     @Transactional(readOnly = true)
     public List<PostulacionDTO> obtenerTodas() {
-        return repository.findAll().stream()
+        if (SecurityUtils.isAdmin()) {
+            return repository.findAll().stream()
+                    .map(mapper::toDTO)
+                    .collect(Collectors.toList());
+        }
+
+        Usuario actual = SecurityUtils.currentUser();
+        if (actual == null) {
+            throw new AccessDeniedException("No tiene permisos para consultar postulaciones.");
+        }
+
+        List<Postulacion> alcance = actual instanceof Empleador
+                ? repository.findByOportunidadLaboralAutorId(actual.getId())
+                : repository.findByAutorId(actual.getId());
+
+        return alcance.stream()
                 .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Una postulación sólo es visible para su autor, el empleador dueño de la oferta
+     * o un administrador (AL-SEC-006); para el resto responde 403, sin importar si la
+     * postulación existe.
+     */
     @Override
     @Transactional(readOnly = true)
     public PostulacionDTO obtenerPorId(Long id) {
         Postulacion postulacion = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Postulación no encontrada con ID: " + id));
+        exigirAlcanceDeLectura(postulacion);
         return mapper.toDTO(postulacion);
+    }
+
+    /** Título/ADMIN pueden leer la postulación; el resto no. */
+    private void exigirAlcanceDeLectura(Postulacion postulacion) {
+        if (SecurityUtils.isAdmin()) {
+            return;
+        }
+
+        Long actual = SecurityUtils.currentUserId();
+        if (actual == null) {
+            throw new AccessDeniedException("No tiene permisos para consultar esta postulación.");
+        }
+
+        Long autorId = postulacion.getAutor() != null ? postulacion.getAutor().getId() : null;
+        OportunidadLaboral oportunidad = postulacion.getOportunidadLaboral();
+        Long empleadorId = oportunidad != null && oportunidad.getAutor() != null
+                ? oportunidad.getAutor().getId() : null;
+
+        if (actual.equals(autorId) || actual.equals(empleadorId)) {
+            return;
+        }
+        throw new AccessDeniedException("No tiene permisos para consultar esta postulación.");
     }
 
     @Override
@@ -261,9 +314,11 @@ public class PostulacionServiceImpl implements PostulacionService {
     @Override
     @Transactional(readOnly = true)
     public EstadisticasTrabajadorDTO obtenerEstadisticasTrabajadorPorEmail(String email) {
-        // Buscar trabajador por email
+        // AL-SEC-005: la misma respuesta exista o no el email. Si no existe se devuelve
+        // 403 (igual que cuando existe y no es propio): un 404 permitiría enumerar las
+        // cuentas registradas comparando respuestas.
         Trabajador trabajador = trabajadorRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Trabajador no encontrado con email: " + email));
+                .orElseThrow(() -> new AccessDeniedException("No tiene permisos para consultar estas estadísticas."));
         SecurityUtils.requireSelfOrAdmin(trabajador.getId());
 
         // Contar valoraciones recibidas usando el repositorio de valoraciones

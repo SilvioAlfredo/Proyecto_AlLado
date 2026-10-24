@@ -2,16 +2,16 @@ import React, { useCallback, useState } from 'react';
 import { Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Screen, Brand, Title, AppCard, AppButton, Empty } from '../../../src/components/ui';
-import { comunidadService, resolveIdByEmail, trabajadorService } from '../../../src/api/services';
+import { comunidadService, trabajadorService } from '../../../src/api/services';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function Favoritos() {
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [items, setItems] = useState<Array<{ id: number; nombre: string; fecha?: unknown }>>([]);
   const [empId, setEmpId] = useState<number | null>(null);
   const load = async () => {
-    const eid = userId ?? (await resolveIdByEmail(email, 'EMPLEADOR'));
+    const eid = userId;
     setEmpId(eid);
     if (!eid) return;
     const f = await comunidadService.favoritosDe(eid).catch(() => []);

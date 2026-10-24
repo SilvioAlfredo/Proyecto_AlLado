@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import { authService, resolveIdByEmail } from '../api/services';
+import { authService } from '../api/services';
 import { setToken } from '../api/client';
 import type { AuthResponse, JwtRol, Rol } from '../types';
 import type { Href } from 'expo-router';
@@ -25,6 +25,41 @@ function storageSet(k: string, v: string | null): Promise<void> {
   }
   if (v == null) return SecureStore.deleteItemAsync(k).then(() => undefined);
   return SecureStore.setItemAsync(k, v);
+}
+
+/** Decodifica base64url a UTF-8 (payload del JWT). */
+function decodificarBase64Url(texto: string): string {
+  const normalizado = texto.replace(/-/g, '+').replace(/_/g, '/');
+  const completo = normalizado + '='.repeat((4 - (normalizado.length % 4)) % 4);
+  if (typeof atob === 'function') {
+    // atob devuelve binario: se reinterpreta como UTF-8.
+    return decodeURIComponent(
+      atob(completo)
+        .split('')
+        .map((c) => `%${c.charCodeAt(0).toString(16).padStart(2, '0')}`)
+        .join(''),
+    );
+  }
+  // Fallback para runtimes sin atob (p. ej. Node en los tests).
+  return Buffer.from(completo, 'base64').toString('utf8');
+}
+
+/**
+ * Lee el claim `uid` del token de sesión (AL-API-005).
+ * Devuelve null si el token es inválido o no declara uid.
+ */
+export function userIdFromToken(token: string | null): number | null {
+  if (!token) return null;
+  const partes = token.split('.');
+  if (partes.length < 2) return null;
+  try {
+    const payload = JSON.parse(decodificarBase64Url(partes[1])) as { uid?: unknown };
+    if (payload?.uid == null) return null;
+    const uid = Number(payload.uid);
+    return Number.isFinite(uid) ? uid : null;
+  } catch {
+    return null;
+  }
 }
 
 export function roleHome(roles: JwtRol[] = []): Href {
@@ -85,16 +120,24 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       setRoles(parsed);
       setUserId(u ? Number(u) : null);
       setLoading(false);
-      // Backfill: sesiones guardadas sin userId (login anterior) lo resuelven
-      // en segundo plano para evitar resolveIdByEmail en cada pantalla.
-      if (t && e && !u && parsed.length > 0) {
-        const simple = parsed[0].replace('ROLE_', '') as Rol;
-        resolveIdByEmail(e, simple).then((uid) => {
-          if (uid != null) {
-            storageSet(UID_KEY, String(uid)).catch(() => undefined);
-            setUserId(uid);
-          }
-        });
+      // Backfill (AL-API-005): sesiones guardadas sin user_id resuelven el
+      // identificador desde el claim `uid` del token; si el token no lo trae,
+      // con GET /auth/me. Nunca listando el directorio de usuarios.
+      if (t && !u) {
+        const uid = userIdFromToken(t);
+        if (uid != null) {
+          storageSet(UID_KEY, String(uid)).catch(() => undefined);
+          setUserId(uid);
+        } else {
+          authService
+            .me()
+            .then(async (identidad) => {
+              if (identidad?.id == null) return;
+              await storageSet(UID_KEY, String(identidad.id)).catch(() => undefined);
+              setUserId(identidad.id);
+            })
+            .catch(() => undefined);
+        }
       }
     })();
   }, []);
@@ -115,20 +158,33 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     setUserId(uid ?? null);
   };
 
+  /** Identidad mínima: el id llega con el login/registro o del claim `uid`;
+   *  si tampoco está, se rehidrata con GET /auth/me (AL-API-005). */
+  const resolverIdDeSesion = async (res: AuthResponse): Promise<number | null> => {
+    if (res.id != null) return res.id;
+    const uid = userIdFromToken(res.token);
+    if (uid != null) return uid;
+    try {
+      const identidad = await authService.me();
+      return identidad?.id ?? null;
+    } catch {
+      return null;
+    }
+  };
+
   const login = async (
     emailInput: string,
     password: string,
   ): Promise<AuthResponse & { userId: number | null }> => {
     const res = await authService.login(emailInput, password);
-    const simple: Rol[] = res.roles.map((x) => x.replace('ROLE_', '') as Rol);
-    const uid = await resolveIdByEmail(res.email, simple[0]);
+    const uid = await resolverIdDeSesion(res);
     await persist(res.token, res.email, res.roles, uid);
     return { ...res, userId: uid };
   };
 
   const register = async (input: RegisterInput): Promise<AuthResponse> => {
     const res = await authService.register(input);
-    const uid = await resolveIdByEmail(res.email, input.rol);
+    const uid = await resolverIdDeSesion(res);
     await persist(res.token, res.email, res.roles, uid);
     return res;
   };

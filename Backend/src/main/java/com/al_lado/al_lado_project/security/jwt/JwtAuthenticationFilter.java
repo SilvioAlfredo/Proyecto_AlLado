@@ -51,9 +51,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        final TokenPurpose proposito;
         jwt = authHeader.substring(7);
         try {
             userEmail = jwtUtils.extractUsername(jwt);
+            proposito = jwtUtils.extractPurpose(jwt);
         } catch (RuntimeException e) {
             // Token malformado, con firma inválida o expirado: 401 genérico
             // sin filtrar detalles internos ni continuar la cadena.
@@ -61,7 +63,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // AL-SEC-004: sólo un token de SESIÓN es credencial de acceso. El token de
+        // recuperación o el de verificación (los que llegan por correo) mantienen firma
+        // y vencimiento válidos, pero no deben abrir sesión: si no, quien intercepta un
+        // enlace de recuperación actuaría como el usuario. Los tokens antiguos sin el
+        // claim purpose tampoco autentican: hay que volver a iniciar sesión. Si el token
+        // no da usuario no hay nada que autenticar y la cadena sigue como antes.
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            if (proposito != TokenPurpose.SESSION) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido o expirado.");
+                return;
+            }
+
             final UserDetails userDetails;
             try {
                 userDetails = this.userDetailsService.loadUserByUsername(userEmail);

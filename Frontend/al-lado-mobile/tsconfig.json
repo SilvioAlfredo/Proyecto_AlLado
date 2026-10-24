@@ -6,6 +6,9 @@
     "jsx": "react-native",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
+    // Tipos globales de la suite (describe/it/jest/global) y de Node (Buffer,
+    // process): sin declararlos, tsc no encuentra los globals de los tests.
+    "types": ["jest", "node"],
     "paths": {
       "@/*": ["./*"]
     }

@@ -2,23 +2,21 @@ import React, { useCallback, useState } from 'react';
 import { Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Screen, Brand, Title, AppInput, AppCard, AppButton, Empty } from '../../../src/components/ui';
-import { trabajadorService, comunidadService, suscripcionService, resolveIdByEmail } from '../../../src/api/services';
+import { trabajadorService, comunidadService, suscripcionService } from '../../../src/api/services';
 import type { Trabajador } from '../../../src/types';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function BuscarTrabajadores() {
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [items, setItems] = useState<Trabajador[]>([]);
   const [q, setQ] = useState('');
   const [favs, setFavs] = useState<Set<number>>(new Set<number>());
   const [empId, setEmpId] = useState<number | null>(null);
 
   const load = async () => {
-    const [list, eid] = await Promise.all([
-      trabajadorService.listar().catch(() => []),
-      (async () => userId ?? (await resolveIdByEmail(email, 'EMPLEADOR')))(),
-    ]);
+    const list = await trabajadorService.listar().catch(() => []);
+    const eid = userId;
     setItems(Array.isArray(list) ? list : []);
     setEmpId(eid);
     if (eid) {

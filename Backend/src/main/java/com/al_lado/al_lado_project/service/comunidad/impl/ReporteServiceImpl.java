@@ -48,6 +48,23 @@ public class ReporteServiceImpl implements ReporteService {
         return repository.findByEstadoIgnoreCase(estado, pageable).map(mapper::toDTO);
     }
 
+    /**
+     * GH-56 (HU-13): reportes de un sector concreto, para la bandeja de moderación.
+     *
+     * @param sector   sector a filtrar, sin distinguir mayúsculas; vacío o {@code null}
+     *                 devuelve todos
+     * @param pageable página y orden
+     * @return reportes de ese sector; vacío si no hay coincidencias
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReporteDTO> obtenerPorSector(String sector, Pageable pageable) {
+        if (sector == null || sector.isBlank()) {
+            return repository.findAll(pageable).map(mapper::toDTO);
+        }
+        return repository.findBySectorIgnoreCase(sector.trim(), pageable).map(mapper::toDTO);
+    }
+
     @Override
     @Transactional
     public ReporteDTO crear(ReporteDTO dto) {
@@ -79,9 +96,10 @@ public class ReporteServiceImpl implements ReporteService {
         Reporte reporte = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reporte no encontrado con ID: " + id));
 
+        // Validación de estados finales (no se reabren ni se re-moderan)
         if ("RESUELTO".equalsIgnoreCase(reporte.getEstado())
                 || "DESCARTADO".equalsIgnoreCase(reporte.getEstado())) {
-            throw new BusinessRuleException("El reporte ya fue moderado y no puede re-resolverse.");
+            throw new BusinessRuleException("El reporte ya se encuentra en un estado final (" + reporte.getEstado() + ") y no puede reabrirse.");
         }
 
         String estadoFinal = nuevoEstado != null ? nuevoEstado : "RESUELTO";
@@ -91,15 +109,19 @@ public class ReporteServiceImpl implements ReporteService {
             throw new BusinessRuleException("Estado inválido. Valores permitidos: EN_REVISION, RESUELTO, DESCARTADO.");
         }
 
-        // Sincronía con el frontend: no envía moderadorId porque no conoce
-        // su id numérico; se usa el admin autenticado (el endpoint ya exige ROLE_ADMIN).
-        Long moderadorEfectivo = moderadorId != null ? moderadorId
-                : com.al_lado.al_lado_project.security.SecurityUtils.currentUserId();
-        if (moderadorEfectivo == null) {
+        // AL-SEC-010 (MEJ-016): La atribución debe ser obligatoriamente al principal autenticado.
+        Long principalId = SecurityUtils.currentUserId();
+        if (principalId == null) {
             throw new BusinessRuleException("No se pudo determinar el moderador autenticado.");
         }
-        Administrador moderador = administradorRepository.findById(moderadorEfectivo)
-                .orElseThrow(() -> new ResourceNotFoundException("Administrador no encontrado con ID: " + moderadorEfectivo));
+
+        // Si el cliente envía moderadorId explícito (legado), se valida coincidencia estricta para evitar suplantación (A1 no atribuye a A2)
+        if (moderadorId != null && !moderadorId.equals(principalId)) {
+            throw new BusinessRuleException("No está permitido atribuir la moderación a otro administrador.");
+        }
+
+        Administrador moderador = administradorRepository.findById(principalId)
+                .orElseThrow(() -> new ResourceNotFoundException("Administrador autenticado no encontrado con ID: " + principalId));
 
         reporte.setModerador(moderador);
         reporte.setEstado(estadoFinal.toUpperCase());

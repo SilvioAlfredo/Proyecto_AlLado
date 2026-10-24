@@ -2,14 +2,14 @@ import React, { useCallback, useState } from 'react';
 import { Text, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Screen, Brand, Title, AppCard, AppInput, AppButton, Note, Empty } from '../../../src/components/ui';
-import { perfilService, resolveIdByEmail } from '../../../src/api/services';
+import { perfilService } from '../../../src/api/services';
 import { errMsg } from '../../../src/api/client';
 import type { PortafolioItem } from '../../../src/types';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function Portafolio() {
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [tid, setTid] = useState<number | null>(userId);
   const [items, setItems] = useState<PortafolioItem[]>([]);
   const [titulo, setTitulo] = useState('');
@@ -23,11 +23,11 @@ export default function Portafolio() {
   };
   useFocusEffect(useCallback(() => {
     (async () => {
-      const id = userId ?? (await resolveIdByEmail(email, 'TRABAJADOR'));
+      const id = userId;
       setTid(id);
       if (id) await load(id);
     })();
-  }, [email, userId]));
+  }, [userId]));
 
   const agregar = async () => {
     setError('');

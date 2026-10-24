@@ -1,10 +1,12 @@
 package com.al_lado.al_lado_project.service.trabajo.impl;
 
+import com.al_lado.al_lado_project.dto.trabajo.ContactoEmpleadorDTO;
 import com.al_lado.al_lado_project.dto.trabajo.FiltrosOportunidadesDTO;
 import com.al_lado.al_lado_project.dto.trabajo.OportunidadLaboralDTO;
 import com.al_lado.al_lado_project.entity.trabajo.OportunidadLaboral;
 import com.al_lado.al_lado_project.entity.usuario.Empleador;
 import com.al_lado.al_lado_project.entity.usuario.Trabajador;
+import com.al_lado.al_lado_project.entity.usuario.Usuario;
 import com.al_lado.al_lado_project.exception.BusinessRuleException;
 import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
 import com.al_lado.al_lado_project.entity.trabajo.Etiqueta;
@@ -17,6 +19,7 @@ import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
 import com.al_lado.al_lado_project.mappers.trabajo.OportunidadLaboralMapper;
 import com.al_lado.al_lado_project.service.usuario.SuscripcionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -49,20 +52,20 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
     @Transactional(readOnly = true)
     public List<OportunidadLaboralDTO> obtenerTodas() {
         return repository.findAll().stream()
-                .map(mapper::toDTO)
+                .map(this::proyectar)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<OportunidadLaboralDTO> listarOportunidades(String filtro, Pageable pageable) {
-        return repository.findAll(specBusqueda(filtro, null, null), pageable).map(mapper::toDTO);
+        return repository.findAll(specBusqueda(filtro, null, null), pageable).map(this::proyectar);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<OportunidadLaboralDTO> listarOportunidades(String filtro, String modalidad, List<String> etiquetas, Pageable pageable) {
-        return repository.findAll(specBusqueda(filtro, modalidad, etiquetas), pageable).map(mapper::toDTO);
+        return repository.findAll(specBusqueda(filtro, modalidad, etiquetas), pageable).map(this::proyectar);
     }
 
     /**
@@ -80,7 +83,7 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
     @Transactional(readOnly = true)
     public List<OportunidadLaboralDTO> buscarPorFiltros(String filtro, String modalidad, List<String> etiquetas) {
         return repository.findAll(specBusqueda(filtro, modalidad, etiquetas)).stream()
-                .map(mapper::toDTO)
+                .map(this::proyectar)
                 .collect(Collectors.toList());
     }
 
@@ -172,7 +175,61 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
     public OportunidadLaboralDTO obtenerPorId(Long id) {
         OportunidadLaboral oportunidad = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Oportunidad no encontrada con ID: " + id));
-        return mapper.toDTO(oportunidad);
+        return proyectar(oportunidad);
+    }
+
+    /**
+     * Elige la proyección de la oferta según quién pregunta (AL-SEC-006).
+     *
+     * <p>El empleador titular de la oferta y ADMIN ven la ficha completa, con el
+     * detalle de postulantes; el resto recibe la proyección pública, sin el listado
+     * de postulaciones (sólo el conteo) y con el autor sin datos de contacto.</p>
+     *
+     * @param oportunidad oferta a convertir, o {@code null}
+     */
+    private OportunidadLaboralDTO proyectar(OportunidadLaboral oportunidad) {
+        if (oportunidad == null) return null;
+        Long autorId = oportunidad.getAutor() != null ? oportunidad.getAutor().getId() : null;
+        return SecurityUtils.canViewPrivateDataOf(autorId)
+                ? mapper.toDTO(oportunidad)
+                : mapper.toDTOPublic(oportunidad);
+    }
+
+    /**
+     * Contacto del empleador de la oferta (AL-SEC-006).
+     *
+     * <p>El correo electrónico y el teléfono no forman parte del detalle público de la
+     * oferta: los entrega sólo este endpoint, y sólo a quien tiene relación con ella:
+     * el empleador titular, un administrador o el trabajador que se postuló.</p>
+     *
+     * @param id identificador de la oferta
+     * @return nombre, email y teléfono del empleador
+     * @throws com.al_lado.al_lado_project.exception.ResourceNotFoundException si no existe la oferta
+     * @throws org.springframework.security.access.AccessDeniedException si no tiene relación con la oferta
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public ContactoEmpleadorDTO obtenerContacto(Long id) {
+        OportunidadLaboral oportunidad = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Oportunidad no encontrada con ID: " + id));
+
+        Usuario autor = oportunidad.getAutor();
+        Long actualId = SecurityUtils.currentUserId();
+
+        boolean esTitular = autor != null && autor.getId() != null && autor.getId().equals(actualId);
+        boolean sePostulo = actualId != null && oportunidad.getPostulaciones() != null
+                && oportunidad.getPostulaciones().stream()
+                        .anyMatch(p -> p.getAutor() != null && actualId.equals(p.getAutor().getId()));
+
+        if (!SecurityUtils.isAdmin() && !esTitular && !sePostulo) {
+            throw new AccessDeniedException("Sólo el titular de la oferta, un administrador o un postulante pueden ver el contacto.");
+        }
+
+        ContactoEmpleadorDTO contacto = new ContactoEmpleadorDTO();
+        contacto.setNombre(autor != null ? autor.getNombre() : null);
+        contacto.setEmail(autor != null ? autor.getEmail() : null);
+        contacto.setTelefono(autor != null ? autor.getTelefono() : null);
+        return contacto;
     }
 
     /**
@@ -321,7 +378,7 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
         boolean soloDestacadas = filtros != null && Boolean.TRUE.equals(filtros.getSoloDestacadas());
 
         return repository.findAll(specBusqueda(filtro, modalidad, etiquetas, soloDestacadas)).stream()
-                .map(mapper::toDTO)
+                .map(this::proyectar)
                 .collect(Collectors.toList());
     }
 

@@ -26,4 +26,11 @@ public class OportunidadLaboralDTO extends PostBaseDTO {
 
     private Set<EtiquetaDTO> etiquetas = new HashSet<>();
     private List<PostulacionResumenDTO> postulaciones = new ArrayList<>();
+
+    /**
+     * Cantidad de postulaciones recibidas. Se informa en todas las lecturas para que
+     * la proyección pública (AL-SEC-006) pueda mostrar el interés sin exponer el
+     * detalle de los postulantes.
+     */
+    private Integer postulacionesCount;
 }

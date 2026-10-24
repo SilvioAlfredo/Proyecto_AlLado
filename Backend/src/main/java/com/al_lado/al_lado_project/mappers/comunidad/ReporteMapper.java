@@ -1,7 +1,6 @@
 package com.al_lado.al_lado_project.mappers.comunidad;
 
 import com.al_lado.al_lado_project.mappers.usuario.UsuarioResumenMapper;
-
 import com.al_lado.al_lado_project.dto.comunidad.ReporteDTO;
 import com.al_lado.al_lado_project.entity.comunidad.Reporte;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +19,7 @@ public class ReporteMapper {
         dto.setId(entity.getId());
         dto.setMotivo(entity.getMotivo());
         dto.setDescripcion(entity.getDescripcion());
+        dto.setSector(entity.getSector());
         dto.setEstado(entity.getEstado());
         dto.setFechaCreacion(entity.getFechaCreacion());
         dto.setReportante(usuarioResumenMapper.toDTO(entity.getReportante()));
@@ -28,16 +28,15 @@ public class ReporteMapper {
         return dto;
     }
 
-    // Las relaciones reportante/reportado/moderador se resuelven en
-    // ReporteServiceImpl a partir de sus IDs; no se reconstruyen aqui
-    // para no crear entidades transient.
+    // AL-SEC-008 / AL-SEC-010: se fuerza id null para altas limpias
     public Reporte toEntity(ReporteDTO dto) {
         if (dto == null) return null;
 
         Reporte entity = new Reporte();
-        entity.setId(dto.getId());
+        entity.setId(null);
         entity.setMotivo(dto.getMotivo());
         entity.setDescripcion(dto.getDescripcion());
+        entity.setSector(dto.getSector());
         entity.setEstado(dto.getEstado());
         return entity;
     }

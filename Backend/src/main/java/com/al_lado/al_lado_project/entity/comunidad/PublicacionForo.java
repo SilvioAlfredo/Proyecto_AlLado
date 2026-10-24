@@ -27,6 +27,9 @@ public class PublicacionForo {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String contenido;
 
+    @Column(length = 100)
+    private String sector;
+
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -45,6 +48,13 @@ public class PublicacionForo {
     public PublicacionForo(String titulo, String contenido, Usuario autor) {
         this.titulo = titulo;
         this.contenido = contenido;
+        this.autor = autor;
+    }
+
+    public PublicacionForo(String titulo, String contenido, String sector, Usuario autor) {
+        this.titulo = titulo;
+        this.contenido = contenido;
+        this.sector = sector;
         this.autor = autor;
     }
 
