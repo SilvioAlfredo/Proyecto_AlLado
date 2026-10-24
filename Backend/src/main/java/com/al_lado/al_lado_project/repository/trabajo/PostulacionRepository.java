@@ -3,6 +3,7 @@ package com.al_lado.al_lado_project.repository.trabajo;
 import com.al_lado.al_lado_project.entity.trabajo.Postulacion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,6 +11,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 /**
  * Repositorio de postulaciones.
@@ -85,4 +87,18 @@ public interface PostulacionRepository extends JpaRepository<Postulacion, Long> 
     @Query("SELECT COALESCE(SUM(p.remuneracionPretendida), 0.0) FROM Postulacion p " +
             "WHERE UPPER(p.estado) = 'COMPLETADA' AND p.remuneracionPretendida IS NOT NULL")
     Double sumaRemuneracionCompletadas();
+
+    /** Suma importes declarados por un trabajador en postulaciones completadas. */
+    @Query("SELECT COALESCE(SUM(p.remuneracionPretendida), 0.0) FROM Postulacion p " +
+            "WHERE p.autor.id = :trabajadorId AND UPPER(p.estado) = 'COMPLETADA' " +
+            "AND p.remuneracionPretendida IS NOT NULL AND p.remuneracionPretendida > 0")
+    Double sumarImportesCompletadosPorTrabajador(@Param("trabajadorId") Long trabajadorId);
+
+    /** Suma importes declarados en postulaciones completadas desde la fecha indicada. */
+    @Query("SELECT COALESCE(SUM(p.remuneracionPretendida), 0.0) FROM Postulacion p " +
+            "WHERE p.autor.id = :trabajadorId AND UPPER(p.estado) = 'COMPLETADA' " +
+            "AND p.fechaCreacion >= :desde AND p.remuneracionPretendida IS NOT NULL " +
+            "AND p.remuneracionPretendida > 0")
+    Double sumarImportesCompletadosPorTrabajadorDesde(@Param("trabajadorId") Long trabajadorId,
+                                                       @Param("desde") LocalDateTime desde);
 }

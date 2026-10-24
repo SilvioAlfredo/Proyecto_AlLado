@@ -28,6 +28,10 @@ import java.util.stream.Collectors;
 
 import com.al_lado.al_lado_project.dto.usuario.EstadisticasTrabajadorDTO;
 import java.math.BigDecimal;
+import com.al_lado.al_lado_project.service.usuario.SuscripcionVigencia;
+import com.al_lado.al_lado_project.entity.usuario.Suscripcion;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Aplica los cambios de estado y sus notificaciones en una transacción.
@@ -275,74 +279,52 @@ public class PostulacionServiceImpl implements PostulacionService {
         SecurityUtils.requireSelfOrAdmin(trabajadorId);
         Trabajador trabajador = trabajadorRepository.findById(trabajadorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Trabajador no encontrado con ID: " + trabajadorId));
-
-        // Contar valoraciones recibidas usando el repositorio de valoraciones
-        Long valoracionesCount = valoracionRepository.countByTrabajadorId(trabajadorId);
-
-        // Calcular promedio de valoraciones usando el query del repositorio
-        Double promedioDouble = valoracionRepository.calcularPromedioPuntuacionPorTrabajadorId(trabajadorId);
-        BigDecimal promedio = promedioDouble != null ? BigDecimal.valueOf(promedioDouble) : BigDecimal.ZERO;
-
-        // Contar postulaciones por estado con el repository de postulaciones
-        long completadas = repository.countByAutorIdAndEstadoIgnoreCase(
-                trabajadorId, Postulacion.ESTADO_COMPLETADA);
-        long seleccionadas = repository.countByAutorIdAndEstadoIgnoreCase(
-                trabajadorId, Postulacion.ESTADO_SELECCIONADA);
-        long enviadas = repository.countByAutorId(trabajadorId);
-
-        // Estadísticasplaceholder para ingresos
-        EstadisticasTrabajadorDTO stats = new EstadisticasTrabajadorDTO();
-        stats.setId(trabajador.getId());
-        stats.setNombre(trabajador.getNombre());
-        stats.setEmail(trabajador.getEmail());
-        stats.setIngresosTotales(BigDecimal.ZERO);
-        stats.setIngresosUltimos3Meses(BigDecimal.ZERO);
-        stats.setValoracionesCount(valoracionesCount != null ? valoracionesCount.intValue() : 0);
-        stats.setPromedioValoraciones(promedio);
-        stats.setOfertasPublicadas(0);
-        stats.setPostulacionesEnviadas((int) enviadas);
-        stats.setPostulacionesSeleccionadas((int) seleccionadas);
-        stats.setPostulacionesCompletadas((int) completadas);
-        stats.setNivelRecomendacion(4);
-        stats.setPerfilCompleto(trabajador.getFotografia() != null && !trabajador.getFotografia().isEmpty());
-        stats.setUltimoLogin(null);
-        stats.setSuscripcionActiva(trabajador.getSuscripcion() != null && trabajador.getSuscripcion().isActiva());
-
-        return stats;
+        return construirEstadisticas(trabajador);
     }
 
     @Override
     @Transactional(readOnly = true)
     public EstadisticasTrabajadorDTO obtenerEstadisticasTrabajadorPorEmail(String email) {
-        // AL-SEC-005: la misma respuesta exista o no el email. Si no existe se devuelve
-        // 403 (igual que cuando existe y no es propio): un 404 permitiría enumerar las
-        // cuentas registradas comparando respuestas.
+        // Mantener misma respuesta exista o no el email, para impedir enumerar cuentas.
         Trabajador trabajador = trabajadorRepository.findByEmail(email)
                 .orElseThrow(() -> new AccessDeniedException("No tiene permisos para consultar estas estadísticas."));
         SecurityUtils.requireSelfOrAdmin(trabajador.getId());
+        return construirEstadisticas(trabajador);
+    }
 
-        // Contar valoraciones recibidas usando el repositorio de valoraciones
-        Long valoracionesCount = valoracionRepository.countByTrabajadorId(trabajador.getId());
+    private EstadisticasTrabajadorDTO construirEstadisticas(Trabajador trabajador) {
+        Long id = trabajador.getId();
+        long completadas = repository.countByAutorIdAndEstadoIgnoreCase(id, Postulacion.ESTADO_COMPLETADA);
+        long seleccionadas = repository.countByAutorIdAndEstadoIgnoreCase(id, Postulacion.ESTADO_SELECCIONADA);
+        long enviadas = repository.countByAutorId(id);
+        Long cantidadValoraciones = valoracionRepository.countByTrabajadorId(id);
+        Double promedioValoraciones = valoracionRepository.calcularPromedioPuntuacionPorTrabajadorId(id);
+        BigDecimal promedio = promedioValoraciones == null ? BigDecimal.ZERO : BigDecimal.valueOf(promedioValoraciones);
 
-        // Calcular promedio de valoraciones usando el query del repositorio
-        Double promedioDouble = valoracionRepository.calcularPromedioPuntuacionPorTrabajadorId(trabajador.getId());
-        BigDecimal promedio = promedioDouble != null ? BigDecimal.valueOf(promedioDouble) : BigDecimal.ZERO;
+        LocalDate hoy = LocalDate.now();
+        Suscripcion suscripcion = trabajador.getSuscripcion();
+        boolean suscripcionVigente = suscripcion != null && SuscripcionVigencia.esVigente(suscripcion, hoy);
+        boolean ingresosDisponibles = suscripcionVigente
+                && "PRO".equalsIgnoreCase(suscripcion.getNivel());
 
-        // Contar postulaciones por estado con el repository de postulaciones
-        long completadas = repository.countByAutorIdAndEstadoIgnoreCase(
-                trabajador.getId(), Postulacion.ESTADO_COMPLETADA);
-        long seleccionadas = repository.countByAutorIdAndEstadoIgnoreCase(
-                trabajador.getId(), Postulacion.ESTADO_SELECCIONADA);
-        long enviadas = repository.countByAutorId(trabajador.getId());
+        BigDecimal ingresosTotales = BigDecimal.ZERO;
+        BigDecimal ingresosUltimos3Meses = BigDecimal.ZERO;
+        if (ingresosDisponibles) {
+            Double total = repository.sumarImportesCompletadosPorTrabajador(id);
+            Double ultimosTresMeses = repository.sumarImportesCompletadosPorTrabajadorDesde(
+                    id, hoy.minusMonths(3).atStartOfDay());
+            ingresosTotales = BigDecimal.valueOf(total == null ? 0.0 : total);
+            ingresosUltimos3Meses = BigDecimal.valueOf(ultimosTresMeses == null ? 0.0 : ultimosTresMeses);
+        }
 
-        // Estadísticas placeholder para ingresos
         EstadisticasTrabajadorDTO stats = new EstadisticasTrabajadorDTO();
-        stats.setId(trabajador.getId());
+        stats.setId(id);
         stats.setNombre(trabajador.getNombre());
         stats.setEmail(trabajador.getEmail());
-        stats.setIngresosTotales(BigDecimal.ZERO);
-        stats.setIngresosUltimos3Meses(BigDecimal.ZERO);
-        stats.setValoracionesCount(valoracionesCount != null ? valoracionesCount.intValue() : 0);
+        stats.setIngresosTotales(ingresosTotales);
+        stats.setIngresosUltimos3Meses(ingresosUltimos3Meses);
+        stats.setIngresosDisponibles(ingresosDisponibles);
+        stats.setValoracionesCount(cantidadValoraciones == null ? 0 : cantidadValoraciones.intValue());
         stats.setPromedioValoraciones(promedio);
         stats.setOfertasPublicadas(0);
         stats.setPostulacionesEnviadas((int) enviadas);
@@ -351,8 +333,7 @@ public class PostulacionServiceImpl implements PostulacionService {
         stats.setNivelRecomendacion(4);
         stats.setPerfilCompleto(trabajador.getFotografia() != null && !trabajador.getFotografia().isEmpty());
         stats.setUltimoLogin(null);
-        stats.setSuscripcionActiva(trabajador.getSuscripcion() != null && trabajador.getSuscripcion().isActiva());
-
+        stats.setSuscripcionActiva(suscripcionVigente);
         return stats;
     }
 }

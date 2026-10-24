@@ -99,13 +99,9 @@ public interface PostulacionService {
     /**
      * Obtiene los conteos y datos del perfil de un trabajador.
      *
-     * <p>Los ingresos y ofertas publicadas devuelven cero, el nivel de recomendación devuelve 4
-     * y el último ingreso es nulo: son datos aún no implementados. {@code perfilCompleto} solo
+     * <p>Los ingresos estiman importes declarados en postulaciones completadas; no representan
+     * pagos auditados y solo se entregan cuando hay PRO vigente. {@code perfilCompleto} solo
      * indica que hay fotografía.</p>
-     *
-     * <p>{@code suscripcionActiva} lee el indicador activa; no comprueba nivel PRO ni
-     * vencimiento. Ver {@link
-     * com.al_lado.al_lado_project.service.usuario.SuscripcionService#esProVigente(Long)}.</p>
      *
      * @param trabajadorId ID del titular; puede ser de otro usuario si quien ejecuta es ADMIN
      * @throws com.al_lado.al_lado_project.exception.ResourceNotFoundException
