@@ -36,7 +36,7 @@ export function Navbar() {
             <span className="block font-extrabold text-xl tracking-tight text-white">
               Al<span className="text-[#ffc107]">L</span>ado
             </span>
-            <span className="block text-[10px] tracking-[0.2em] text-zinc-500">
+            <span className="block text-[10px] tracking-[0.2em] text-zinc-400">
               SERVICIOS LOCALES
             </span>
           </span>

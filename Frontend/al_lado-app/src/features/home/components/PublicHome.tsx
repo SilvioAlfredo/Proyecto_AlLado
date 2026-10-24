@@ -181,7 +181,7 @@ export function PublicHome() {
               Necesito contratar
             </Link>
           </div>
-          <p className="mt-4 text-xs text-zinc-500">
+          <p className="mt-4 text-xs text-zinc-400">
             ¿Ya sos parte?{' '}
             <Link
               href="/login"
@@ -205,7 +205,7 @@ export function PublicHome() {
                 <Search size={18} className="shrink-0 text-allado-yellow" />
                 <span className="sr-only">Oficio o trabajo</span>
                 <input
-                  className="w-full min-w-0 bg-transparent py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-allado-yellow"
+                  className="w-full min-w-0 bg-transparent py-2 text-sm text-white placeholder:text-zinc-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-allado-yellow"
                   placeholder="¿Cuál es tu oficio?"
                   value={search}
                   onChange={(e) => {
@@ -218,7 +218,7 @@ export function PublicHome() {
                 <MapPin size={18} className="shrink-0 text-zinc-500" />
                 <span className="sr-only">Barrio o ciudad</span>
                 <input
-                  className="w-full min-w-0 bg-transparent py-2 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-allado-yellow"
+                  className="w-full min-w-0 bg-transparent py-2 text-sm text-white placeholder:text-zinc-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-allado-yellow"
                   placeholder="Barrio o ciudad"
                   value={location}
                   onChange={(e) => {
@@ -232,7 +232,7 @@ export function PublicHome() {
               </button>
             </div>
           </form>
-          <p className="mt-3 text-xs text-zinc-500">
+          <p className="mt-3 text-xs text-zinc-400">
             Explorá las publicaciones sin crear una cuenta.
           </p>
         </div>
@@ -525,7 +525,7 @@ export function PublicHome() {
                 <Check size={15} />
               </span>
               <div>
-                <p className="text-[10px] font-semibold text-zinc-500">PASO {i + 1}</p>
+                <p className="text-[10px] font-semibold text-zinc-400">PASO {i + 1}</p>
                 <h3 className="mt-1 font-bold">{title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-400">{text}</p>
               </div>
@@ -560,7 +560,7 @@ export function PublicHome() {
           <Link href="/" className="text-xl font-black">
             Al<span className="text-allado-yellow">Lado.</span>
           </Link>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-zinc-400">
             Personas de tu barrio para lo que necesitás.
           </p>
         </div>
