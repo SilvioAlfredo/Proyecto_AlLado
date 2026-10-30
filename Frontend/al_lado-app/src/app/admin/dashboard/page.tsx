@@ -12,6 +12,15 @@ import { errorMessage } from '@/lib/errors';
 
 const card = 'space-y-4 rounded-2xl border border-[#2e2e33] bg-[#1a1a1c] p-5';
 
+const metricText = (value: number | string | null | undefined, fallback = '—') => {
+  if (value === null || value === undefined || value === '') return fallback;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) return fallback;
+    return value.toLocaleString('es-AR');
+  }
+  return value;
+};
+
 const actions = [
   ['Personas', '/admin/personas', 'Trabajadores, empleadores y administración'],
   ['Comunicados', '/admin/comunicados', 'Publicaciones institucionales'],
@@ -54,9 +63,10 @@ export default function Page() {
   ]
     .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
     .slice(0, 5);
-  const completedPercentage = metrics?.metricContratos
-    ? ((100 * metrics.trabajosCompletados) / metrics.metricContratos).toFixed(1)
-    : '0';
+  const completedPercentage =
+    metrics && Number.isFinite(metrics.metricContratos) && metrics.metricContratos > 0
+      ? ((100 * metrics.trabajosCompletados) / metrics.metricContratos).toFixed(1)
+      : '—';
 
   return (
     <div className="space-y-6">
@@ -83,35 +93,35 @@ export default function Page() {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard
                 label="Trabajadores"
-                value={metrics.metricTrabajadores.toLocaleString('es-AR')}
+                value={metricText(metrics.metricTrabajadores, '—')}
                 hint="Personas con perfil de trabajador"
                 highlight
               />
               <StatCard
                 label="Postulaciones"
-                value={metrics.metricContratos.toLocaleString('es-AR')}
+                value={metricText(metrics.metricContratos, '—')}
                 hint="Total de postulaciones registradas"
               />
               <StatCard
                 label="Completadas"
-                value={metrics.trabajosCompletados.toLocaleString('es-AR')}
-                hint={`${completedPercentage}% del total`}
+                value={metricText(metrics.trabajosCompletados, '—')}
+                hint={completedPercentage === '—' ? 'Sin datos disponibles' : `${completedPercentage}% del total`}
               />
               <StatCard
                 label="Remuneración pretendida promedio"
-                value={metrics.metricAvg}
+                value={metricText(metrics.metricAvg, '—')}
                 hint="Promedio de montos positivos declarados; no representa cobros"
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <StatCard
                 label="Usuarios habilitados"
-                value={String(metrics.usuariosActivos ?? 0)}
+                value={metricText(metrics.usuariosActivos, '—')}
                 hint="Cuentas habilitadas, no sesiones conectadas"
               />
               <StatCard
                 label="Usuarios deshabilitados"
-                value={String(metrics.usuariosInactivos ?? 0)}
+                value={metricText(metrics.usuariosInactivos, '—')}
               />
             </div>
             <div className="grid gap-6 xl:grid-cols-[3fr_2fr]">
@@ -181,11 +191,11 @@ export default function Page() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <StatCard
                   label="Aportes y planes (estimación)"
-                  value={metrics.totalIngresos}
+                  value={metricText(metrics.totalIngresos, '—')}
                 />
                 <StatCard
                   label="Remuneración en postulaciones completadas"
-                  value={metrics.dineroComunidad}
+                  value={metricText(metrics.dineroComunidad, '—')}
                 />
               </div>
               <Note>
