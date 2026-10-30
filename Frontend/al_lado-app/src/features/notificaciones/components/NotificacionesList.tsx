@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { notificacionesService, NotificacionDTO } from '@/features/notificaciones/services/notificacionesService';
-import { PageHeader, Empty } from '@/components/ui/shared';
+import { Empty } from '@/components/ui/shared';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { errorMessage } from '@/lib/errors';
 import { formatDate } from '@/lib/utils';
+import type { ConsultaNotificaciones } from '@/features/notificaciones/hooks/useNotificaciones';
 
 const TIPO_LABEL: Record<string, string> = {
   POSTULACION_RECIBIDA: 'Postulación',
@@ -13,51 +13,51 @@ const TIPO_LABEL: Record<string, string> = {
   SISTEMA: 'Sistema',
 };
 
-// Lista compartida trabajador/empleador. Endpoints: GET /notificaciones/usuario/{id},
-// PATCH /notificaciones/{id}/leer, PATCH /notificaciones/usuario/{id}/leer-todas
-export function NotificacionesList({ usuarioId }: { usuarioId: number }) {
-  const [items, setItems] = useState<NotificacionDTO[]>([]);
-  const [loading, setLoading] = useState(true);
+/**
+ * Lista de notificaciones compartida por trabajador y empleador.
+ *
+ * Es presentacional a propósito: el estado y las mutaciones viven en
+ * `useNotificaciones`, que es quien invalida la lista y el contador de la
+ * Navbar. Así las dos pantallas no vuelven a divergir.
+ */
+export function NotificacionesList({
+  consulta,
+}: {
+  consulta: ConsultaNotificaciones;
+}) {
+  const items = consulta.data ?? [];
+  const haySinLeer = items.some((n) => !n.leida);
 
-  const cargar = async () => {
-    setLoading(true);
-    try {
-      setItems(await notificacionesService.listar(usuarioId));
-    } catch {
-      setItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuarioId]);
-
-  const leer = async (id?: number) => {
-    if (!id) return;
-    await notificacionesService.marcarLeida(id);
-    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
-  };
-
-  const leerTodas = async () => {
-    await notificacionesService.marcarTodasLeidas(usuarioId);
-    setItems((prev) => prev.map((n) => ({ ...n, leida: true })));
-  };
-
-  if (loading) return <p className="text-sm text-zinc-500">Cargando notificaciones...</p>;
+  if (consulta.isPending) {
+    return <p className="text-sm text-zinc-500">Cargando notificaciones...</p>;
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <PageHeader eyebrow="Avisos" title="Notificaciones" />
-        {items.some((n) => !n.leida) && (
-          <Button size="sm" variant="outline" onClick={leerTodas}>
+      {consulta.error && (
+        <p role="alert" className="text-sm text-red-300">
+          {errorMessage(consulta.error)}
+        </p>
+      )}
+      {consulta.errorLectura && (
+        <p role="alert" className="text-sm text-red-300">
+          {errorMessage(consulta.errorLectura)}
+        </p>
+      )}
+
+      {haySinLeer && (
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={consulta.marcando}
+            onClick={consulta.leerTodas}
+          >
             Marcar todas como leídas
           </Button>
-        )}
-      </div>
+        </div>
+      )}
+
       {items.length === 0 ? (
         <Empty mensaje="No tenés notificaciones todavía." />
       ) : (
@@ -78,8 +78,12 @@ export function NotificacionesList({ usuarioId }: { usuarioId: number }) {
                 <span className="text-xs text-zinc-500">
                   {n.fechaCreacion ? formatDate(n.fechaCreacion) : ''}
                 </span>
-                {!n.leida && (
-                  <button onClick={() => leer(n.id)} className="text-xs font-bold text-[#ffc107] hover:underline">
+                {!n.leida && n.id != null && (
+                  <button
+                    onClick={() => consulta.leer(n.id!)}
+                    disabled={consulta.marcando}
+                    className="text-xs font-bold text-[#ffc107] hover:underline disabled:opacity-50"
+                  >
                     Marcar como leída
                   </button>
                 )}

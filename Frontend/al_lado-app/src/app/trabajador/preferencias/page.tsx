@@ -16,6 +16,7 @@ import {
 } from '@/features/usuario/components/TrabajadorPage';
 import { Button } from '@/components/ui/button';
 import { errorMessage } from '@/lib/errors';
+import { Note } from '@/components/ui/shared';
 import type { PreferenciaNotificacionDTO } from '@/types/usuario';
 
 export default function PreferenciasPage() {
@@ -75,6 +76,11 @@ function Preferencias({
       {!inicial && (
         <p>No tenés preferencias guardadas. Elegí las opciones y guardalas.</p>
       )}
+      <Note>
+        Correo y push todavía no tienen envío implementado: hoy los avisos llegan
+        solo dentro de la app. Guardar estas preferencias no activa entregas por
+        esos canales.
+      </Note>
       {[
         ['notificarEmail', 'Notificaciones por correo'],
         ['notificarPush', 'Notificaciones push'],

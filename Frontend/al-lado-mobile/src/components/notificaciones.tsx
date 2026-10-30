@@ -4,6 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { AppCard, Badge, Empty, AppButton } from './ui';
 import { notificacionService } from '../api/services';
 import { errMsg } from '../api/client';
+import { useNoLeidas } from '../notificaciones/NoLeidasContext';
 import type { Notificacion } from '../types';
 import { colors } from '../theme';
 
@@ -15,6 +16,7 @@ const TIPO_LABEL: Record<string, string> = {
 
 // Lista compartida trabajador/empleador. Espejo de NotificacionesList (web).
 export function NotificacionesList({ usuarioId }: { usuarioId: number }): React.JSX.Element {
+  const { refrescar } = useNoLeidas();
   const [items, setItems] = useState<Notificacion[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -25,13 +27,15 @@ export function NotificacionesList({ usuarioId }: { usuarioId: number }): React.
     try {
       const data = await notificacionService.listar(usuarioId);
       setItems(Array.isArray(data) ? data : []);
+      // Mantiene el badge de la tab alineado con lo que se acaba de listar.
+      await refrescar();
     } catch (e) {
       setError(errMsg(e));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [usuarioId]);
+  }, [usuarioId, refrescar]);
 
   useFocusEffect(useCallback(() => { cargar(); }, [cargar]));
 
@@ -40,6 +44,7 @@ export function NotificacionesList({ usuarioId }: { usuarioId: number }): React.
     try {
       await notificacionService.marcarLeida(id);
       setItems((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
+      await refrescar();
     } catch (e) {
       setError(errMsg(e));
     }
@@ -49,6 +54,7 @@ export function NotificacionesList({ usuarioId }: { usuarioId: number }): React.
     try {
       await notificacionService.marcarTodasLeidas(usuarioId);
       setItems((prev) => prev.map((n) => ({ ...n, leida: true })));
+      await refrescar();
     } catch (e) {
       setError(errMsg(e));
     }

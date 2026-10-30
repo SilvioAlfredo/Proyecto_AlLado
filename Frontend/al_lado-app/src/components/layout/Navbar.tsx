@@ -6,11 +6,12 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Bell } from 'lucide-react';
 import { notificacionesService } from '@/features/notificaciones/services/notificacionesService';
+import { notificacionesKeys } from '@/features/notificaciones/queryKeys';
 
 export function Navbar() {
   const { user, userId, logout } = useAuth();
   const notices = useQuery({
-    queryKey: ['notificaciones-count', userId],
+    queryKey: notificacionesKeys.contador(userId ?? 0),
     enabled: userId != null,
     queryFn: () => notificacionesService.noLeidas(userId!),
     staleTime: 30000,

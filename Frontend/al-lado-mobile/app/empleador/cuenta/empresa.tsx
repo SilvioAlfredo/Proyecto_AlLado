@@ -31,8 +31,8 @@ export default function Empresa() {
                 setWeb(String(data.sitioWeb ?? ''));
                 setVerificado(Boolean(data.verificado));
             }
-        }, [userId]));
-    }, [userId]);
+        })();
+    }, [userId]));
 
     return (
         <Screen><ScrollView>
