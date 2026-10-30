@@ -2,18 +2,18 @@ import React, { useCallback, useState } from 'react';
 import { Text, FlatList, StyleSheet } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Screen, Brand, Title, AppCard, Empty, Note } from '../../../src/components/ui';
-import { comunidadService, resolveIdByEmail } from '../../../src/api/services';
+import { comunidadService } from '../../../src/api/services';
 import type { Valoracion } from '../../../src/types';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function Valoraciones() {
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [items, setItems] = useState<Valoracion[]>([]);
   const [prom, setProm] = useState<number | null>(null);
   useFocusEffect(useCallback(() => {
     (async () => {
-      const id = userId ?? (await resolveIdByEmail(email, 'TRABAJADOR'));
+      const id = userId;
       if (!id) return;
       const [l, a] = await Promise.all([
         comunidadService.valoracionesDe(id).catch(() => []),
@@ -22,7 +22,7 @@ export default function Valoraciones() {
       setItems(Array.isArray(l) ? l : []);
       setProm(a);
     })();
-  }, [email, userId]));
+  }, [userId]));
   return (
     <Screen>
       <Brand />

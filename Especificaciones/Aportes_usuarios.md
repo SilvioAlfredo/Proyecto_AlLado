@@ -60,8 +60,9 @@ candidatas a asignar en el próximo sprint.
 
 ## 3. Sincronización con sinc-issues
 
-- Las 24 `AL-*` locales siguen en `Issues_Backlog.md` / `issues.json`.
-- Las 38 de GitHub se importan a `sinc-issues/issues.json` como `GH-<n>`
+- Las 28 `AL-*` del backlog siguen en `Issues_Backlog.md`; `issues.json`
+  agrupa 44 `AL-*` + 13 `GH-*` (57 en total) y el remoto tiene 95 issues.
+- Las remotas se importan a `sinc-issues/issues.json` como `GH-<n>`
   con `autor`, `asignado`, `gh_state` (OPEN/CLOSED) y `estado` local
   (Cerrado / En desarrollo / Pendiente). Ver `sinc-issues/README.md` y
   `sync_github.py`. El ejecutable las lista, edita y re-sube vía `gh`.
@@ -118,3 +119,102 @@ candidatas a asignar en el próximo sprint.
 - Merge con cambios de Julio · Merge con cambios de Chiara · Elimino TrbajadorService.java
 - Added tag 0.2 · Diseño Sprint 2 (bocetos/diagramas) · archivos Sprint 2 en Diseño
 - repository completa + TrabajadorService
+
+## 5. Reparto de issues abiertas por responsable (20/10/2026)
+
+> Criterio: el responsable de una issue es el desarrollador con la propiedad
+> actual del código que la issue toca, según `hg log` (último autor por
+> archivo) y el foco de trabajo por capa. Se reparte ~10 issues por persona.
+> 41 issues abiertas, 0 sin asignar.
+
+### 5.1 Evidencia por capa (archivos como último toucher)
+
+| Capa | Dueño principal | Secundarios |
+|---|---|---|
+| BE/controller, dto, entity, config | SilvioAlfredo (63-70 %) | chiara_madera, juliolasa81 |
+| BE/mapper, repository, service | chiara_madera (43 %) | SilvioAlfredo, juliolasa81 |
+| BE/otros (OpenApi, Cors, pom) | SilvioAlfredo | juliolasa81 |
+| FE web (pages/features) | chiara_madera (63-88 %) | SilvioAlfredo |
+| FE móvil (Expo) | SilvioAlfredo (85 %) | williams-gonzalez |
+| FE capa de datos (mapper/DTO/repo) | williams-gonzalez | — |
+| Diseño / Especificaciones / Testing | chiara_madera, williams-gonzalez | SilvioAlfredo |
+
+### 5.2 Issues por responsable
+
+**SilvioAlfredo (10)** — lead backend, seguridad, OpenAPI, cliente móvil
+| # | Issue | Área | Prio |
+|---|---|---|---|
+| 74 | AL-SEC-001 JWT secret hardcodeado | Seguridad | P0 |
+| 75 | AL-SEC-002 Credencial PostgreSQL hardcodeada | Seguridad | P0 |
+| 80 | AL-SEC-004 Endurecer recuperación y verificación de cuenta | Seguridad | P0 |
+| 81 | AL-SEC-005 Evitar enumeración de usuarios | Seguridad | P0 |
+| 82 | AL-SEC-006 Restringir lecturas y proyecciones por audiencia | Seguridad | P0 |
+| 93 | AL-SEC-007 Cerrar concesión directa de PRO | Seguridad | P0 |
+| 88 | AL-API-005 Identidad autenticada mínima y sesión coherente | Integración | P1 |
+| 47 | GH-47 [HU-04] Registro — SMS y política de contraseña | Producto | P2 |
+| 52 | GH-52 [HU-09] Notificaciones al publicar (<30 s) | Producto | P2 |
+| 66 | AL-DOC-002 Completar contrato OpenAPI como fuente de verdad | Documentación | P2 |
+
+**ChiaraMadera (11)** — frontend web, documentación, plan de pruebas
+| # | Issue | Área | Prio |
+|---|---|---|---|
+| 70 | AL-FE-004 Definir frontend oficial y matriz de alcance | Frontend | P1 |
+| 90 | AL-FE-008 Coherencia de notificaciones: flags y contador | Frontend | P1 |
+| 78 | AL-FE-005 Quitar datos ficticios del Home y formularios | Frontend | P2 |
+| 72 | AL-FUNC-002 Implementar notificaciones del matching | Producto | P2 |
+| 73 | AL-FUNC-003 Eliminar placeholders | Producto | P2 |
+| 86 | AL-TEST-004 Crear seed_tc_db_005.sql y separar schema/seed | Testing | P2 |
+| 87 | AL-TEST-005 Ejecutar el ciclo S1 del plan de pruebas | Testing | P2 |
+| 97 | AL-FE-009 Contraste de texto WCAG AA (Lighthouse) | Frontend | P2 |
+| 98 | AL-FE-010 Atributo alt a imagen sin describir (Lighthouse) | Frontend | P2 |
+| 99 | AL-SEC-011 Headers de seguridad en next.config.ts | Seguridad | P2 |
+| 100 | AL-FE-011 Optimizar rendimiento del frontend (Lighthouse) | Frontend | P3 |
+
+**juliolasa81 (10)** — capa service, infraestructura backend, flujos de web
+| # | Issue | Área | Prio |
+|---|---|---|---|
+| 95 | AL-SEC-009 Centralizar vigencia, cupo y renovación | Seguridad | P1 |
+| 49 | GH-49 [HU-06] Valoración — gate por finalización y tip | Producto | P2 |
+| 50 | GH-50 [HU-07] Búsqueda filtrada + UI (<500 ms) | Producto | P2 |
+| 53 | GH-53 [HU-10] Disponibilidad — excluir de búsquedas | Producto | P2 |
+| 55 | GH-55 [HU-12] Estadísticas del trabajador + candado Pro | Producto | P2 |
+| 63 | AL-DB-001 Reemplazar ddl-auto=update | Backend | P2 |
+| 64 | AL-DB-002 Separar configuración de producción | Backend | P2 |
+| 71 | AL-FUNC-001 Implementar matching local real | Producto | P2 |
+| 84 | AL-TEST-002 Agregar tests de integración API | Testing | P2 |
+| 61 | AL-CLEAN-001 Eliminar artefactos generados | Repositorio | P3 |
+
+**williams-gonzalez (10)** — capa de datos (mapper/DTO/repo), móvil, fixes FE
+| # | Issue | Área | Prio |
+|---|---|---|---|
+| 94 | AL-SEC-008 Impedir IDs del cliente en altas | Seguridad | P0 |
+| 89 | AL-FE-007 Uniformar errores HTTP: 403 ≠ 401 y parseo tolerante | Frontend | P1 |
+| 91 | AL-MOB-001 Corregir las 14 divergencias móviles | Frontend/Móvil | P1 |
+| 92 | AL-MOB-002 Aporte verificable completo entre clientes | Frontend/Móvil | P1 |
+| 96 | AL-SEC-010 Atribuir acciones administrativas al principal | Seguridad | P1 |
+| 56 | GH-56 [HU-13] Reportes + foro por sector | Producto | P2 |
+| 62 | AL-CLEAN-002 Revisar .hg | Repositorio | P3 |
+| 77 | AL-CLEAN-003 Normalizar estructura de la carpeta Diseño | Repositorio | P3 |
+| 79 | AL-FE-006 Eliminar código muerto del frontend | Frontend | P3 |
+| 85 | AL-TEST-003 Ampliar Postman/test_endpoints a módulos de comunidad | Testing | P3 |
+
+## 6. Etiquetado (tags) de las issues
+
+Las 95 issues del remoto quedaron etiquetadas con un esquema uniforme:
+
+| Tipo de etiqueta | Valores | Origen |
+|---|---|---|
+| Área | Frontend, Backend, Mobile, Seguridad, Integración, Testing, Documentación, Diseño, Producto, Repositorio, Automatización | campo `area` de `issues.json` / `clasificar_areas.py` |
+| Prioridad | P0, P1, P2, P3 | campo `priority` |
+| Tipo | bug, enhancement, documentation, wontfix | naturaleza del trabajo (hallazgos MEJ-* = bug) |
+| Temáticas | UML, OpenAPI, Lighthouse, Accesibilidad, Performance, Mobile | contexto de la issue |
+
+Notas:
+
+- Las 13 automatizaciones `HU-xx: Automatizar …` (#15–#29) y #38 (Kallithea)
+  llevan `wontfix` + `Automatización`/`Repositorio`: se cerraron por limpieza
+  (ver `Unificacion_issues.md` §3).
+- Las #34–#42 (TSK/TKS por capas) llevan `Backend` + `enhancement`: el trabajo
+  existe en el código, se cerraron sin seguimiento.
+- Se conservaron las etiquetas preexistentes (`documentation`, `UML`,
+  `good first issue`) y se agregaron las que faltaban; no se quitó ninguna.

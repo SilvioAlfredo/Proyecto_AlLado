@@ -3,7 +3,7 @@ import { Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import type { Href } from 'expo-router';
 import { Screen, Brand, Title, AppCard, AppButton } from '../../../src/components/ui';
-import { trabajadorService, comunidadService, resolveIdByEmail } from '../../../src/api/services';
+import { trabajadorService, comunidadService } from '../../../src/api/services';
 import type { Trabajador } from '../../../src/types';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
@@ -15,7 +15,7 @@ export default function MiPerfil() {
 
   useFocusEffect(useCallback(() => {
     (async () => {
-      const id = userId ?? (await resolveIdByEmail(email, 'TRABAJADOR'));
+      const id = userId;
       if (!id) return;
       const data = await trabajadorService.detalle(id).catch(() => null);
       setP(data);
@@ -24,7 +24,7 @@ export default function MiPerfil() {
         setProm(avg);
       }
     })();
-  }, [email, userId]));
+  }, [userId]));
 
   const initials = (p?.nombre ?? email ?? '?').slice(0, 2).toUpperCase();
 

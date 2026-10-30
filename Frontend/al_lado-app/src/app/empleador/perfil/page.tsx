@@ -35,7 +35,7 @@ function Datos({
         setError(null);
         setOk('');
         try {
-          await empleadorService.actualizarPerfil(data.email, {
+          await empleadorService.actualizarPerfil(data.id, {
             nombre: nombre.trim(),
             telefono: telefono.trim(),
           });

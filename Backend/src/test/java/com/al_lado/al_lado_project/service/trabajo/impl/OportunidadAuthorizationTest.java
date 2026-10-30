@@ -3,6 +3,7 @@ package com.al_lado.al_lado_project.service.trabajo.impl;
 import com.al_lado.al_lado_project.dto.trabajo.OportunidadLaboralDTO;
 import com.al_lado.al_lado_project.dto.usuario.UsuarioResumenDTO;
 import com.al_lado.al_lado_project.entity.trabajo.OportunidadLaboral;
+import com.al_lado.al_lado_project.exception.BusinessRuleException;
 import com.al_lado.al_lado_project.entity.usuario.Empleador;
 import com.al_lado.al_lado_project.mappers.trabajo.OportunidadLaboralMapper;
 import com.al_lado.al_lado_project.repository.trabajo.EtiquetaRepository;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -103,6 +105,24 @@ class OportunidadAuthorizationTest {
 
         assertNotNull(service().guardar(dto(null, 5L)));
         verify(repository).save(any(OportunidadLaboral.class));
+    }
+
+    @Test
+    void reactivarOfertaConsultaCupoAntesDeGuardar() {
+        autenticarComo(empleador(5L));
+        OportunidadLaboral existente = new OportunidadLaboral();
+        existente.setId(100L);
+        existente.setActiva(false);
+        existente.setAutor(empleador(5L));
+        when(empleadorRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(empleador(5L)));
+        when(repository.findById(100L)).thenReturn(Optional.of(existente));
+        when(suscripcionService.puedePublicarOferta(5L)).thenReturn(false);
+
+        OportunidadLaboralDTO actualizacion = dto(100L, 5L);
+        actualizacion.setActiva(true);
+        assertThrows(BusinessRuleException.class, () -> service().guardar(actualizacion));
+        verify(suscripcionService, times(1)).puedePublicarOferta(5L);
+        verify(repository, never()).save(any(OportunidadLaboral.class));
     }
 
     @Test

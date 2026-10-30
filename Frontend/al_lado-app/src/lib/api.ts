@@ -40,23 +40,31 @@ api.interceptors.response.use(
         }
 
         if (typeof window !== 'undefined') {
-            // 401 Unauthorized: token expirado, inválido o no provisto -> Cerrar sesión
-            if (status === 401) {
-                const isLoginRequest = error.config?.url?.includes('/auth/login');
-                const isLoginPage = ['/login', '/acceso-admin'].includes(window.location.pathname);
+            const urlPeticion = error.config?.url ?? '';
+            // El login/registro con credenciales inválidas no destruye la sesión actual
+            const esPeticionDeAuth = urlPeticion.includes('/auth/login') || urlPeticion.includes('/auth/register');
+            const enPantallaDeAcceso = ['/login', '/acceso-admin'].includes(window.location.pathname);
 
-                if (!isLoginRequest && !isLoginPage) {
-                    localStorage.removeItem('auth_token');
-                    localStorage.removeItem('user_email');
-                    localStorage.removeItem('user_roles');
-                    window.location.href = window.location.pathname.startsWith('/admin') ? '/acceso-admin' : '/login';
-                }
+            // 401 (token expirado/inválido) y 403 (sin permisos): la sesión ya no
+            // sirve, se borra completa (incluido el identificador del usuario,
+            // AL-API-005) y se vuelve al login para no mostrar datos de la cuenta
+            // anterior (AL-FE-007 / MEJ-008)
+            if ((status === 401 || status === 403) && !esPeticionDeAuth && !enPantallaDeAcceso) {
+                ['auth_token', 'user_email', 'user_roles', 'user_id', 'user_nombre'].forEach((key) =>
+                    localStorage.removeItem(key)
+                );
+                window.location.href = window.location.pathname.startsWith('/admin') ? '/acceso-admin' : '/login';
             }
 
             // 403 Forbidden: autenticado pero sin permisos -> NO desloguear, solo registrar / propagar
             if (status === 403) {
                 console.warn('Acceso denegado (403 Forbidden): El usuario carece de permisos para este recurso.');
             }
+        }
+
+        // Adjuntar mensaje normalizado al error antes de propagarlo
+        if (error.response) {
+            (error.response as any).friendlyMessage = errorMessage;
         }
 
         // Adjuntar mensaje normalizado al error antes de propagarlo

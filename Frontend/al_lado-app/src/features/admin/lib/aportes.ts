@@ -3,8 +3,8 @@ import type { SuscripcionDTO } from '@/features/usuario/services/aportesService'
 /**
  * Determina la vigencia de una suscripción sin modificarla.
  *
- * Una suscripción cancelada es inactiva aunque su fecha de fin sea futura.
- * La fecha final es inclusiva; si no existe, no se considera vencida.
+ * La vigencia llega del backend para compartir la política de calendario.
+ * El cálculo local solo se usa mientras se despliega una versión compatible del backend.
  *
  * @param sub - Suscripción que se quiere evaluar.
  * @param today - Fecha YYYY-MM-DD. Si se omite, utiliza la fecha local actual.
@@ -13,7 +13,7 @@ import type { SuscripcionDTO } from '@/features/usuario/services/aportesService'
 export function subscriptionState(
   sub: SuscripcionDTO,
   today?: string,
-): 'Activa' | 'Inactiva' | 'Vencida' {
+): 'Activa y vigente' | 'Activa fuera de vigencia' | 'Inactiva' {
   if (!sub.activa) {
     return 'Inactiva';
   }
@@ -26,7 +26,15 @@ export function subscriptionState(
       String(now.getDate()).padStart(2, '0'),
     ].join('-');
 
-  return sub.fechaFin && sub.fechaFin < date ? 'Vencida' : 'Activa';
+  const vigente =
+    sub.vigente ??
+    Boolean(
+      sub.fechaInicio &&
+        sub.fechaInicio <= date &&
+        (!sub.fechaFin || sub.fechaFin >= date),
+    );
+
+  return vigente ? 'Activa y vigente' : 'Activa fuera de vigencia';
 }
 
 /**

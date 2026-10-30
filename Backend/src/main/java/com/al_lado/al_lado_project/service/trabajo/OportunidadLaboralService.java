@@ -1,6 +1,8 @@
 package com.al_lado.al_lado_project.service.trabajo;
 
+import com.al_lado.al_lado_project.dto.trabajo.ContactoEmpleadorDTO;
 import com.al_lado.al_lado_project.dto.trabajo.FiltrosOportunidadesDTO;
+import com.al_lado.al_lado_project.dto.trabajo.CandidatoMatchingDTO;
 import com.al_lado.al_lado_project.dto.trabajo.OportunidadLaboralDTO;
 import com.al_lado.al_lado_project.entity.usuario.Trabajador;
 import org.springframework.data.domain.Page;
@@ -45,6 +47,20 @@ public interface OportunidadLaboralService {
      * @throws com.al_lado.al_lado_project.exception.ResourceNotFoundException si no existe
      */
     OportunidadLaboralDTO obtenerPorId(Long id);
+
+    /**
+     * Contacto del empleador dueño de la oferta (AL-SEC-006).
+     *
+     * <p>El detalle público de la oferta no trae email ni teléfono: éste es el único
+     * camino para obtenerlos y sólo lo tiene el empleador titular, un administrador o
+     * el trabajador que se postuló a la oferta.</p>
+     *
+     * @param id identificador de la oferta
+     * @return nombre, email y teléfono del empleador
+     * @throws com.al_lado.al_lado_project.exception.ResourceNotFoundException si no existe la oferta
+     * @throws org.springframework.security.access.AccessDeniedException si no tiene relación con la oferta
+     */
+    ContactoEmpleadorDTO obtenerContacto(Long id);
 
     /**
      * Crea o actualiza una oferta del empleador indicado.
@@ -140,4 +156,7 @@ public interface OportunidadLaboralService {
      *     si actúa un tercero sin rol ADMIN
      */
     List<OportunidadLaboralDTO> propuestasProParaTrabajador(Long trabajadorId);
+
+    /** Devuelve trabajadores compatibles con una oportunidad, ordenados por puntuación. */
+    List<CandidatoMatchingDTO> candidatosParaOportunidad(Long oportunidadId, double radioKm);
 }

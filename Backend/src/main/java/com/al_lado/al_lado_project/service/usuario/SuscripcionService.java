@@ -30,8 +30,9 @@ public interface SuscripcionService {
     /**
      * Crea o reactiva el plan de un usuario.
      *
-     * <p>Si ya existe, reutiliza el registro. Actualiza nivel y fechas con los datos recibidos y
-     * siempre lo deja activo.</p>
+     * <p>Si ya existe, reutiliza el registro. Un usuario puede crear o reactivar solo el plan
+     * Básico; PRO se concede únicamente al verificar una transferencia. Las fechas PRO las
+     * establece esa operación de verificación.</p>
      *
      * @param dto debe traer {@code usuario.id}; el resto de campos se toman tal cual
      * @return la suscripción persistida (nueva o reactivada)
@@ -70,8 +71,8 @@ public interface SuscripcionService {
      * Comprueba si el usuario puede crear otra oferta este mes.
      *
      * <p>El plan básico permite hasta tres ofertas que sigan activas y hayan sido creadas este
-     * mes. Cerrar una libera cupo. Sin plan, con nivel nulo, Básico o plan inactivo/vencido se
-     * aplica ese límite; los demás niveles activos y vigentes no tienen límite.</p>
+     * mes. Cerrar una libera cupo. Sin plan, con nivel nulo, Básico o plan PRO fuera de su
+     * período de vigencia se aplica ese límite; solo PRO activo y vigente no tiene límite.</p>
      *
      * <p>Se utiliza al crear ofertas. El control de publicaciones simultáneas pertenece a ese
      * flujo, no a este método por separado.</p>
@@ -84,10 +85,10 @@ public interface SuscripcionService {
     boolean puedePublicarOferta(Long usuarioId);
 
     /**
-     * Comprueba si hay un plan PRO activo y sin vencer.
+     * Comprueba si hay un plan PRO activo y vigente.
      *
-     * <p>Sin fecha final no se considera vencido. El plan sigue vigente durante su fecha de
-     * finalización. No comprueba fechaInicio: un inicio futuro no impide el acceso.</p>
+     * <p>El período es inclusivo en ambas fechas; {@code fechaFin} nula significa sin
+     * vencimiento. Una fecha de inicio futura aún no concede acceso.</p>
      *
      * @param usuarioId ID del usuario a consultar
      * @return {@code false} si no tiene suscripción o no cumple las condiciones

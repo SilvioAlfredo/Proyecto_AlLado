@@ -13,6 +13,8 @@ import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
 import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
 import com.al_lado.al_lado_project.repository.usuario.UsuarioRepository;
 import com.al_lado.al_lado_project.security.SecurityUtils;
+import com.al_lado.al_lado_project.service.usuario.EmpleadorService;
+import com.al_lado.al_lado_project.service.usuario.TrabajadorService;
 import com.al_lado.al_lado_project.service.usuario.UsuarioService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,8 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final EmpleadorRepository empleadorRepository;
     private final TrabajadorMapper trabajadorMapper;
     private final EmpleadorMapper empleadorMapper;
+    private final TrabajadorService trabajadorService;
+    private final EmpleadorService empleadorService;
 
     @Override
     @Transactional(readOnly = true)
@@ -54,24 +58,39 @@ public class UsuarioServiceImpl implements UsuarioService {
         // Buscar primero en Trabajador
         // Type witness explícito: el Optional se abre como <UsuarioDTO> porque el
         // fallback devuelve un EmpleadorDTO y Optional<TrabajadorDTO> no lo aceptaría.
+        // AL-SEC-006: la ficha sólo se muestra completa al titular o a un administrador.
         return trabajadorRepository.findById(id)
-                .<UsuarioDTO>map(trabajadorMapper::toDTO)
+                .<UsuarioDTO>map(this::proyectarTrabajador)
                 .orElseGet(() -> empleadorRepository.findById(id)
-                        .map(empleadorMapper::toDTO)
+                        .map(this::proyectarEmpleador)
                         .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id)));
+    }
+
+    private TrabajadorDTO proyectarTrabajador(Trabajador trabajador) {
+        return SecurityUtils.canViewPrivateDataOf(trabajador.getId())
+                ? trabajadorMapper.toDTO(trabajador)
+                : trabajadorMapper.toDTOPublic(trabajador);
+    }
+
+    private EmpleadorDTO proyectarEmpleador(Empleador empleador) {
+        return SecurityUtils.canViewPrivateDataOf(empleador.getId())
+                ? empleadorMapper.toDTO(empleador)
+                : empleadorMapper.toDTOPublic(empleador);
     }
 
     @Override
     @Transactional
     public UsuarioDTO guardar(UsuarioDTO dto) {
-        if (dto.getId() != null) {
-            SecurityUtils.requireSelfOrAdmin(dto.getId());
+        // AL-SEC-008 / AL-SEC-010: alta y edición delegadas en el servicio de cada tipo.
+        // Ahí el ID que manda el cliente no se copia a la entidad (no se puede
+        // sobrescribir un registro ajeno), se comprueba la titularidad, se valida el
+        // email duplicado y la contraseña se guarda cifrada: un save() directo sobre
+        // el mapper guardaba la contraseña en claro y aceptaba cualquier ID.
+        if (dto instanceof TrabajadorDTO trabajadorDTO) {
+            return trabajadorService.guardar(trabajadorDTO);
         }
-        // Determinar el tipo de usuario y delegar al servicio correspondiente
-        if (dto instanceof TrabajadorDTO) {
-            return trabajadorMapper.toDTO(trabajadorRepository.save(trabajadorMapper.toEntity((TrabajadorDTO) dto)));
-        } else if (dto instanceof EmpleadorDTO) {
-            return empleadorMapper.toDTO(empleadorRepository.save(empleadorMapper.toEntity((EmpleadorDTO) dto)));
+        if (dto instanceof EmpleadorDTO empleadorDTO) {
+            return empleadorService.guardar(empleadorDTO);
         }
         throw new IllegalArgumentException("Tipo de usuario no soportado");
     }

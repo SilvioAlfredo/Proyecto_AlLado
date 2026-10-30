@@ -44,6 +44,11 @@ public class OportunidadLaboralMapper extends PostBaseMapper {
         dto.setUbicacion(entity.getUbicacion());
         dto.setModalidad(entity.getModalidad());
         dto.setRangoSalarial(entity.getRangoSalarial());
+        dto.setLatitud(entity.getLatitud());
+        dto.setLongitud(entity.getLongitud());
+        dto.setDiaSemanaRequerido(entity.getDiaSemanaRequerido());
+        dto.setHoraInicioRequerida(entity.getHoraInicioRequerida());
+        dto.setHoraFinRequerida(entity.getHoraFinRequerida());
         dto.setActiva(entity.isActiva());
         dto.setDestacada(entity.isDestacada());
 
@@ -58,6 +63,47 @@ public class OportunidadLaboralMapper extends PostBaseMapper {
                     .map(postulacionResumenMapper::toDTO)
                     .collect(Collectors.toList()));
         }
+
+        dto.setPostulacionesCount(entity.getPostulaciones() == null
+                ? 0 : entity.getPostulaciones().size());
+
+        return dto;
+    }
+
+    /**
+     * Proyección pública de la oferta (AL-SEC-006).
+     *
+     * <p>El contenido de la oferta es público, pero el autor sólo se identifica con
+     * id y nombre (sin email ni teléfono) y el detalle de los postulantes queda
+     * fuera: sólo se informa cuántos hay, en {@code postulacionesCount}.</p>
+     *
+     * @param entity entidad a convertir, o {@code null}
+     * @return DTO con la proyección pública, o {@code null}
+     */
+    public OportunidadLaboralDTO toDTOPublic(OportunidadLaboral entity) {
+        if (entity == null) return null;
+
+        OportunidadLaboralDTO dto = new OportunidadLaboralDTO();
+        mapBaseToDTO(entity, dto);
+
+        if (entity.getAutor() != null) {
+            dto.setAutor(usuarioResumenMapper.toDTOPublic(entity.getAutor()));
+        }
+
+        dto.setUbicacion(entity.getUbicacion());
+        dto.setModalidad(entity.getModalidad());
+        dto.setRangoSalarial(entity.getRangoSalarial());
+        dto.setActiva(entity.isActiva());
+        dto.setDestacada(entity.isDestacada());
+
+        if (entity.getEtiquetas() != null) {
+            dto.setEtiquetas(entity.getEtiquetas().stream()
+                    .map(etiquetaMapper::toDTO)
+                    .collect(Collectors.toSet()));
+        }
+
+        dto.setPostulacionesCount(entity.getPostulaciones() == null
+                ? 0 : entity.getPostulaciones().size());
 
         return dto;
     }
@@ -78,6 +124,11 @@ public class OportunidadLaboralMapper extends PostBaseMapper {
         entity.setUbicacion(dto.getUbicacion());
         entity.setModalidad(dto.getModalidad());
         entity.setRangoSalarial(dto.getRangoSalarial());
+        entity.setLatitud(dto.getLatitud());
+        entity.setLongitud(dto.getLongitud());
+        entity.setDiaSemanaRequerido(dto.getDiaSemanaRequerido());
+        entity.setHoraInicioRequerida(dto.getHoraInicioRequerida());
+        entity.setHoraFinRequerida(dto.getHoraFinRequerida());
         entity.setActiva(dto.isActiva());
         entity.setDestacada(dto.isDestacada());
 

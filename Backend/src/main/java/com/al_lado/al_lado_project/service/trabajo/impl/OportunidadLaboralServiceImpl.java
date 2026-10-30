@@ -1,10 +1,13 @@
 package com.al_lado.al_lado_project.service.trabajo.impl;
 
+import com.al_lado.al_lado_project.dto.trabajo.ContactoEmpleadorDTO;
 import com.al_lado.al_lado_project.dto.trabajo.FiltrosOportunidadesDTO;
+import com.al_lado.al_lado_project.dto.trabajo.CandidatoMatchingDTO;
 import com.al_lado.al_lado_project.dto.trabajo.OportunidadLaboralDTO;
 import com.al_lado.al_lado_project.entity.trabajo.OportunidadLaboral;
 import com.al_lado.al_lado_project.entity.usuario.Empleador;
 import com.al_lado.al_lado_project.entity.usuario.Trabajador;
+import com.al_lado.al_lado_project.entity.usuario.Usuario;
 import com.al_lado.al_lado_project.exception.BusinessRuleException;
 import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
 import com.al_lado.al_lado_project.entity.trabajo.Etiqueta;
@@ -17,6 +20,7 @@ import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
 import com.al_lado.al_lado_project.mappers.trabajo.OportunidadLaboralMapper;
 import com.al_lado.al_lado_project.service.usuario.SuscripcionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
@@ -49,20 +53,20 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
     @Transactional(readOnly = true)
     public List<OportunidadLaboralDTO> obtenerTodas() {
         return repository.findAll().stream()
-                .map(mapper::toDTO)
+                .map(this::proyectar)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<OportunidadLaboralDTO> listarOportunidades(String filtro, Pageable pageable) {
-        return repository.findAll(specBusqueda(filtro, null, null), pageable).map(mapper::toDTO);
+        return repository.findAll(specBusqueda(filtro, null, null), pageable).map(this::proyectar);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<OportunidadLaboralDTO> listarOportunidades(String filtro, String modalidad, List<String> etiquetas, Pageable pageable) {
-        return repository.findAll(specBusqueda(filtro, modalidad, etiquetas), pageable).map(mapper::toDTO);
+        return repository.findAll(specBusqueda(filtro, modalidad, etiquetas), pageable).map(this::proyectar);
     }
 
     /**
@@ -80,7 +84,7 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
     @Transactional(readOnly = true)
     public List<OportunidadLaboralDTO> buscarPorFiltros(String filtro, String modalidad, List<String> etiquetas) {
         return repository.findAll(specBusqueda(filtro, modalidad, etiquetas)).stream()
-                .map(mapper::toDTO)
+                .map(this::proyectar)
                 .collect(Collectors.toList());
     }
 
@@ -172,7 +176,61 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
     public OportunidadLaboralDTO obtenerPorId(Long id) {
         OportunidadLaboral oportunidad = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Oportunidad no encontrada con ID: " + id));
-        return mapper.toDTO(oportunidad);
+        return proyectar(oportunidad);
+    }
+
+    /**
+     * Elige la proyección de la oferta según quién pregunta (AL-SEC-006).
+     *
+     * <p>El empleador titular de la oferta y ADMIN ven la ficha completa, con el
+     * detalle de postulantes; el resto recibe la proyección pública, sin el listado
+     * de postulaciones (sólo el conteo) y con el autor sin datos de contacto.</p>
+     *
+     * @param oportunidad oferta a convertir, o {@code null}
+     */
+    private OportunidadLaboralDTO proyectar(OportunidadLaboral oportunidad) {
+        if (oportunidad == null) return null;
+        Long autorId = oportunidad.getAutor() != null ? oportunidad.getAutor().getId() : null;
+        return SecurityUtils.canViewPrivateDataOf(autorId)
+                ? mapper.toDTO(oportunidad)
+                : mapper.toDTOPublic(oportunidad);
+    }
+
+    /**
+     * Contacto del empleador de la oferta (AL-SEC-006).
+     *
+     * <p>El correo electrónico y el teléfono no forman parte del detalle público de la
+     * oferta: los entrega sólo este endpoint, y sólo a quien tiene relación con ella:
+     * el empleador titular, un administrador o el trabajador que se postuló.</p>
+     *
+     * @param id identificador de la oferta
+     * @return nombre, email y teléfono del empleador
+     * @throws com.al_lado.al_lado_project.exception.ResourceNotFoundException si no existe la oferta
+     * @throws org.springframework.security.access.AccessDeniedException si no tiene relación con la oferta
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public ContactoEmpleadorDTO obtenerContacto(Long id) {
+        OportunidadLaboral oportunidad = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Oportunidad no encontrada con ID: " + id));
+
+        Usuario autor = oportunidad.getAutor();
+        Long actualId = SecurityUtils.currentUserId();
+
+        boolean esTitular = autor != null && autor.getId() != null && autor.getId().equals(actualId);
+        boolean sePostulo = actualId != null && oportunidad.getPostulaciones() != null
+                && oportunidad.getPostulaciones().stream()
+                        .anyMatch(p -> p.getAutor() != null && actualId.equals(p.getAutor().getId()));
+
+        if (!SecurityUtils.isAdmin() && !esTitular && !sePostulo) {
+            throw new AccessDeniedException("Sólo el titular de la oferta, un administrador o un postulante pueden ver el contacto.");
+        }
+
+        ContactoEmpleadorDTO contacto = new ContactoEmpleadorDTO();
+        contacto.setNombre(autor != null ? autor.getNombre() : null);
+        contacto.setEmail(autor != null ? autor.getEmail() : null);
+        contacto.setTelefono(autor != null ? autor.getTelefono() : null);
+        return contacto;
     }
 
     /**
@@ -224,6 +282,11 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
         oportunidad.setUbicacion(dto.getUbicacion());
         oportunidad.setModalidad(dto.getModalidad());
         oportunidad.setRangoSalarial(dto.getRangoSalarial());
+        oportunidad.setLatitud(dto.getLatitud());
+        oportunidad.setLongitud(dto.getLongitud());
+        oportunidad.setDiaSemanaRequerido(dto.getDiaSemanaRequerido());
+        oportunidad.setHoraInicioRequerida(dto.getHoraInicioRequerida());
+        oportunidad.setHoraFinRequerida(dto.getHoraFinRequerida());
         oportunidad.setAutor(empleador);
 
         // Las etiquetas se resuelven contra el repositorio para trabajar
@@ -245,6 +308,11 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
                     "Actualiza a Nivel Pro para publicar ofertas ilimitadas.");
             }
         } else {
+            boolean reactivando = !oportunidad.isActiva() && dto.isActiva();
+            if (reactivando && !suscripcionService.puedePublicarOferta(autorId)) {
+                throw new BusinessRuleException("Límite mensual de ofertas alcanzado. " +
+                    "Actualiza a Nivel Pro para publicar ofertas ilimitadas.");
+            }
             oportunidad.setActiva(dto.isActiva());
         }
 
@@ -321,7 +389,7 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
         boolean soloDestacadas = filtros != null && Boolean.TRUE.equals(filtros.getSoloDestacadas());
 
         return repository.findAll(specBusqueda(filtro, modalidad, etiquetas, soloDestacadas)).stream()
-                .map(mapper::toDTO)
+                .map(this::proyectar)
                 .collect(Collectors.toList());
     }
 
@@ -347,5 +415,129 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
         return buscarPorFiltros(null, null, especialidades).stream()
                 .sorted(Comparator.comparing(OportunidadLaboralDTO::isDestacada).reversed())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Ordena candidatos por especialidades coincidentes, distancia real y horario.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<CandidatoMatchingDTO> candidatosParaOportunidad(Long oportunidadId, double radioKm) {
+        if (!Double.isFinite(radioKm) || radioKm <= 0 || radioKm > 200) {
+            throw new BusinessRuleException("El radio debe ser mayor que 0 y no superar 200 km.");
+        }
+        OportunidadLaboral oportunidad = repository.findById(oportunidadId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Oportunidad no encontrada con ID: " + oportunidadId));
+        Long propietarioId = oportunidad.getAutor() != null ? oportunidad.getAutor().getId() : null;
+        SecurityUtils.requireSelfOrAdmin(propietarioId);
+        if (!oportunidad.isActiva()) {
+            return List.of();
+        }
+
+        boolean esRemota = "REMOTO".equalsIgnoreCase(oportunidad.getModalidad());
+        if (!esRemota && (oportunidad.getLatitud() == null || oportunidad.getLongitud() == null)) {
+            throw new BusinessRuleException("La oportunidad debe tener coordenadas para buscar candidatos por radio.");
+        }
+
+        Set<String> etiquetasOferta = oportunidad.getEtiquetas() == null ? Set.of()
+                : oportunidad.getEtiquetas().stream()
+                        .map(Etiqueta::getNombre)
+                        .map(this::normalizarTexto)
+                        .filter(nombre -> !nombre.isEmpty())
+                        .collect(Collectors.toSet());
+        return trabajadorRepository.findAllHabilitadosParaMatching().stream()
+                .map(trabajador -> puntuarCandidato(trabajador, oportunidad, etiquetasOferta,
+                        radioKm, esRemota))
+                .filter(Objects::nonNull)
+                .filter(candidato -> !etiquetasOferta.isEmpty()
+                        && !candidato.getEspecialidadesCoincidentes().isEmpty())
+                .filter(candidato -> !candidato.isHorarioRequerido()
+                        || candidato.isDisponibilidadCoincidente())
+                .sorted(Comparator.comparingInt(CandidatoMatchingDTO::getPuntuacion).reversed()
+                        .thenComparingDouble(CandidatoMatchingDTO::getDistanciaKm)
+                        .thenComparing(CandidatoMatchingDTO::getNombre,
+                                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER))
+                        .thenComparing(CandidatoMatchingDTO::getTrabajadorId))
+                .collect(Collectors.toList());
+    }
+
+    private CandidatoMatchingDTO puntuarCandidato(Trabajador trabajador,
+                                                   OportunidadLaboral oportunidad,
+                                                   Set<String> etiquetasOferta,
+                                                   double radioKm,
+                                                   boolean esRemota) {
+        List<String> coincidentes = trabajador.getEspecialidades() == null ? List.of()
+                : trabajador.getEspecialidades().stream()
+                        .filter(etiqueta -> etiquetasOferta.contains(normalizarTexto(etiqueta.getNombre())))
+                        .map(Etiqueta::getNombre)
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .sorted(String.CASE_INSENSITIVE_ORDER)
+                        .collect(Collectors.toList());
+
+        double distanciaKm;
+        if (esRemota) {
+            distanciaKm = 0;
+        } else if (trabajador.getLatitud() == null || trabajador.getLongitud() == null) {
+            return null;
+        } else {
+            distanciaKm = distanciaKm(oportunidad.getLatitud(), oportunidad.getLongitud(),
+                    trabajador.getLatitud(), trabajador.getLongitud());
+            if (distanciaKm > radioKm) {
+                return null;
+            }
+        }
+        boolean disponibilidadDeclarada = trabajador.getHorarios() != null
+                && !trabajador.getHorarios().isEmpty();
+        boolean horarioRequerido = oportunidad.getDiaSemanaRequerido() != null
+                && oportunidad.getHoraInicioRequerida() != null
+                && oportunidad.getHoraFinRequerida() != null;
+        boolean disponibilidadCoincidente = !horarioRequerido || (trabajador.getHorarios() != null
+                && trabajador.getHorarios().stream().anyMatch(h ->
+                    oportunidad.getDiaSemanaRequerido().equalsIgnoreCase(h.getDiaSemana())
+                    && h.getHoraInicio().isBefore(oportunidad.getHoraFinRequerida())
+                    && oportunidad.getHoraInicioRequerida().isBefore(h.getHoraFin())));
+
+        int puntuacionHabilidades = etiquetasOferta.isEmpty() ? 0
+                : (int) Math.round(60.0 * coincidentes.size() / etiquetasOferta.size());
+        int puntuacionDistancia = esRemota ? 25
+                : (int) Math.round(25.0 * Math.max(0, 1.0 - distanciaKm / radioKm));
+        int puntuacionDisponibilidad = horarioRequerido && disponibilidadCoincidente ? 15 : 0;
+
+        CandidatoMatchingDTO candidato = new CandidatoMatchingDTO();
+        candidato.setTrabajadorId(trabajador.getId());
+        candidato.setNombre(trabajador.getNombre());
+        candidato.setSector(trabajador.getSector());
+        candidato.setEspecialidadesCoincidentes(coincidentes);
+        candidato.setDistanciaKm(Math.round(distanciaKm * 100.0) / 100.0);
+        candidato.setDentroDelRadio(true);
+        candidato.setDisponibilidadDeclarada(disponibilidadDeclarada);
+        candidato.setDisponibilidadCoincidente(disponibilidadCoincidente);
+        candidato.setHorarioRequerido(horarioRequerido);
+        candidato.setPuntuacion(Math.min(100,
+                puntuacionHabilidades + puntuacionDistancia + puntuacionDisponibilidad));
+        return candidato;
+    }
+
+    private double distanciaKm(double lat1, double lon1, double lat2, double lon2) {
+        final double radioTierraKm = 6371.0088;
+        double diferenciaLatitud = Math.toRadians(lat2 - lat1);
+        double diferenciaLongitud = Math.toRadians(lon2 - lon1);
+        double a = Math.pow(Math.sin(diferenciaLatitud / 2), 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.pow(Math.sin(diferenciaLongitud / 2), 2);
+        a = Math.max(0, Math.min(1, a));
+        return 2 * radioTierraKm * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    private String normalizarTexto(String texto) {
+        if (texto == null) {
+            return "";
+        }
+        return java.text.Normalizer.normalize(texto.trim(), java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .toLowerCase()
+                .replaceAll("\\s+", " ");
     }
 }

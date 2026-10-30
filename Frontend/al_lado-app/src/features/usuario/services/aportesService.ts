@@ -8,6 +8,7 @@ export interface SuscripcionDTO {
   fechaInicio: string;
   fechaFin?: string;
   activa?: boolean;
+  vigente?: boolean;
 }
 
 export const suscripcionesService = {

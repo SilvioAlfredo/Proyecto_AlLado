@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Text, ScrollView, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Screen, Brand, Title, AppInput, AppButton, Note } from '../../../../src/components/ui';
-import { postulacionService, resolveIdByEmail } from '../../../../src/api/services';
+import { postulacionService } from '../../../../src/api/services';
 import { errMsg, param } from '../../../../src/api/client';
 import { useAuth } from '../../../../src/auth/AuthContext';
 import { colors } from '../../../../src/theme';
 
 export default function Postular() {
   const { id } = useLocalSearchParams();
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [titulo, setTitulo] = useState('');
   const [contenido, setContenido] = useState('');
   const [monto, setMonto] = useState('');
@@ -24,13 +24,13 @@ export default function Postular() {
     }
     setLoading(true);
     try {
-      const autorId = userId ?? (await resolveIdByEmail(email, 'TRABAJADOR'));
+      if (userId == null) throw new Error('No hay sesión activa.');
       await postulacionService.crear({
         titulo: titulo.trim(),
         contenido: contenido.trim(),
         remuneracionPretendida: monto ? Number(monto) : undefined,
         oportunidadLaboral: { id: Number(param(id)) },
-        autor: { id: autorId },
+        autor: { id: userId },
       });
       router.replace('/trabajador/postulaciones');
     } catch (e) {

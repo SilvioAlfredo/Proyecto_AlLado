@@ -2,12 +2,12 @@ import React, { useCallback, useState } from 'react';
 import { Text, ScrollView, StyleSheet } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Screen, Brand, Title, AppInput, AppButton, Note } from '../../../src/components/ui';
-import { empresaService, resolveIdByEmail } from '../../../src/api/services';
+import { empresaService } from '../../../src/api/services';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function Empresa() {
-    const { email, userId } = useAuth();
+    const { userId } = useAuth();
     const [eid, setEid] = useState<number | null>(userId);
     const [nombreEmpresa, setNombreEmpresa] = useState('');
     const [cuit, setCuit] = useState('');
@@ -18,7 +18,7 @@ export default function Empresa() {
 
     useFocusEffect(useCallback(() => {
         (async () => {
-            const id = userId ?? (await resolveIdByEmail(email, 'EMPLEADOR'));
+            const id = userId;
             setEid(id);
             if (!id) return;
             const p = await empresaService.perfil(id).catch(() => null);
@@ -31,8 +31,8 @@ export default function Empresa() {
                 setWeb(String(data.sitioWeb ?? ''));
                 setVerificado(Boolean(data.verificado));
             }
-        })();
-    }, [email, userId]));
+        }, [userId]));
+    }, [userId]);
 
     return (
         <Screen><ScrollView>
@@ -61,4 +61,5 @@ export default function Empresa() {
         </ScrollView></Screen>
     );
 }
+
 const styles = StyleSheet.create({ ok: { color: colors.success } });

@@ -42,6 +42,18 @@ public class ReporteController {
         return ResponseEntity.ok(service.obtenerPorEstado(estado, PageRequest.of(page, size)).getContent());
     }
 
+    /**
+     * GH-56 (HU-13): bandeja de moderación filtrada por sector.
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/sector/{sector}")
+    public ResponseEntity<List<ReporteDTO>> obtenerPorSector(
+            @PathVariable String sector,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "10") int size) {
+        return ResponseEntity.ok(service.obtenerPorSector(sector, PageRequest.of(page, size)).getContent());
+    }
+
     @PostMapping
     public ResponseEntity<ReporteDTO> crear(@Valid @RequestBody ReporteDTO reporteDTO) {
         return new ResponseEntity<>(service.crear(reporteDTO), HttpStatus.CREATED);

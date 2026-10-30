@@ -36,25 +36,21 @@ public class TrabajadorServiceImpl implements TrabajadorService {
     @Override
     @Transactional(readOnly = true)
     public List<TrabajadorDTO> obtenerTodos() {
+        // AL-SEC-006: cada ficha se proyecta según quién pregunta; el directorio no
+        // expone datos de contacto de terceros.
         return repository.findAll().stream()
-                .map(mapper::toDTO)
+                .map(this::proyectar)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<TrabajadorDTO> filtrar(String etiqueta, String sector) {
-        List<Trabajador> base;
-        if (etiqueta != null && !etiqueta.isBlank()) {
-            base = repository.findByEspecialidadNombreIgnoreCase(etiqueta.trim());
-        } else {
-            base = repository.findAll();
-        }
-        String sectorNormalizado = sector != null ? sector.trim().toLowerCase() : null;
-        return base.stream()
-                .filter(t -> sectorNormalizado == null || sectorNormalizado.isEmpty()
-                        || (t.getSector() != null && t.getSector().toLowerCase().contains(sectorNormalizado)))
-                .map(mapper::toDTO)
+        String etiquetaNormalizada = etiqueta == null || etiqueta.isBlank() ? null : etiqueta.trim();
+        String sectorNormalizado = sector == null || sector.isBlank() ? null : sector.trim();
+        return repository.filtrarPorEtiquetaYSector(etiquetaNormalizada, sectorNormalizado).stream()
+                .filter(t -> t.getHorarios() != null && !t.getHorarios().isEmpty())
+                .map(this::proyectar)
                 .collect(Collectors.toList());
     }
 
@@ -63,7 +59,18 @@ public class TrabajadorServiceImpl implements TrabajadorService {
     public TrabajadorDTO obtenerPorId(Long id) {
         Trabajador trabajador = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Trabajador no encontrado con ID: " + id));
-        return mapper.toDTO(trabajador);
+        return proyectar(trabajador);
+    }
+
+    /**
+     * Elige la proyección según la audiencia (AL-SEC-006): el titular de la cuenta y
+     * ADMIN reciben la ficha completa, el resto la proyección pública.
+     */
+    private TrabajadorDTO proyectar(Trabajador trabajador) {
+        if (trabajador == null) return null;
+        return SecurityUtils.canViewPrivateDataOf(trabajador.getId())
+                ? mapper.toDTO(trabajador)
+                : mapper.toDTOPublic(trabajador);
     }
 
     @Override
@@ -102,6 +109,8 @@ public class TrabajadorServiceImpl implements TrabajadorService {
         trabajador.setBiografia(dto.getBiografia());
         trabajador.setCertificados(dto.getCertificados());
         trabajador.setSector(dto.getSector());
+        trabajador.setLatitud(dto.getLatitud());
+        trabajador.setLongitud(dto.getLongitud());
 
         // Especialidades siempre como entidades gestionadas (evita
         // duplicados por unique y re-inserciones en lote).

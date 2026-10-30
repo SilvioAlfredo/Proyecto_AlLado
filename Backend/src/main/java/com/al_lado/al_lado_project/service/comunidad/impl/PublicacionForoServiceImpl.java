@@ -28,7 +28,7 @@ public class PublicacionForoServiceImpl implements PublicacionForoService {
     @Override
     @Transactional(readOnly = true)
     public Page<PublicacionForoDTO> obtenerTodas(Pageable pageable) {
-        return repository.findAllByOrderByFechaCreacionDesc(pageable).map(mapper::toDTO);
+        return repository.findAllByOrderByFechaCreacionDesc(pageable).map(this::proyectar);
     }
 
     @Override
@@ -36,13 +36,45 @@ public class PublicacionForoServiceImpl implements PublicacionForoService {
     public PublicacionForoDTO obtenerPorId(Long id) {
         PublicacionForo publicacion = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Publicación no encontrada con ID: " + id));
-        return mapper.toDTO(publicacion);
+        return proyectar(publicacion);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<PublicacionForoDTO> obtenerPorAutor(Long autorId, Pageable pageable) {
-        return repository.findByAutorId(autorId, pageable).map(mapper::toDTO);
+        return repository.findByAutorId(autorId, pageable).map(this::proyectar);
+    }
+
+    /**
+     * GH-56 (HU-13): publicaciones de un sector concreto del foro.
+     *
+     * <p>El sector es una categoría pública del tema; la comparación no distingue
+     * mayúsculas. Cada publicación se proyecta igual que en el resto de lecturas
+     * (AL-SEC-006).</p>
+     *
+     * @param sector   nombre del sector, sin distinguir mayúsculas
+     * @param pageable página y orden
+     * @return publicaciones de ese sector, o vacío si no hay
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<PublicacionForoDTO> obtenerPorSector(String sector, Pageable pageable) {
+        if (sector == null || sector.isBlank()) {
+            return repository.findAllByOrderByFechaCreacionDesc(pageable).map(this::proyectar);
+        }
+        return repository.findBySectorIgnoreCase(sector.trim(), pageable).map(this::proyectar);
+    }
+
+    /**
+     * El foro es público: el email del autor no. Sólo el propio autor o un
+     * administrador ven la publicación con la identidad completa (AL-SEC-006).
+     */
+    private PublicacionForoDTO proyectar(PublicacionForo publicacion) {
+        if (publicacion == null) return null;
+        Long autorId = publicacion.getAutor() != null ? publicacion.getAutor().getId() : null;
+        return SecurityUtils.canViewPrivateDataOf(autorId)
+                ? mapper.toDTO(publicacion)
+                : mapper.toDTOPublic(publicacion);
     }
 
     @Override

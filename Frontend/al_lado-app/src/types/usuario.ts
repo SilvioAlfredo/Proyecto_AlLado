@@ -52,6 +52,7 @@ export interface EstadisticasTrabajadorDTO {
   // Métricas financieras
   ingresosTotales: number;
   ingresosUltimos3Meses: number;
+  ingresosDisponibles: boolean;
   valoracionesCount: number;
   promedioValoraciones: number; // 1-5 estrellas
 

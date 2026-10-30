@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { Screen, Brand, Title, AppCard, Badge, Empty, AppButton, Note } from '../../../src/components/ui';
-import { oportunidadService, resolveIdByEmail } from '../../../src/api/services';
+import { oportunidadService } from '../../../src/api/services';
 import { ApiError, errMsg } from '../../../src/api/client';
 import type { Oportunidad } from '../../../src/types';
 import { useAuth } from '../../../src/auth/AuthContext';
@@ -12,7 +12,7 @@ import { colors } from '../../../src/theme';
 // Endpoint: GET /oportunidades/propuestas-pro?trabajadorId=
 // Espejo de app/trabajador/propuestas (web).
 export default function PropuestasPro() {
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [items, setItems] = useState<Oportunidad[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -23,7 +23,7 @@ export default function PropuestasPro() {
     setError('');
     setSinPlan(false);
     try {
-      const id = userId ?? (await resolveIdByEmail(email, 'TRABAJADOR'));
+      const id = userId;
       if (!id) throw new Error('No se pudo identificar tu perfil de trabajador.');
       const data = await oportunidadService.propuestasPro(id);
       setItems(Array.isArray(data) ? data : []);
@@ -38,7 +38,7 @@ export default function PropuestasPro() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [email, userId]);
+  }, [userId]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { OportunidadLaboralDTO } from '@/types/trabajo';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { obtenerRefPorEmail } from '@/lib/usuarioRef';
+import { obtenerRefSesion } from '@/lib/usuarioRef';
 import { errorMessage } from '@/lib/errors';
 import { oportunidadesService } from '@/features/oportunidades/services/oportunidadService';
 import { postulacionesService } from '../services/postulacionesService';
@@ -61,7 +61,7 @@ export function PostulacionModal({
       ) {
         throw new Error('Inicia sesión como trabajador para postularte.');
       }
-      const autor = await obtenerRefPorEmail(user.email);
+      const autor = obtenerRefSesion();
       if (!autor?.id) throw new Error('No se pudo identificar tu usuario.');
       const oferta = oportunidad ?? (await oportunidadesService.obtenerPorId(id));
       const monto = Number(tarifaPropuesta);

@@ -18,6 +18,24 @@ public class UsuarioResumenMapper {
         return dto;
     }
 
+    /**
+     * Proyección pública del resumen de usuario (AL-SEC-006).
+     *
+     * <p>Sólo identifica quién es (id y nombre): el email es dato privado del titular
+     * o del administrador, así que las lecturas de terceros lo reciben nulo.</p>
+     *
+     * @param entity entidad a convertir, o {@code null}
+     * @return DTO sin email, o {@code null}
+     */
+    public UsuarioResumenDTO toDTOPublic(Usuario entity) {
+        if (entity == null) return null;
+
+        UsuarioResumenDTO dto = new UsuarioResumenDTO();
+        dto.setId(entity.getId());
+        dto.setNombre(entity.getNombre());
+        return dto;
+    }
+
     // Quitamos el toEntity que hacía 'new Usuario()' porque rompía al ser abstracta.
     // Si en el futuro necesitas guardar un usuario desde este DTO, se maneja
     // en los mappers específicos de Empleador o Trabajador.

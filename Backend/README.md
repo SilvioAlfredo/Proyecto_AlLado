@@ -174,9 +174,11 @@ Sin PRO → `400` con mensaje que indica el plan requerido.
 
 ## Configuración
 
-### Base de datos (`application.properties`)
-- URL `jdbc:postgresql://localhost:5432/al_lado_db`, usuario `postgres` — ver `src/main/resources/instrucciones_container` para el contenedor.
-- `ddl-auto=update`, `show-sql=true`, `open-in-view=true` (solo desarrollo).
+### Perfiles de configuración
+- `application.properties` contiene valores comunes conservadores: `ddl-auto=validate`, `show-sql=false` y `open-in-view=false`.
+- Desarrollo local: activar `SPRING_PROFILES_ACTIVE=dev`. El perfil `dev` usa PostgreSQL local y habilita `ddl-auto=update`, el log SQL y Open Session in View. Ver `src/main/resources/instrucciones_container` para iniciar PostgreSQL.
+- Producción: activar `SPRING_PROFILES_ACTIVE=prod` y definir `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` y `JWT_SECRET` en el entorno. El perfil valida el esquema, mantiene apagados los logs SQL y no expone mensajes ni stack traces en errores.
+- No guardar credenciales reales en los archivos de propiedades ni activar `dev` en producción.
 
 ### JWT
 - `jwt.secret` / `jwt.expiration` (default 86400000 ms = 24 h). **Definir `jwt.secret` en cada entorno**: el default del código es compartido.

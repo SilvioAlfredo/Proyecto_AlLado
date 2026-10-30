@@ -8,11 +8,13 @@ import com.al_lado.al_lado_project.repository.usuario.SuscripcionRepository;
 import com.al_lado.al_lado_project.repository.usuario.UsuarioRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -32,30 +34,37 @@ class SuscripcionProVigenteTest {
     @Mock
     private SuscripcionMapper mapper;
 
-    @InjectMocks
     private SuscripcionServiceImpl service;
+
+    private static final LocalDate HOY = LocalDate.of(2025, 5, 10);
+
+    @org.junit.jupiter.api.BeforeEach
+    void setup() {
+        service = new SuscripcionServiceImpl(repository, usuarioRepository, oportunidadLaboralRepository,
+                mapper, Clock.fixed(Instant.parse("2025-05-10T12:00:00Z"), ZoneOffset.UTC));
+    }
 
     private Suscripcion pro(boolean activa, LocalDate fin) {
         Trabajador t = new Trabajador();
         t.setId(1L);
-        return new Suscripcion(t, "PRO", LocalDate.now().minusDays(1), fin, activa);
+        return new Suscripcion(t, "PRO", HOY.minusDays(1), fin, activa);
     }
 
     @Test
     void proActivaVigenteEsTrue() {
-        when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(pro(true, LocalDate.now().plusDays(10))));
+        when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(pro(true, HOY.plusDays(10))));
         assertTrue(service.esProVigente(1L));
     }
 
     @Test
     void proInactivaEsFalse() {
-        when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(pro(false, LocalDate.now().plusDays(10))));
+        when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(pro(false, HOY.plusDays(10))));
         assertFalse(service.esProVigente(1L));
     }
 
     @Test
     void proVencidaEsFalse() {
-        when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(pro(true, LocalDate.now().minusDays(1))));
+        when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(pro(true, HOY.minusDays(1))));
         assertFalse(service.esProVigente(1L));
     }
 
@@ -70,7 +79,27 @@ class SuscripcionProVigenteTest {
         Trabajador t = new Trabajador();
         t.setId(1L);
         when(repository.findByUsuarioId(1L)).thenReturn(
-                Optional.of(new Suscripcion(t, "BASICO", LocalDate.now().minusDays(1), null, true)));
+                Optional.of(new Suscripcion(t, "BASICO", HOY.minusDays(1), null, true)));
         assertFalse(service.esProVigente(1L));
+    }
+
+    @Test
+    void inicioFuturoNoConcedeBeneficio() {
+        Suscripcion suscripcion = pro(true, HOY.plusDays(10));
+        suscripcion.setFechaInicio(HOY.plusDays(1));
+        when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(suscripcion));
+        assertFalse(service.esProVigente(1L));
+    }
+
+    @Test
+    void fechasLimiteSonInclusivasYFinNuloNoVence() {
+        Suscripcion terminaHoy = pro(true, HOY);
+        terminaHoy.setFechaInicio(HOY);
+        when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(terminaHoy));
+        assertTrue(service.esProVigente(1L));
+
+        terminaHoy.setFechaFin(null);
+        terminaHoy.setFechaInicio(HOY.minusDays(2));
+        assertTrue(service.esProVigente(1L));
     }
 }

@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Text, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Screen, Brand, Title, AppInput, AppButton, Note } from '../../src/components/ui';
-import { comunidadService, postulacionService, resolveIdByEmail } from '../../src/api/services';
+import { comunidadService, postulacionService } from '../../src/api/services';
 import { errMsg, param } from '../../src/api/client';
 import { useAuth } from '../../src/auth/AuthContext';
 import { colors } from '../../src/theme';
 
 export default function Valorar() {
   const { postulacion } = useLocalSearchParams();
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [stars, setStars] = useState(5);
   const [comentario, setComentario] = useState('');
   const [msg, setMsg] = useState('');
@@ -18,12 +18,12 @@ export default function Valorar() {
   const onSubmit = async () => {
     setError(''); setMsg('');
     try {
-      const autorId = userId ?? (await resolveIdByEmail(email, 'EMPLEADOR'));
+      if (userId == null) throw new Error('No hay sesión activa.');
       // El trabajador es el autor de la postulación
       const p = await postulacionService.detalle(param(postulacion));
       await comunidadService.valorar({
         puntuacion: stars, comentario,
-        autor: { id: autorId },
+        autor: { id: userId },
         trabajador: { id: p.autor?.id ?? p.trabajador?.id },
       });
       setMsg('Valoración publicada.');

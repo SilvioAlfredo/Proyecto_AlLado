@@ -1,37 +1,39 @@
-# Control de versiones local (Mercurial)
+# Ignorar la carpeta de compilación de Maven
+target/
+
+# Ignorar archivos de configuración del IDE (IntelliJ, Eclipse, VS Code)
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+
+# Ignorar archivos de sistema o logs
+*.log
+.DS_Store
+
+# Resultados JUnit generados por las suites de los frontends (se regeneran)
+Frontend/*/test-results/
+
+# Copias de seguridad de la planilla de pruebas (se regeneran)
+*.xlsx.bak
+
+# Ignorar secretos: solo se versiona el ejemplo .env.example (AL-SEC-001/002)
+.env
+.env.*
+!.env.example
+
+# Ignorar repositorio y metadatos de Mercurial
 .hg/
 .hgignore
 .hgtags
 
-# IDEs y editores
-.idea/
-*.iml
-.vscode/
-.qodo/
+# Bytecode compilado de Python (scripts de pruebas E2E)
+__pycache__/
+*.pyc
 
-# Compilados de Backend
-target/
-Backend/target/
-build/
-*.class
-
-# Dependencias y compilados de Frontend
-node_modules/
-Frontend/*/node_modules/
-FrontPrueba/
-Frontend/frontend-web/
-.next/
+# Frontend al_lado-app (Next.js) - artefactos de construccion (no versionar)
+Frontend/al_lado-app/node_modules/
 Frontend/al_lado-app/.next/
-out/
-dist/
-*.tsbuildinfo
-
-# Mobile / Expo
-.expo/
-Frontend/al-lado-mobile/.expo/
-mini-app-android/
-
-# Archivos del sistema
-.DS_Store
-Thumbs.db
-*.log
+Frontend/al_lado-app/tsconfig.tsbuildinfo

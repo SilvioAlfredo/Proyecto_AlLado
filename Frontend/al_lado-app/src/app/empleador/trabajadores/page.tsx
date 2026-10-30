@@ -1,5 +1,5 @@
 'use client';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
@@ -23,12 +23,18 @@ function Content() {
   const [q, setQ] = useState('');
   const [especialidad, setEspecialidad] = useState(params.get('especialidad') ?? '');
   const [sector, setSector] = useState('');
+  const [sectorFiltrado, setSectorFiltrado] = useState('');
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<unknown>(null);
   const tags = useQuery({ queryKey: ['etiquetas'], queryFn: etiquetasService.listar });
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSectorFiltrado(sector.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [sector]);
   const query = useQuery({
-    queryKey: ['trabajadores-directorio'],
-    queryFn: trabajadorService.obtenerTodos,
+    queryKey: ['trabajadores-directorio', especialidad, sectorFiltrado],
+    queryFn: () => trabajadorService.filtrar(especialidad || undefined, sectorFiltrado || undefined),
+    placeholderData: (previousData) => previousData,
   });
   const normalize = (v: string) =>
     v

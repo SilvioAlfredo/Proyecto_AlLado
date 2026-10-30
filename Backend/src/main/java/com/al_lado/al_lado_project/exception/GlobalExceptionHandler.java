@@ -26,8 +26,9 @@ import java.util.Map;
  * <ul>
  *   <li><b>400</b> — {@link BusinessRuleException} (regla de negocio violada),
  *       {@link MethodArgumentNotValidException} (Bean Validation, con detalle campo
- *       a campo) y {@link MissingServletRequestParameterException} (parámetro
- *       ausente).</li>
+ *       a campo), {@link MissingServletRequestParameterException} (parámetro
+ *       ausente) e {@link IllegalArgumentException} (rechazos de los servicios, como
+ *       un token inválido o una contraseña actual incorrecta).</li>
  *   <li><b>401</b> — {@link BadCredentialsException} y cualquier
  *       {@link org.springframework.security.core.AuthenticationException}
  *       (cuenta deshabilitada u otras).</li>
@@ -43,9 +44,6 @@ import java.util.Map;
  * <ul>
  *   <li>Solo ve excepciones que llegan al controlador. Lo que falla antes —en
  *       particular {@code JwtAuthenticationFilter}— responde sin pasar por aquí.</li>
- *   <li>No tiene handler para {@link IllegalArgumentException}: los rechazos de
- *       {@code AuthService} (token inválido, contraseña actual incorrecta) caen en
- *       el genérico y responden <b>500</b>, no 400.</li>
  *   <li>No traduce automáticamente las violaciones de integridad a una regla de
  *       negocio: depende de cuándo se materialicen, por lo que el código puede ser
  *       400 o 409 según el caso.</li>
@@ -135,6 +133,20 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("Bad Request")
                 .message("Falta el parámetro requerido: " + ex.getParameterName() + ".")
+                .path(request.getRequestURI())
+                .timestamp(LocalDateTime.now())
+                .build();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    // 4c. Rechazos de los servicios (token inválido, contraseña actual incorrecta):
+    // HTTP 400 con el mensaje del servicio, en vez de caer en el 500 genérico.
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex, HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message(ex.getMessage())
                 .path(request.getRequestURI())
                 .timestamp(LocalDateTime.now())
                 .build();

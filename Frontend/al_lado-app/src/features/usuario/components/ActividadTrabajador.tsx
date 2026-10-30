@@ -1,11 +1,13 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import {
   CheckCircle2,
   Clock,
   Star,
   DollarSign,
+  LockKeyhole,
   Activity,
   ArrowUpRight,
 } from 'lucide-react';
@@ -55,18 +57,46 @@ export function ActividadTrabajador() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="bg-allado-card p-5 border-allado-border shadow-sm flex flex-col justify-center">
             <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-emerald-400/10 text-emerald-400 rounded-lg">
-                <DollarSign className="w-5 h-5" />
+              <div
+                className={`rounded-lg p-2 ${
+                  datos.ingresosDisponibles
+                    ? 'bg-emerald-400/10 text-emerald-400'
+                    : 'bg-zinc-700/50 text-zinc-300'
+                }`}
+              >
+                {datos.ingresosDisponibles ? (
+                  <DollarSign className="h-5 w-5" />
+                ) : (
+                  <LockKeyhole className="h-5 w-5" />
+                )}
               </div>
-              <span className="text-sm font-medium text-zinc-300">
-                Ingresos de los últimos 3 meses
-              </span>
+              <span className="text-sm font-medium text-zinc-300">Ingresos estimados</span>
             </div>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-bold text-white">
-                ${estadisticas.gananciasMes.toLocaleString()}
-              </h3>
-            </div>
+            {datos.ingresosDisponibles ? (
+              <div>
+                <h3 className="text-2xl font-bold text-white">
+                  ${estadisticas.gananciasMes.toLocaleString()}{' '}
+                  <span className="text-xs font-normal text-zinc-400">últimos 3 meses</span>
+                </h3>
+                <p className="mt-1 text-xs text-zinc-400">
+                  Total: ${datos.ingresosTotales.toLocaleString()} · Importes declarados en
+                  trabajos completados; no confirma pagos.
+                </p>
+              </div>
+            ) : (
+              <div>
+                <p className="font-semibold text-white">Disponible con PRO</p>
+                <p className="mt-1 text-xs text-zinc-400">
+                  Consulta tus importes estimados de trabajos completados.
+                </p>
+                <Link
+                  className="mt-3 inline-flex text-sm font-semibold text-allado-yellow hover:underline"
+                  href="/trabajador/suscripcion"
+                >
+                  Ver planes
+                </Link>
+              </div>
+            )}
           </Card>
 
           <Card className="bg-allado-card p-5 border-allado-border shadow-sm flex flex-col justify-center">

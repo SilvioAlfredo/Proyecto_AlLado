@@ -1,6 +1,8 @@
 package com.al_lado.al_lado_project.controller.trabajo;
 
+import com.al_lado.al_lado_project.dto.trabajo.ContactoEmpleadorDTO;
 import com.al_lado.al_lado_project.dto.trabajo.FiltrosOportunidadesDTO;
+import com.al_lado.al_lado_project.dto.trabajo.CandidatoMatchingDTO;
 import com.al_lado.al_lado_project.dto.trabajo.OportunidadLaboralDTO;
 import com.al_lado.al_lado_project.service.trabajo.OportunidadLaboralService;
 import jakarta.validation.Valid;
@@ -36,6 +38,24 @@ public class OportunidadLaboralController {
     @GetMapping("/{id}")
     public ResponseEntity<OportunidadLaboralDTO> obtenerOportunidad(@PathVariable Long id) {
         return ResponseEntity.ok(service.obtenerPorId(id));
+    }
+
+    /**
+     * AL-SEC-006: el contacto del empleador no está en el detalle público de la
+     * oferta. Exige sesión y relación con la oferta (titular, ADMIN o postulante);
+     * el servicio decide y responde 403 si no corresponde.
+     */
+    @GetMapping("/{id}/contacto")
+    public ResponseEntity<ContactoEmpleadorDTO> obtenerContacto(@PathVariable Long id) {
+        return ResponseEntity.ok(service.obtenerContacto(id));
+    }
+
+    @PreAuthorize("hasAnyRole('EMPLEADOR', 'ADMIN')")
+    @GetMapping("/{id}/matching")
+    public ResponseEntity<List<CandidatoMatchingDTO>> candidatosMatching(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "10") double radioKm) {
+        return ResponseEntity.ok(service.candidatosParaOportunidad(id, radioKm));
     }
 
     @PreAuthorize("hasAnyRole('EMPLEADOR', 'ADMIN')")

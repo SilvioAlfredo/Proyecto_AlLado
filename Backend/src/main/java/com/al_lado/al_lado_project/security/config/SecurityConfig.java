@@ -46,9 +46,18 @@ public class SecurityConfig {
                         // 2. Endpoints públicos de autenticación y registro
                         // /auth/logout exige sesión: matcher previo para que no caiga
                         // en el permitAll de /auth/** (anónimos -> 401 limpio).
-                        .requestMatchers(HttpMethod.POST, "/auth/logout", "/auth/password", "/auth/password/verify").authenticated()
+                        // /auth/me (identidad de la sesión, AL-API-005) y la
+                        // reemisión del token de verificación también exigen sesión.
+                        .requestMatchers(HttpMethod.POST, "/auth/logout", "/auth/password", "/auth/password/verify", "/auth/verificacion-email").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/auth/me").authenticated()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/trabajadores", "/empleadores").permitAll()
+
+                        // 3a. El contacto del empleador NO es público (AL-SEC-006): lo ven
+                        // el titular de la oferta, ADMIN y quien se postuló a ella.
+                        // Este matcher va ANTES del permitAll de /oportunidades/**:
+                        // las reglas se evalúan en orden y gana la primera que coincide.
+                        .requestMatchers(HttpMethod.GET, "/oportunidades/*/contacto").authenticated()
 
                         // 3. Endpoints públicos de lectura (catálogos/foro)
                         .requestMatchers(HttpMethod.GET, "/oportunidades/**", "/comunicados/**", "/publicidades/**", "/foro/**").permitAll()
@@ -64,8 +73,12 @@ public class SecurityConfig {
                                 "/trabajadores", "/trabajadores/{id}",
                                 "/empleadores", "/empleadores/{id}",
                                 "/valoraciones/**", "/horarios/**",
-                                "/portafolio-items/**", "/preferencias/**",
-                                "/perfiles-empresariales/**", "/favoritos/**").permitAll()
+                                "/portafolio-items/**",
+                                "/perfiles-empresariales/**").permitAll()
+                        // AL-SEC-006: las preferencias de notificación y la lista de
+                        // favoritos son datos privados: exigen sesión y además el
+                        // servicio verifica que el solicitante sea el titular o ADMIN.
+                        // No van en permitAll.
 
                         // 4. Panel de administración REST (protegido para ROLE_ADMIN)
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

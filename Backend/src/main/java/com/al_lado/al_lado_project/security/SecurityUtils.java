@@ -62,4 +62,31 @@ public final class SecurityUtils {
             throw new AccessDeniedException("No tiene permisos para operar sobre recursos de otro usuario.");
         }
     }
+
+    /**
+     * @return el {@link Usuario} de la sesión actual, o {@code null} si no hay sesión
+     *         o el principal no es una entidad {@link Usuario} (p. ej. un principal
+     *         de prueba sin entidad asociada).
+     */
+    public static Usuario currentUser() {
+        Authentication authentication = currentAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+        return authentication.getPrincipal() instanceof Usuario usuario ? usuario : null;
+    }
+
+    /**
+     * Indica si la sesión actual puede ver los datos privados de un usuario (AL-SEC-006).
+     *
+     * <p>Los datos privados son el email, el teléfono y las colecciones privadas
+     * (postulaciones, portafolio, horarios, preferencias). Solo el titular de la cuenta
+     * o un administrador los ven; para el resto se devuelve una proyección pública.</p>
+     *
+     * @param userId ID del dueño de los datos
+     * @return {@code true} si se pueden mostrar los datos privados de ese usuario
+     */
+    public static boolean canViewPrivateDataOf(Long userId) {
+        return isAdmin() || (userId != null && userId.equals(currentUserId()));
+    }
 }

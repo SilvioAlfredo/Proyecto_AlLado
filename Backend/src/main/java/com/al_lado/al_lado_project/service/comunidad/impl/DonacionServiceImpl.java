@@ -20,7 +20,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Clock;
+import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +31,7 @@ public class DonacionServiceImpl implements DonacionService {
     private final UsuarioRepository usuarioRepository;
     private final SuscripcionRepository suscripcionRepository;
     private final DonacionMapper mapper;
+    private final Clock clock;
 
     @Override
     @Transactional(readOnly = true)
@@ -138,17 +140,19 @@ public class DonacionServiceImpl implements DonacionService {
             // (el cascade está en el lado inverso mappedBy).
             Suscripcion suscripcion = usuario.getSuscripcion();
             if (suscripcion == null) {
+                LocalDate inicio = LocalDate.now(clock);
                 suscripcion = new Suscripcion(
                         usuario,
                         "PRO", // Nivel Pro por transferencia exitosa
-                        LocalDateTime.now().toLocalDate(),
-                        LocalDateTime.now().plusYears(1).toLocalDate(),
+                        inicio,
+                        inicio.plusYears(1),
                         true
                 );
             } else {
                 suscripcion.setNivel("PRO");
-                suscripcion.setFechaInicio(LocalDateTime.now().toLocalDate());
-                suscripcion.setFechaFin(LocalDateTime.now().plusYears(1).toLocalDate());
+                LocalDate inicio = LocalDate.now(clock);
+                suscripcion.setFechaInicio(inicio);
+                suscripcion.setFechaFin(inicio.plusYears(1));
                 suscripcion.setActiva(true);
             }
             suscripcionRepository.save(suscripcion);

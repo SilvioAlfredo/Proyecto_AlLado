@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Text, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Brand, Title, AppInput, AppButton, Note } from '../../../src/components/ui';
-import { comunidadService, resolveIdByEmail } from '../../../src/api/services';
+import { comunidadService } from '../../../src/api/services';
 import { errMsg } from '../../../src/api/client';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function Reportar() {
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [motivo, setMotivo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [error, setError] = useState('');
@@ -16,8 +16,8 @@ export default function Reportar() {
   const onSubmit = async () => {
     setError(''); setOk('');
     try {
-      const autorId = userId ?? (await resolveIdByEmail(email));
-      await comunidadService.reportar({ motivo: motivo.trim(), descripcion: descripcion.trim(), autor: { id: autorId } });
+      if (userId == null) throw new Error('No hay sesión activa.');
+      await comunidadService.reportar({ motivo: motivo.trim(), descripcion: descripcion.trim(), reportante: { id: userId } });
       setOk('Reporte enviado. El admin lo revisa.');
       setTimeout(() => router.back(), 800);
     } catch (e) { setError(errMsg(e)); }

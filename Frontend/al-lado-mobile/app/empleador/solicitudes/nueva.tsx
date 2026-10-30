@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Text, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Brand, Title, AppInput, AppButton, Note } from '../../../src/components/ui';
-import { oportunidadService, etiquetasService, resolveIdByEmail } from '../../../src/api/services';
+import { oportunidadService, etiquetasService } from '../../../src/api/services';
 import { errMsg } from '../../../src/api/client';
 import type { Etiqueta } from '../../../src/types';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function NuevaSolicitud() {
-  const { email, userId } = useAuth();
+  const { userId } = useAuth();
   const [titulo, setTitulo] = useState('');
   const [contenido, setContenido] = useState('');
   const [ubicacion, setUbicacion] = useState('');
@@ -26,11 +26,11 @@ export default function NuevaSolicitud() {
   const onSubmit = async () => {
     setError('');
     try {
-      const autorId = userId ?? (await resolveIdByEmail(email, 'EMPLEADOR'));
+      if (userId == null) throw new Error('No hay sesión activa.');
       await oportunidadService.crear({
         titulo: titulo.trim(), contenido: contenido.trim(),
         ubicacion, modalidad, rangoSalarial: rango,
-        activa: true, autor: { id: autorId },
+        activa: true, autor: { id: userId },
         etiquetas: sel.map((nombre) => ({ nombre })),
       });
       router.back();

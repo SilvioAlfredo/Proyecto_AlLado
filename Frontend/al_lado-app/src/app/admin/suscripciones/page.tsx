@@ -38,8 +38,8 @@ export default function SuscripcionesPage() {
         onChange={(estado) => setFilters({ ...filters, estado, page: 0 })}
         options={[
           { value: 'TODAS', label: 'Todas' },
-          { value: 'ACTIVAS', label: 'Activas' },
-          { value: 'INACTIVAS', label: 'Inactivas o vencidas' },
+          { value: 'ACTIVAS', label: 'Vigentes' },
+          { value: 'INACTIVAS', label: 'No vigentes' },
         ]}
       />
       <form
@@ -119,8 +119,8 @@ export default function SuscripcionesPage() {
         </>
       )}
       <Note>
-        Las suscripciones vencidas se incluyen entre las inactivas. La verificación de una
-        transferencia de suscripción activa el plan PRO.
+        La vigencia requiere que el plan esté activo y que hoy esté dentro de sus fechas.
+        Verificar una transferencia de suscripción activa el plan PRO.
       </Note>
     </div>
   );

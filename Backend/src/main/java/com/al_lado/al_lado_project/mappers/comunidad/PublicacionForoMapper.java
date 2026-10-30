@@ -25,6 +25,28 @@ public class PublicacionForoMapper {
         return dto;
     }
 
+    /**
+     * Proyección pública de la publicación del foro (AL-SEC-006).
+     *
+     * <p>El foro es público y su sector es la categoría del tema, también pública:
+     * se conserva quien publicó (identificador y nombre) pero no su email.</p>
+     *
+     * @param entity entidad a convertir, o {@code null}
+     * @return DTO con la proyección pública, o {@code null}
+     */
+    public PublicacionForoDTO toDTOPublic(PublicacionForo entity) {
+        if (entity == null) return null;
+
+        PublicacionForoDTO dto = new PublicacionForoDTO();
+        dto.setId(entity.getId());
+        dto.setTitulo(entity.getTitulo());
+        dto.setContenido(entity.getContenido());
+        dto.setSector(entity.getSector());
+        dto.setFechaCreacion(entity.getFechaCreacion());
+        dto.setAutor(usuarioResumenMapper.toDTOPublic(entity.getAutor()));
+        return dto;
+    }
+
     // La relacion autor se resuelve en PublicacionForoServiceImpl por ID;
     // no se reconstruye aqui para no crear entidades transient.
     // MEJ-003 / AL-SEC-008: Se fuerza entity.setId(null) para impedir sobrescrituras en altas

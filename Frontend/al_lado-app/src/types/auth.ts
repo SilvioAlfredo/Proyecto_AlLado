@@ -9,6 +9,9 @@ export interface AuthResponseDTO {
   token: string;
   email: string;
   roles: string[];
+  // AL-API-005: el backend ya devuelve la identidad mínima en login/registro
+  id?: number;
+  nombre?: string;
 }
 
 export interface RegisterCredentials {
