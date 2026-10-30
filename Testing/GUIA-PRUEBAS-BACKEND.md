@@ -8,8 +8,8 @@
 
 ## 1. Convenciones que ya usa el proyecto
 
-Antes de escribir un test, hay que respetar las convenciones de las 18 clases de prueba
-existentes. No son estilos distintos: son **el** estilo del proyecto.
+Antes de escribir un test, hay que respetar las convenciones de la suite existente.
+Al 29/10/2026 hay 218 casos automatizados ejecutados en verde.
 
 ### 1.1 Tres niveles de prueba
 
@@ -154,9 +154,10 @@ El informe HTML queda en `Backend/target/surefire-reports/site/index.html`.
 
 ## 3. Catálogo de pruebas a crear
 
-Estado a la fecha del informe: **27 clases / 162 tests, todos en verde** (la suite
-completa corre sin PostgreSQL: el test de arranque usa el perfil `e2e-h2`).
-Faltan las siguientes. La prioridad va de mayor a menor riesgo.
+Estado al 29/10/2026: **218 tests, todos en verde**, incluyendo el test de contexto
+con el perfil `e2e-h2`; la suite backend no requiere PostgreSQL.
+Los siguientes casos de esta tabla reflejan el catálogo pendiente del informe previo;
+revisar su estado en `Especificaciones/Testing.md` antes de abrir trabajo nuevo.
 
 > Los ítems 1 a 4 ya se crearon (21/10) y los de seguridad AL-SEC-001/004/005/006/007
 > y AL-API-005 se cerraron el 22/10 con 4 clases nuevas
@@ -172,7 +173,7 @@ Faltan las siguientes. La prioridad va de mayor a menor riesgo.
 | 3 | `service/trabajo/impl/PostulacionLimiteTest` | Remuneración 0 y negativa: el backend **no** valida `@Positive` | RF-04 / TC-POS-004 | **Hecho** |
 | 4 | `service/comunidad/impl/PublicacionForoServiceImplTest` | Autor obligatorio; no se puede borrar la publicación de otro; **el foro no filtra por barrio** | RF-13 / TC-SEC-002 | **Hecho** |
 | 5 | `service/comunidad/impl/FavoritoServiceImplTest` | No se puede favoritar dos veces; no se borra el favorito de otro | RF-03 | Pendiente |
-| 6 | `service/comunidad/impl/NotificacionServiceImplTest` | Marcar como leída solo la propia notificación | RF-12 | Pendiente |
+| 6 | `service/comunidad/impl/NotificacionServiceImplTest` | Lectura individual/masiva, conteo y rechazo de acceso de terceros | RF-11/RF-12 · TC-NOTIF-001/002/005 · TC-SEC-004/005 | **Hecho** (29/10) |
 | 7 | `service/usuario/impl/UsuarioServiceImplTest` | Cambio de contraseña con la actual correcta; no se cambia la de otro | RF-01 | Pendiente |
 | 8 | `service/perfil/impl/HorarioDisponibilidadServiceImplTest` | Validación de día y hora; solapamiento de horarios | RF-02 | Pendiente |
 | 9 | `service/trabajo/impl/EtiquetaServiceImplTest` | Etiqueta en uso no se puede eliminar; normalización del nombre | RF-06 | Pendiente |
@@ -191,7 +192,7 @@ Faltan las siguientes. La prioridad va de mayor a menor riesgo.
 | 14 | `web/EtiquetaControllerSecurityTest` | Listado público; escritura restringida a ADMIN | RF-06 | Pendiente |
 | 15 | `web/UsuarioControllerSecurityTest` | Perfil propio; el de otro devuelve 403; contraseña | RF-01 | Pendiente |
 | 16 | `web/ComunicadoControllerTest` | Contract de comunicados; alcance GLOBAL vs GENERAL | RF-11 | Pendiente |
-| 17 | `web/NotificacionControllerTest` | Listado paginado; marcar leída | RF-12 | Pendiente |
+| 17 | `web/NotificacionControllerTest` | Contrato HTTP del listado, conteo y lectura individual/masiva | RF-11/RF-12 · TC-NOTIF-001/002/004/005 | Pendiente (servicio cubierto; colección Postman añadida) |
 | 18 | `web/PerfilEmpresarialControllerTest` | Perfil del empleador; contacto enmascarado para el resto | RF-03 | Pendiente |
 | 19 | `web/PublicidadControllerTest` | Vigencia de la publicidad; solo ADMIN gestiona | RF-11 | Pendiente |
 | 20 | `web/HorarioDisponibilidadControllerTest` | CRUD del horario del trabajador | RF-02 | Pendiente |

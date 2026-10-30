@@ -193,6 +193,11 @@ Sin PRO → `400` con mensaje que indica el plan requerido.
   `PostulacionServiceImplTest`, `PostulacionAuthorizationTest`, `OportunidadAuthorizationTest` (Mockito).
 - Slices MockMvc (`@WebMvcTest` + seguridad real): `Reporte/Postulacion/Oportunidad/AuthController*Test`
   (matriz 401/403/200/201 por rol + contratos JSON).
-- `AlLadoProjectApplicationTests` (contexto completo) requiere PostgreSQL activo.
-- Sin Maven en este entorno: compilar con `javac -parameters` y ejecutar con el
-  launcher JUnit de `~/.m2` (ver script de verificación usado en esta sesión).
+- `AlLadoProjectApplicationTests` carga el perfil `e2e-h2` y valida el contexto
+  sin PostgreSQL. H2 no sustituye las pruebas de persistencia ni los E2E sobre
+  PostgreSQL QA.
+- Corte verificado el 29/10/2026: `mvn -f Backend/pom.xml verify` con JDK 21,
+  **218 tests, 0 fallos**. JaCoCo genera HTML/XML en `Backend/target/site/jacoco/`.
+  En este entorno el wrapper no resuelve
+  `.mvn/wrapper/maven-wrapper.properties`; usar Maven 3.9+ instalado o reparar
+  ese archivo antes de depender de `./mvnw`.

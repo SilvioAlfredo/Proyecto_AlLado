@@ -1,9 +1,9 @@
 # Testing — Plan de Pruebas y Trazabilidad (IEEE 829)
 
 > **Responde a:** Devolución Plan de Pruebas y Test Cases — AlLado Grupo D.
-> Complementa a `Issues_Backlog.md`. Los 25 casos existentes (TEST-G/L/D/DB/M-00x)
-> se conservan; aquí se corrigen los puntos observados. Nada está marcado como
-> ejecutado: `Resultado Real / Estado / Evidencia` se completa al ejecutar.
+> Complementa a `Issues_Backlog.md`. Los casos manuales existentes se conservan;
+> los resultados automatizados se registran por suite y los resultados de la
+> planilla manual solo se marcan ejecutados con evidencia de esa corrida.
 
 ## 1. Unificación de IDs (trazabilidad)
 
@@ -13,6 +13,21 @@
   - Los casos nuevos usan el correlativo siguiente (`TC-SEC-001`, `TC-LIM-001`, …).
 - Prohibidos los resultados con "o" (`401/404`, `400/409`, "impide… o maneja…").
   Cada caso fija **un** oráculo verificable (código HTTP exacto + estado en BD).
+
+## 1.1 Inventario de suites y última validación
+
+| Suite | Casos en código | Última validación | Resultado / límite |
+|---|---:|---|---|
+| Backend (JUnit/Mockito) | 218 | 29/10/2026 | 218 aprobados; incluye contexto H2 y autorización de notificaciones |
+| Frontend web (Vitest/RTL) | 45 | 29/10/2026 | 45 aprobados; `npm test` |
+| Frontend móvil (Jest/RNTL) | 27 | 29/10/2026 | 27 aprobados; `npm test -- --runInBand`; la suite previa de sesión aún emite warnings `act` |
+| E2E web (Selenium + axe) | 32 en código | último runtime 22/10/2026 | 30 resultados: 28 PASS, 2 SKIP; `TC-NOTIF-003` y `TC-ACC-001` compilan, pero no se han ejecutado |
+| Postman API | 41 requests / 31 casos API+BD | 29/10/2026 | ejecución manual registrada: 29 PASS, 2 FAIL; colección y environment versionados; sin reporte Newman |
+
+**Informe consolidado actual:** 351 casos, 347 PASS, 2 FAIL, 0 ERROR y 2 SKIP
+(29/10/2026). La planilla contiene los mismos IDs y estados. Los FAIL/SKIP están
+ligados a defectos abiertos. La aprobación es 347/349 (99,4 %) de los ejecutados;
+los SKIP no se cuentan como aprobados. Este corte no equivale al cierre de QA.
 
 ## 2. Criterios de entrada, salida, suspensión y reanudación
 
@@ -78,11 +93,11 @@ La devolución observó que el plan mencionaba JMeter sin umbrales. Umbrales vig
 **Entregables IEEE 829:** este plan, planilla de casos, logs de ejecución,
 reportes de incidencias (GitHub Issues), evidencias (capturas/colección Postman).
 
-## 6. Matriz de trazabilidad HU → CA → TC → Bug (cubre los 5 RF sin casos)
+## 6. Matriz de trazabilidad HU → CA → TC → Bug
 
-RF sin casos según devolución: RF-02/03, RF-06, RF-11, RF-12, RF-13.
-Reglas prometidas sin prueba: límite 3 publicaciones/mes, exclusividad Pro 15 min,
-enmascaramiento de teléfonos, foro geográfico, reseña inmutable.
+La matriz original de devolución se conserva como punto de partida. La cobertura
+automatizada fue ampliada desde esa revisión; los casos siguen separados entre
+implementados, omitidos por defecto conocido y pendientes de ejecución real.
 
 | HU / CA | RF | TC (existente o nuevo) | Bug |
 |---|---|---|---|
@@ -100,6 +115,33 @@ enmascaramiento de teléfonos, foro geográfico, reseña inmutable.
 | Autorización (no solo autenticación) | RF-10 | **TC-SEC-001** (`ROLE_TRABAJADOR → /admin/** = 403`) — nuevo | (al ejecutar) |
 | Negativos gestión datos (hoja D toda happy path) | RF-04 | **TC-NEG-001** editar oportunidad ajena → 403; **TC-NEG-002** postularse a cerrada → 409; **TC-NEG-003** doble postulación → 409; **TC-NEG-004** remuneración ≤ 0 → 400 — nuevos | (al ejecutar) |
 | HU-08 CA-01 (historial inalterable) | RF-08 | TC-DB-005 corregido (ver §7 ejemplo; borrado lógico, 6 puntos) | (al ejecutar) |
+| HU-09 (notificación por postulación) | RF-11/RF-12* | **TC-NOTIF-001** lectura individual (200); **TC-NOTIF-002** lectura masiva (204 + contador 0); **TC-NOTIF-003** postulación crea aviso al empleador | AL-FE-008 / AL-TEST-005 |
+| Notificaciones: listado y contador del titular | RF-11/RF-12* | **TC-NOTIF-004** listado 200; **TC-NOTIF-005** contador numérico; **TC-NOTIF-006** decremento exacto tras leer una; **TC-NOTIF-007** cero tras lectura masiva | AL-FE-008 |
+| Aislamiento de notificaciones | RF-10/RF-11 | **TC-SEC-004** listado ajeno → 403; **TC-SEC-005** lectura de notificación ajena → 403 | AL-TEST-001 |
+| Accesibilidad WCAG 2.2 AA | Transversal | **TC-ACC-001** axe-core sobre inicio, login y dashboard de trabajador; reporte `Testing/e2e/target/accesibilidad/axe-report.md` | AL-FE-009/010 |
+
+### Estado de implementación por suite (29/10/2026)
+
+| TC | Backend | Web | Móvil | E2E | Postman |
+|---|---|---|---|---|---|
+| TC-NOTIF-001 | Servicio: titular puede marcar leída | Lista: marca una y oculta la acción | Lista: marca una y oculta la acción | — | PATCH devuelve 200 y `leida=true` |
+| TC-NOTIF-002 | Servicio: lectura masiva del titular | Lista: marca todas | Lista: marca todas | — | PATCH devuelve 204; verificación posterior exige contador 0 |
+| TC-NOTIF-003 | — | — | — | Postulación → aviso al empleador → lectura masiva; compilado, pendiente de runtime | Requiere aviso pendiente |
+| TC-NOTIF-004/005/006/007 | Conteo y propiedad verificados en servicio | — | — | — | Listado, conteo, decremento y cero con respuestas exactas |
+| TC-SEC-004/005 | Listado y lectura de tercero rechazados | — | — | — | GET de usuario ajeno y PATCH de notificación ajena exigen 403 |
+| TC-ACC-001 | — | — | — | axe-core sobre 3 pantallas; compilado y pendiente de runtime | — |
+
+AL-FE-008 sigue abierto: los tests de lista verifican el estado local tras leer,
+pero no verifican que el contador de la barra web se invalide en todas las rutas;
+el móvil tampoco expone un contador global. No se considera corregido por estos
+casos. Los casos API/BD ya tienen resultados manuales de Postman en la planilla;
+AL-TEST-005 sigue abierto hasta ejecutar TC-NOTIF-003 contra QA y adjuntar su
+evidencia E2E.
+
+`TC-ACC-001` está integrado a Selenium con axe 4.13.0 y filtra tags WCAG 2.2 AA.
+Genera un Markdown con violations, impacto, URL, target y HTML. La última
+validación fue compilación solamente: frontend y API QA no estaban levantados,
+por lo que no se declara resultado ni se genera un informe axe vacío.
 
 \* Nota: el doc de RF define RF-11 como redes sociales y RF-12 como notificaciones;
 la devolución los cita como Notificaciones/Dashboard. Se mantiene el mapeo HU→TC
@@ -180,5 +222,25 @@ Evidencia (captura/log):
 - Query SQL de verificación (`SELECT activo ...`, `COUNT(*) ...`) donde aplique.
 - Screenshot UI para TC-G/TC-L/TC-M.
 - Link al Issue si el caso falla; link al re-test al cerrar.
-- Columnas `Resultado Real / Estado / Evidencia`: vacías = no ejecutado
-  (la devolución observó las 25 vacías; se llenan en el ciclo S1–S2).
+- Corte 29/10/2026: 351 filas con resultado y evidencia; 347 PASS, 2 FAIL y 2
+  SKIP. Los casos incorporados después de la corrida deben quedar señalados como
+  pendientes, sin heredar el resultado de una corrida previa.
+
+## 10. Ejecución de notificaciones en Postman
+
+Importar `Postman_Collection.json` y `Postman_Environment_QA.json`; seleccionar
+`AlLado QA PostgreSQL` y ejecutar `Comunidad / Notificaciones` en orden, contra
+una base QA aislada:
+
+1. `authToken` y `userId`: token e ID del empleador titular.
+2. `otroUsuarioId`: ID de otro usuario autenticado, distinto del titular.
+3. `notificacionAjenaId`: notificación que pertenece a un tercer usuario.
+4. Debe existir al menos una notificación pendiente del titular, generada por
+  una postulación creada durante la preparación del caso.
+
+La primera petición elige `notificacionId` de la respuesta; las siguientes
+verifican listado y conteo, lectura individual y decremento exacto, rechazo de
+consulta/lectura ajena (`403`), lectura masiva (`204`) y contador final `0`.
+Esta carpeta no crea ni limpia datos. Los 31 casos API/BD manuales tienen
+resultados en la planilla; esta carpeta nueva de notificaciones aún no se ejecutó
+contra QA. El informe Newman no se generó en este corte.

@@ -1117,6 +1117,10 @@ def main():
     ya_cubiertos_id |= {v for caso in casos_catalogo for v in variantes_de_id(caso["id"])}
     casos += construir_casos_planilla(
         [caso for caso in leer_planilla()
+            # BE/FEW/FEM los reconstruyen los reportes JUnit actuales; no reutilizar
+            # filas generadas en corridas anteriores, porque pueden apuntar a tests
+            # eliminados o reclasificarse como casos API.
+            if not caso["id"].startswith(("BE-", "FEW-", "FEM-"))
          if clave_caso(caso) not in ya_cubiertos_clave
          and not (variantes_de_id(caso["id"]) & ya_cubiertos_id)]
     )

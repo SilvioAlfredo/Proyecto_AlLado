@@ -48,6 +48,13 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>com.deque.html.axe-core</groupId>
+			<artifactId>selenium</artifactId>
+			<version>4.13.0</version>
+			<scope>test</scope>
+		</dependency>
+
 		<!-- Cliente HTTP para consultar la API desde la suite: permite verificar el
 		     estado real del backend (no solo lo que muestra la pantalla) y localizar
 		     datos que la UI no lista, como las oportunidades cerradas. -->

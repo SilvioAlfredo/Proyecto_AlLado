@@ -2,23 +2,23 @@
 
 > Ruta: `Backend/src/test/java/com/al_lado/al_lado_project`
 > Stack: **JUnit 5 + Mockito** (+ `@WebMvcTest` para la capa web)
-> Fecha: 21/10/2026 · Salida de las tres exportaciones: PDF, XML y XLSX
+> Corte vigente: 29/10/2026 · El detalle histórico se conserva; las métricas y pendientes siguientes fueron reconciliados con el código actual.
 
 ---
 
 ## 1. Resumen ejecutivo
 
-| Métrica | Antes | Después (21/10) | Δ tras cierre seguridad (22/10) |
-|---|---|---|---|
-| Clases de prueba | 18 | **23** | **27** (+4) |
-| Casos de prueba | 86 | **122** | **162** (+40) |
-| Suites en verde | 18/18 | **23/23** | **27/27** |
-| Fallos | 0 | **0** | **0** |
-| Casos que documentan defectos abiertos | 0 | **9** | +9 |
+| Métrica | Corte vigente (29/10/2026) |
+|---|---:|
+| Clases de prueba Java | 38 |
+| Casos de prueba | **218** |
+| Casos aprobados | **218** |
+| Fallos / errores / omitidos | **0 / 0 / 0** |
 
-La suite del backend pasó de 86 a **162 casos**, todos en verde. No se modificó
-ninguna clase de prueba preexistente: se agregaron clases nuevas y el
-resto del árbol quedó intacto.
+El registro histórico pasó de 86 a 162 casos al 22/10. En la corrida del
+29/10 la suite contiene **218 casos**, todos en verde; el test de contexto usa
+H2 y no requiere PostgreSQL. Las pruebas sobre persistencia real siguen siendo
+responsabilidad de API/BD y E2E sobre PostgreSQL QA.
 
 > **Actualización 22/10/2026 (cierre de seguridad de la semana 1):** 4 clases
 > nuevas (`JwtUtilsTest`, `AuthServiceSeguridadTest`, `SuscripcionConcesionProTest`,
@@ -156,7 +156,7 @@ titular → `403`.
 | Publicación en el foro | RF-13 | **Cubierto**, con el defecto de filtro por barrio documentado |
 | Suscripciones / plan PRO | RF-12 | Parcial (vigencia y cancelación) |
 | Panel de administración | RF-12 | **Cubierto** (14 casos de gestión + 4 de métricas) |
-| Notificaciones | RF-11/RF-12 | Pendiente |
+| Notificaciones | RF-11/RF-12 | Parcial: servicio cubierto por `NotificacionServiceImplTest` (titular, tercero, lectura masiva y conteo); contrato HTTP pendiente |
 | Historial inalterable | RF-08 | Pendiente |
 
 ---
@@ -273,8 +273,8 @@ por defecto (`application.properties`): solo agregan perfiles de QA.
 
 ## 9. Exportaciones del informe
 
-Los resultados de esta suite se consolidan con los de la suite E2E y con la
-planilla oficial en tres formatos, todos en
+Los resultados de esta suite se consolidan con los de la suite E2E, los dos
+frontends y los 31 casos API/BD de la planilla en tres formatos, todos en
 `/home/Alfredo/Documentos/AlLado/plan_de_pruebas/`:
 
 | Formato | Archivo | Contenido |
@@ -287,24 +287,27 @@ planilla oficial en tres formatos, todos en
 
 | Ubicación | Qué hay | Cómo se ve |
 |---|---|---|
-| `/plan_de_pruebas/evidencias/<carpeta>/captura.png` | Las **210 capturas**: 30 de la suite E2E, 20 de API/BD y 162 del backend | La celda "Evidencia" apunta a `evidencias/.../captura.png`, ruta que **resuelve desde la carpeta del informe** |
+| `/plan_de_pruebas/evidencias/<carpeta>/captura.png` | Capturas disponibles en la última corrida; las pruebas unitarias no siempre producen screenshot | La celda "Evidencia" apunta a `evidencias/.../captura.png` cuando existe; el XML también referencia el reporte fuente |
 | Celda "Evidencia" del XLSX | La imagen incrustada dentro de la celda | Se ve sin abrir nada, al abrir la hoja |
 | Anexo del PDF (sección 5) | Una página por caso con la captura a tamaño completo | Se imprime y se adjunta al Issue |
 | Atributo `evidenciaRutaAbsoluta` del XML | Ruta en disco de la imagen | Para pipelines que la consumes |
 
-Resultado consolidado de la última corrida (22/10/2026, contra el PostgreSQL del
-contenedor `al_lado_db`): **280 casos · 276 PASS · 2 FAIL (los defectos abiertos
-documentados) · 2 SKIP · 0 ERROR**.
+Resultado consolidado actual (29/10/2026): **351 casos · 347 PASS · 2 FAIL ·
+2 SKIP · 0 ERROR**. Componentes: 218 backend, 45 web, 27 móvil, 30 resultados
+E2E (28 PASS/2 SKIP) y 31 casos API/BD (29 PASS/2 FAIL). El nuevo caso
+`TC-NOTIF-003` y el nuevo `TC-ACC-001` compilan, pero no están incluidos en el
+runtime consolidado.
 
 La **planilla oficial** (`Testing/Planilla de Test Cases v2(2).xlsx`, ahora en el
 repositorio) quedó con los mismos casos y su `Estado`, `Resultado Real` y
-`Evidencia`: **280 filas, 276 PASS · 2 FAIL · 2 SKIP, sin duplicados**. Se actualiza
-con `python3 Testing/e2e/scripts/actualizar_planilla.py` (idempotente).
+`Evidencia`: **351 filas, 347 PASS · 2 FAIL · 2 SKIP, sin IDs duplicados**,
+con etiquetas, capa, decisión de automatización justificada y ruta de test.
+Se actualiza con `python3 Testing/e2e/scripts/actualizar_planilla.py`; el proceso
+genera backup fechado y retira IDs generados obsoletos solo cuando hay JUnit actual.
 
-> Ese consolidado (PDF/XML/XLSX) cubre **backend + E2E + API/BD**. Las suites
-> unitarias de los frontends (43 web + 25 móvil) se reportan por separado, con sus
-> propios comandos (`npm test` en cada front); el generador del informe todavía no
-> las incluye.
+> El consolidado incluye backend, web, móvil, E2E y API/BD ejecutada manualmente
+> con Postman. No equivale a una corrida Newman. E2E requiere regenerarse cuando
+> se ejecuten `TC-NOTIF-003` y `TC-ACC-001` contra el entorno QA.
 
 Se regeneran con:
 

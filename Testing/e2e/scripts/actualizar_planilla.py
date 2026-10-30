@@ -22,6 +22,9 @@ import json
 import os
 import re
 import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
+from shutil import copyfile
 
 import openpyxl
 
@@ -58,6 +61,207 @@ COL_PRIORIDAD = 10
 COL_RESULTADO_REAL = 11
 COL_ESTADO = 12
 COL_EVIDENCIA = 13
+COL_ETIQUETAS = 14
+COL_CAPA = 15
+COL_AUTOMATIZABLE = 16
+COL_JUSTIFICACION = 17
+COL_TEST_AUTOMATIZADO = 18
+
+ENCABEZADOS_AUTOMATIZACION = (
+    "Etiquetas (tipo de testing)",
+    "Capa de la pirámide",
+    "¿Automatizable?",
+    "Justificación",
+    "Herramienta / ID / ruta del test",
+)
+
+
+def mapa_tests_backend():
+    """Mapea los IDs BE del informe a archivo y método JUnit reales."""
+    raiz_java = Path(RAIZ) / "Backend/src/test/java"
+    fuentes = {ruta.stem: ruta.relative_to(RAIZ).as_posix()
+               for ruta in raiz_java.rglob("*.java")}
+    directorio = Path(RAIZ) / "Backend/target/surefire-reports"
+    mapa = {}
+    for archivo in sorted(directorio.glob("TEST-*.xml")):
+        try:
+            suite = ET.parse(archivo).getroot()
+        except ET.ParseError:
+            continue
+        clase = suite.get("name", "").split(".")[-1]
+        clave = clase.replace("Test", "")
+        fuente = fuentes.get(clase, "")
+        for numero, caso in enumerate(suite.findall("testcase"), start=1):
+            identificador = f"BE-{clave}-{numero:02d}"
+            metodo = caso.get("name", "")
+            mapa[identificador] = f"JUnit 5 + Mockito | {fuente}::{metodo}"
+    return mapa
+
+
+def mapa_tests_frontend(ruta_xml, prefijo, herramienta, raiz_fuente):
+    """Mapea IDs FEW/FEM por el orden estable del JUnit XML."""
+    mapa = {}
+    ruta = Path(ruta_xml)
+    if not ruta.is_file():
+        return mapa
+    try:
+        raiz = ET.parse(ruta).getroot()
+    except ET.ParseError:
+        return mapa
+    contador = 0
+    for suite in raiz.iter("testsuite"):
+        for caso in suite.findall("testcase"):
+            contador += 1
+            identificador = f"{prefijo}-{contador:03d}"
+            clase = (caso.get("classname") or suite.get("name") or "").split("::")[0]
+            metodo = caso.get("name", "")
+            fuente = f"{raiz_fuente}/{clase}".replace("//", "/")
+            mapa[identificador] = f"{herramienta} | {fuente}::{metodo}"
+    return mapa
+
+
+def mapa_tests_e2e():
+    """Mapea IDs TC declarados en @DisplayName a los métodos Selenium."""
+    raiz_java = Path(RAIZ) / "Testing/e2e/src/test/java"
+    patron = re.compile(
+        r'@DisplayName\("([^\"]+)"\)\s*(?:@[\w.]+(?:\([^)]*\))?\s*)*'
+        r'void\s+(\w+)\s*\('
+    )
+    patron_id = re.compile(r"^(TC-[A-Z]+-\d+[a-z]?)")
+    mapa = {}
+    for ruta in raiz_java.rglob("*.java"):
+        texto = ruta.read_text(encoding="utf-8", errors="replace")
+        for nombre, metodo in patron.findall(texto):
+            match = patron_id.match(nombre)
+            if match:
+                mapa[match.group(1)] = (
+                    f"Selenium 4 | {ruta.relative_to(RAIZ).as_posix()}::{metodo}"
+                )
+    return mapa
+
+
+def clasificar_caso(identificador, tipo, tecnica, estado, evidencia,
+                    mapa_backend, mapa_web, mapa_movil, mapa_e2e):
+    """Devuelve las cinco columnas exigidas por la actividad."""
+    identificador = str(identificador or "")
+    tipo = str(tipo or "").lower()
+    tecnica = str(tecnica or "").lower()
+    estado = str(estado or "").upper()
+    evidencia = str(evidencia or "")
+
+    if identificador.startswith("BE-"):
+        clase = identificador.rsplit("-", 1)[0][3:]
+        if "Application" in clase:
+            capa = "Backend - integración de contexto (H2)"
+        elif "Controller" in clase or "Security" in clase:
+            capa = "Backend - integración/slice HTTP"
+        else:
+            capa = "Backend - unitaria"
+        herramienta = mapa_backend.get(identificador, f"JUnit 5 + Mockito | {identificador}")
+    elif identificador.startswith("FEW-"):
+        capa = "Frontend web - unitaria (jsdom)"
+        herramienta = mapa_web.get(identificador, f"Vitest + RTL | {identificador}")
+    elif identificador.startswith("FEM-"):
+        capa = "Frontend móvil - unitaria (RNTL)"
+        herramienta = mapa_movil.get(identificador, f"Jest + RNTL | {identificador}")
+    elif (
+        (identificador in mapa_e2e and evidencia.startswith("evidencias/")
+         and not evidencia.startswith(("evidencias/API-", "evidencias/DB-",
+                                       "evidencias/BACK-", "evidencias/FRONT-")))
+        or (estado == "SKIP" and
+            re.sub(r"(?<=\d)[a-z]$", "", identificador) in mapa_e2e)
+    ):
+        capa = "UI / E2E (Selenium)"
+        id_e2e = re.sub(r"(?<=\d)[a-z]$", "", identificador)
+        herramienta = mapa_e2e.get(
+            identificador,
+            mapa_e2e.get(id_e2e, f"Selenium 4 | {identificador}"),
+        )
+    elif identificador.startswith("TC-DB") or "/DB-" in evidencia:
+        capa = "Integración API + persistencia PostgreSQL"
+        herramienta = f"Postman / API QA | Testing/e2e/casos_api.json::{identificador}"
+    elif identificador.startswith("TC-"):
+        capa = "API (caja negra)"
+        herramienta = f"Postman / API QA | Testing/e2e/casos_api.json::{identificador}"
+    else:
+        capa = "Revisión manual"
+        herramienta = "Sin test automatizado asociado"
+
+    etiquetas = set()
+    if any(token in identificador.lower() for token in ("perf", "rendimiento")) or "rendimiento" in tipo:
+        etiquetas.add("rendimiento básico")
+    if "accesibilidad" in tipo or "accessibility" in tipo:
+        etiquetas.add("accesibilidad")
+    if any(token in tipo for token in ("integración", "integracion", "base de datos")) or identificador.startswith("TC-DB"):
+        etiquetas.add("integración")
+    if any(token in tipo for token in ("funcional", "unitaria", "valor límite", "valor limite")) or "E2E" in capa:
+        etiquetas.add("funcional")
+    if any(token in tipo + " " + tecnica for token in ("seguridad", "negativ", "rbac", "límite", "limite")):
+        etiquetas.add("negativa")
+    if identificador.startswith(("BE-", "FEW-", "FEM-")) or "E2E" in capa:
+        etiquetas.add("regresión")
+    if "Application" in identificador:
+        etiquetas.add("smoke")
+    if not etiquetas:
+        etiquetas.add("funcional")
+
+    automatizable = "No" if any(token in tipo + " " + tecnica for token in ("exploratorio", "usabilidad manual")) else "Sí"
+    if automatizable == "No":
+        justificacion = "Evaluación exploratoria/experiencial; requiere criterio humano y no tiene oráculo determinista."
+    elif estado == "SKIP":
+        justificacion = "Repetible y determinista; temporalmente omitido por un defecto abierto documentado."
+    else:
+        justificacion = "Pasos repetibles y oráculo observable; el costo de automatizar regresiones es menor que repetirlas manualmente."
+
+    return "; ".join(sorted(etiquetas)), capa, automatizable, justificacion, herramienta
+
+
+def preparar_columnas_automatizacion(hoja):
+    """Agrega y completa la clasificación sin cambiar las columnas originales."""
+    from copy import copy
+    from openpyxl.styles import Alignment
+
+    mapa_backend = mapa_tests_backend()
+    mapa_web = mapa_tests_frontend(
+        f"{RAIZ}/Frontend/al_lado-app/test-results/junit.xml", "FEW",
+        "Vitest + React Testing Library", "Frontend/al_lado-app")
+    mapa_movil = mapa_tests_frontend(
+        f"{RAIZ}/Frontend/al-lado-mobile/test-results/junit.xml", "FEM",
+        "Jest + @testing-library/react-native", "Frontend/al-lado-mobile")
+    mapa_e2e = mapa_tests_e2e()
+
+    fuente_estilo = hoja.cell(row=1, column=COL_EVIDENCIA)
+    for offset, encabezado in enumerate(ENCABEZADOS_AUTOMATIZACION):
+        columna = COL_ETIQUETAS + offset
+        celda = hoja.cell(row=1, column=columna)
+        celda.value = encabezado
+        celda._style = copy(fuente_estilo._style)
+        celda.alignment = copy(fuente_estilo.alignment)
+        hoja.column_dimensions[openpyxl.utils.get_column_letter(columna)].width = (
+            (27, 35, 18, 68, 105)[offset]
+        )
+
+    alineacion = Alignment(vertical="top", wrap_text=True)
+    for fila in range(2, hoja.max_row + 1):
+        identificador = hoja.cell(row=fila, column=COL_ID).value
+        if not identificador:
+            continue
+        valores = clasificar_caso(
+            identificador,
+            hoja.cell(row=fila, column=COL_TIPO).value,
+            hoja.cell(row=fila, column=COL_TECNICA).value,
+            hoja.cell(row=fila, column=COL_ESTADO).value,
+            hoja.cell(row=fila, column=COL_EVIDENCIA).value,
+            mapa_backend, mapa_web, mapa_movil, mapa_e2e,
+        )
+        for offset, valor in enumerate(valores):
+            celda = hoja.cell(row=fila, column=COL_ETIQUETAS + offset)
+            celda.value = valor
+            if fuente_estilo.has_style:
+                celda._style = copy(hoja.cell(row=fila, column=COL_EVIDENCIA)._style)
+            celda.alignment = alineacion
+
+    hoja.auto_filter.ref = f"A1:R{hoja.max_row}"
 
 
 def leer_informe(ruta):
@@ -184,17 +388,23 @@ def actualizar(ruta_planilla, resultados, simular, agregar):
         descripcion = descripcion_normalizada(
             hoja.cell(row=fila, column=COL_DESCRIPCION).value)
         if descripcion:
-            por_descripcion.setdefault(descripcion, fila)
+            por_descripcion.setdefault(descripcion, []).append(fila)
 
     usadas = set()
     for id_caso, resultado in resultados.items():
         base, variante = id_base_y_variante(id_caso)
         fila = por_id.get(id_caso)
+        if fila in usadas:
+            fila = None
         if fila is None:
             # El identificador pudo cambiar (por ejemplo, al corregir el de la E2E):
             # se busca la fila por descripcion y se actualiza su identificador.
             descripcion = descripcion_normalizada(resultado.get("descripcion", ""))
-            fila = por_descripcion.get(descripcion)
+            fila = next(
+                (candidata for candidata in por_descripcion.get(descripcion, [])
+                 if candidata not in usadas),
+                None,
+            )
             if fila is not None:
                 hoja.cell(row=fila, column=COL_ID).value = id_caso
                 por_id[id_caso] = fila
@@ -260,14 +470,25 @@ def actualizar(ruta_planilla, resultados, simular, agregar):
             hoja.cell(row=fila, column=COL_DESCRIPCION).value)
         if descripcion and descripcion in descripciones_corrida:
             huerfanas.append(fila)
-    for fila in sorted(huerfanas, reverse=True):
-        hoja.delete_rows(fila)
-    if huerfanas:
-        print(f"Filas huerfanas eliminadas: {len(huerfanas)}")
+    # Las filas BE/FEW/FEM son generadas por runners. Si el informe incluye
+    # resultados actuales de esa suite, los IDs antiguos que ya no aparecen son
+    # stale y no deben mezclarse con los casos manuales TC-*.
+    prefijos_reportados = {
+        id_caso.split("-", 1)[0] for id_caso in resultados
+        if id_caso.startswith(("BE-", "FEW-", "FEM-"))
+    }
+    obsoletas = {
+        fila for id_caso, fila in por_id.items()
+        if id_caso.split("-", 1)[0] in prefijos_reportados
+        and id_caso.startswith(("BE-", "FEW-", "FEM-"))
+        and id_caso not in resultados
+        and fila not in usadas
+    }
+    filas_eliminar = set(huerfanas) | obsoletas
 
     # Casos de la planilla que la corrida no cubrio: se aclara sin pisar lo anterior.
     for id_caso, fila in por_id.items():
-        if fila in usadas:
+        if fila in usadas or fila in filas_eliminar:
             continue
         sin_cubrir += 1
         nota = hoja.cell(row=fila, column=COL_EVIDENCIA).value
@@ -276,8 +497,17 @@ def actualizar(ruta_planilla, resultados, simular, agregar):
                 "No ejecutado en la ultima corrida (ver informe consolidado)."
             )
 
+    for fila in sorted(filas_eliminar, reverse=True):
+        hoja.delete_rows(fila)
+    if huerfanas:
+        print(f"Filas huerfanas eliminadas: {len(huerfanas)}")
+    if obsoletas:
+        print(f"Tests automatizados obsoletos eliminados: {len(obsoletas)}")
+
+    preparar_columnas_automatizacion(hoja)
+
     if not simular:
-        copia = f"{ruta_planilla}.bak"
+        copia = f"{ruta_planilla}.{datetime.datetime.now():%Y%m%d-%H%M%S}.bak"
         libro.save(copia)
         libro.save(ruta_planilla)
         print(f"Planilla actualizada: {ruta_planilla}")

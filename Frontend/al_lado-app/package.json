@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "vitest run --reporter=junit --outputFile=test-results/junit.xml",
+    "test:watch": "vitest",
     "lint": "eslint",
     "format:admin": "prettier --write \"src/app/admin/**/*.{ts,tsx}\" \"src/features/admin/**/*.{ts,tsx}\" \"src/app/acceso-admin/**/*.tsx\" src/features/auth/components/LoginForm.tsx",
     "format:admin:check": "prettier --check \"src/app/admin/**/*.{ts,tsx}\" \"src/features/admin/**/*.{ts,tsx}\" \"src/app/acceso-admin/**/*.tsx\" src/features/auth/components/LoginForm.tsx",

@@ -11,13 +11,13 @@ Ruta: `Testing/e2e`
 
 | Área | Casos | Identificadores |
 |---|---|---|
-| Autenticación | 6 | `TC-L-001` … `TC-L-006` |
-| Autorización y guards de ruta | 5 | `TC-SEC-001a` … `TC-SEC-001e` |
-| Registro y límites de contraseña | 4 | `TC-LIM-003a/b`, `TC-L-004`, `TC-LIM-005` |
-| Comunidad / foro | 3 | `TC-M-001` … `TC-M-003` |
-| Oportunidades y filtros | 6 | `TC-COB-001` … `TC-COB-003e` |
-| Postulación | 5 | `TC-NEG-002`, `TC-NEG-003`, `TC-NEG-004`, `TC-COB-005` |
-| **Total** | **30** (2 deshabilitados por defecto abierto) | |
+| Autenticación | 13 | login, registro, cierre de sesión y guards por rol |
+| Comunidad / foro | 4 | `TC-M-001` … `TC-M-003`, `TC-SEC-002` |
+| Notificaciones | 1 | `TC-NOTIF-003` |
+| Accesibilidad | 1 | `TC-ACC-001` (axe-core, WCAG 2.2 AA) |
+| Oportunidades y postulación | 11 | `TC-COB-*`, `TC-NEG-*`, `TC-LIM-*` |
+| Trabajador | 2 | perfil y rutas protegidas |
+| **Total en código** | **32** | Último runtime: 30 casos, 28 PASS/2 SKIP; notificaciones y axe pendientes de runtime |
 
 ---
 
@@ -39,7 +39,7 @@ Testing/e2e/
     │   ├── ApiClient.java          Cliente HTTP para contrastar la UI con la API
     │   └── BaseE2ETest.java        Clase base con los atajos de autenticación
     ├── pages/                      Page objects (Login, Opportunities, Community…)
-    └── tests/                      Casos agrupados por área
+    └── tests/                      Casos agrupados por área, incluida notificaciones
 ```
 
 **Convenciones**
@@ -51,6 +51,11 @@ Testing/e2e/
   conjunto de datos fijo: los casos siguen siendo válidos si cambia el seed.
 - Los casos que documentan un defecto abierto se marcan `@Disabled` con la
   referencia al caso de la planilla, para no tener la suite en rojo.
+- `NotificationFlowTest` crea una oportunidad con UUID, envía una postulación y
+  comprueba el aviso recibido por el empleador y la lectura masiva.
+- `AccessibilityAxeTest` audita inicio, login y dashboard de trabajador con los
+  tags `wcag22aa`; genera `target/accesibilidad/axe-report.md` y falla si axe
+  encuentra violations. Requiere el runtime QA activo.
 
 ---
 
@@ -63,6 +68,10 @@ Testing/e2e/
   rutas por variable de entorno.
 - **PostgreSQL** con la base de QA (el backend usa bloqueos pesimistas que H2 no
   soporta) y el **frontend** en modo producción o desarrollo.
+- La clase E2E compila, pero el flujo `TC-NOTIF-003` requiere ejecutar la suite
+  contra API, frontend y PostgreSQL QA activos para generar evidencia de runtime.
+- `TC-ACC-001` está compilado, pero requiere navegador y entorno QA activos; no
+  se considera ejecutado hasta generar un reporte axe con resultados reales.
 
 ---
 
@@ -155,10 +164,11 @@ Cada caso deja en `target/e2e-evidencias/<Clase>.<metodo>/`:
 | `url.txt` | URL final |
 | `paso.txt` | Nombre del caso |
 
-La captura se genera **siempre**, tanto si el caso pasa como si falla: es la
-evidencia por caso que exige el plan de pruebas IEEE 829. En una corrida
-completa quedan 28 carpetas (30 casos menos los 2 deshabilitados), cada una con
-sus cuatro archivos.
+La captura se genera **siempre**, tanto si el caso pasa como si falla. El último
+runtime guardado fue del 22/10: 30 casos, 28 capturas y 2 omitidos. El código
+actual tiene 31 métodos; `TC-NOTIF-003` se agregó después y está compilado, pero
+pendiente de ejecución. Al correr los 31 actuales se esperan 29 carpetas con
+captura si los dos casos deshabilitados continúan omitidos.
 
 Para las corridas rápidas de diagnóstico se puede limitar la evidencia a los
 fallos:
@@ -204,7 +214,7 @@ Genera en `/home/Alfredo/Documentos/AlLado/plan_de_pruebas/`:
   evidencia en cada `testcase`.
 - `AlLado - Informe de Resultados de Pruebas.xlsx` — la **captura va incrustada
   dentro de la celda "Evidencia"** de cada fila.
-- `evidencias/` — las 170 capturas, para que la ruta de la celda resuelva desde
+- `evidencias/` — las capturas del último consolidado, para que la ruta de la celda resuelva desde
   la carpeta del informe.
 
 ### De dónde sale cada evidencia

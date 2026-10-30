@@ -2,7 +2,7 @@
 
 > Rutas: `Frontend/al_lado-app` (web, Next.js 16) y `Frontend/al-lado-mobile` (móvil, Expo 57 / React Native 0.86).
 > Stack: **Vitest + React Testing Library** (web) y **jest-expo + @testing-library/react-native** (móvil).
-> Fecha: 22/10/2026.
+> Actualizado: 29/10/2026.
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Capa | Ubicación | Herramienta | Casos | Qué protege |
 |---|---|---|---|---|
-| Backend | `Backend/src/test` | JUnit 5 + Mockito | 162 | reglas de negocio, autorización, contrato HTTP |
-| Web | `Frontend/al_lado-app/src` | Vitest + RTL | 43 | sesión, capa HTTP, servicios, componentes con datos de contacto |
-| Móvil | `Frontend/al-lado-mobile/{src,app}` | jest-expo + RNTL | 25 | sesión, capa HTTP, servicios, pantalla de comunidad |
-| Interfaz completa | `Testing/e2e` | Selenium 4 | 30 | flujos reales en navegador |
+| Backend | `Backend/src/test` | JUnit 5 + Mockito | 218 | reglas de negocio, autorización, contrato HTTP |
+| Web | `Frontend/al_lado-app/src` | Vitest + RTL | 45 | sesión, capa HTTP, servicios, datos de contacto y notificaciones |
+| Móvil | `Frontend/al-lado-mobile/{src,app}` | jest-expo + RNTL | 27 | sesión, capa HTTP, servicios, comunidad y notificaciones |
+| Interfaz completa | `Testing/e2e` | Selenium 4 + axe-core | 32 en código | último runtime 30: 28 PASS/2 SKIP; 2 flujos nuevos pendientes de runtime |
 
 Las suites de frontend también entran al **informe consolidado** y a la **planilla
 oficial**: cada runner deja un JUnit XML (`test-results/junit.xml`) que el generador
@@ -50,7 +50,6 @@ cd Frontend/al_lado-app
 npm install          # instala vitest, @testing-library/* y jsdom
 npm test             # corre la suite una vez
 npm run test:watch   # modo interactivo
-npm run test:coverage
 ```
 
 Configuración: `vitest.config.mts` (entorno `jsdom`, alias `@/*` con
@@ -69,6 +68,7 @@ Preparación común: `src/test/setup.ts` (limpia el almacenamiento, mockea
 | `src/features/usuario/services/serviciosPerfil.test.ts` | 7 | El perfil propio se pide con el id de la sesión; **no** se lista el directorio |
 | `src/features/oportunidades/services/oportunidadService.test.ts` | 4 | Endpoint de contacto del empleador (AL-SEC-006) y cierre de oferta |
 | `src/features/postulaciones/components/CandidatosList.test.tsx` | 3 | El empleador puede contactar al postulante (el email sigue visible en su lista) |
+| `src/features/notificaciones/components/NotificacionesList.test.tsx` | 2 | TC-NOTIF-001/002: marcar una o todas como leídas |
 
 ### 3.3 Regresiones que la suite deja bloqueadas
 
@@ -104,6 +104,7 @@ y mock de `expo-router`).
 | `src/api/client.test.ts` | 9 | Cabecera `Authorization`, contrato del login/registro, traducción de errores |
 | `src/api/services.test.ts` | 4 | Rutas de los servicios y **ausencia de `resolveIdByEmail`** (AL-API-005) |
 | `app/trabajador/comunidad/comunidad.test.tsx` | 2 | El foro público no expone el email del autor: la autoría se compara por id (AL-SEC-006) |
+| `src/components/notificaciones.test.tsx` | 2 | TC-NOTIF-001/002: lectura individual y masiva en la lista móvil |
 
 ### 4.3 Ojo con la API de `render`
 

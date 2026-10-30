@@ -17,7 +17,22 @@
       "type": "string"
     },
     {
+      "key": "loginEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "loginPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "trabajadorId",
       "value": "",
       "type": "string"
     },
@@ -28,6 +43,26 @@
     },
     {
       "key": "postulacionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificacionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificacionAjenaId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "otroUsuarioId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "noLeidasAntes",
       "value": "",
       "type": "string"
     }
@@ -50,7 +85,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"trabajador@test.com\",\n  \"password\": \"password123\"\n}"
+          "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"password\": \"{{loginPassword}}\"\n}"
         }
       },
       "event": [
@@ -58,11 +93,13 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test('Login successful', function () {",
+              "pm.test('TC-AUTH-001: el login devuelve token e identidad HTTP 200', function () {",
               "    pm.response.to.have.status(200);",
-              "    pm.expect(pm.response.json().token).to.exist;",
-              "    pm.collectionVariables.set('authToken', pm.response.json().token);",
-              "    pm.collectionVariables.set('userId', pm.response.json().id || '1');",
+              "    const identity = pm.response.json();",
+              "    pm.expect(identity.token).to.be.a('string').and.not.empty;",
+              "    pm.expect(identity.id).to.be.a('number');",
+              "    pm.environment.set('authToken', identity.token);",
+              "    pm.environment.set('userId', String(identity.id));",
               "});"
             ],
             "type": "text/javascript"
@@ -87,7 +124,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nombre\": \"Juan Pérez\",\n  \"email\": \"trabajador@test.com\",\n  \"password\": \"password123\",\n  \"telefono\": \"+5491123456789\",\n  \"rol\": \"TRABAJADOR\"\n}"
+          "raw": "{\n  \"nombre\": \"{{registroNombre}}\",\n  \"email\": \"{{registroEmail}}\",\n  \"password\": \"{{registroPassword}}\",\n  \"telefono\": \"{{registroTelefono}}\",\n  \"rol\": \"TRABAJADOR\"\n}"
         }
       },
       "event": [
@@ -95,10 +132,13 @@
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test('Register successful', function () {",
+              "pm.test('TC-AUTH-REG-W: registrar trabajador devuelve identidad con HTTP 200', function () {",
               "    pm.response.to.have.status(200);",
-              "    pm.expect(pm.response.json().token).to.exist;",
-              "    pm.collectionVariables.set('authToken', pm.response.json().token);",
+              "    const identity = pm.response.json();",
+              "    pm.expect(identity.token).to.be.a('string').and.not.empty;",
+              "    pm.expect(identity.id).to.be.a('number');",
+              "    pm.environment.set('authToken', identity.token);",
+              "    pm.environment.set('userId', String(identity.id));",
               "});"
             ],
             "type": "text/javascript"
@@ -123,9 +163,27 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"nombre\": \"Empresa ABC\",\n  \"email\": \"empleador@test.com\",\n  \"password\": \"password123\",\n  \"telefono\": \"+5491198765432\",\n  \"rol\": \"EMPLEADOR\"\n}"
+          "raw": "{\n  \"nombre\": \"{{registroNombre}}\",\n  \"email\": \"{{registroEmail}}\",\n  \"password\": \"{{registroPassword}}\",\n  \"telefono\": \"{{registroTelefono}}\",\n  \"rol\": \"EMPLEADOR\"\n}"
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('TC-AUTH-REG-E: registrar empleador devuelve identidad con HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "    const identity = pm.response.json();",
+              "    pm.expect(identity.token).to.be.a('string').and.not.empty;",
+              "    pm.expect(identity.id).to.be.a('number');",
+              "    pm.environment.set('authToken', identity.token);",
+              "    pm.environment.set('userId', String(identity.id));",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
     },
     {
       "name": "Auth - Verify Email",
@@ -133,17 +191,30 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/auth/verify-email?token=verification-token-here",
+          "raw": "{{baseUrl}}/auth/verify-email?token=invalid-token",
           "host": ["{{baseUrl}}"],
           "path": ["auth", "verify-email"],
           "query": [
             {
               "key": "token",
-              "value": "verification-token-here"
+              "value": "invalid-token"
             }
           ]
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('TC-AUTH-VERIFY-001: token de verificación inválido responde HTTP 400', function () {",
+              "    pm.response.to.have.status(400);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
     },
     {
       "name": "Auth - Change Password",
@@ -162,9 +233,22 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"trabajador@test.com\",\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newpassword456\"\n}"
+          "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"currentPassword\": \"{{loginPassword}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}"
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('TC-AUTH-PASSWORD-001: cambiar la contraseña propia responde HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
     },
     {
       "name": "Auth - Verify Current Password",
@@ -183,9 +267,22 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"email\": \"trabajador@test.com\",\n  \"currentPassword\": \"password123\"\n}"
+          "raw": "{\n  \"email\": \"{{loginEmail}}\",\n  \"currentPassword\": \"{{loginPassword}}\"\n}"
         }
-      }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('TC-AUTH-PASSWORD-002: validar la contraseña actual responde HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
     },
     {
       "name": "Oportunidades - Listar con paginación y filtro",
@@ -672,8 +769,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 200 or 201', function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "pm.test('TC-FAV-001: crear favorito responde HTTP 201', function () {",
+                  "    pm.response.to.have.status(201);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -697,9 +794,9 @@
               "raw": "{\n  \"usuarioId\": {{userId}},\n  \"trabajadorId\": 1\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/favoritos",
+              "raw": "{{baseUrl}}/favoritos/empleador/{{userId}}/trabajador/{{trabajadorId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["favoritos"]
+              "path": ["favoritos", "empleador", "{{userId}}", "trabajador", "{{trabajadorId}}"]
             }
           }
         },
@@ -712,9 +809,7 @@
                 "exec": [
                   "pm.test('Status code is 200', function () {",
                   "    pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test('Response is an array', function () {",
-                  "    var data = pm.response.json();",
+                  "    const data = pm.response.json();",
                   "    pm.expect(data).to.be.an('array');",
                   "});"
                 ],
@@ -731,9 +826,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/favoritos/usuario/{{userId}}",
+              "raw": "{{baseUrl}}/favoritos/empleador/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["favoritos", "usuario", "{{userId}}"]
+              "path": ["favoritos", "empleador", "{{userId}}"]
             }
           }
         },
@@ -744,8 +839,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 200 or 201', function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "pm.test('TC-VAL-001: crear valoración responde HTTP 201', function () {",
+                  "    pm.response.to.have.status(201);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -766,7 +861,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"puntuacion\": 5,\n  \"comentario\": \"Excelente servicio profesional\",\n  \"autorId\": {{userId}},\n  \"destinatarioId\": 1\n}"
+              "raw": "{\n  \"puntuacion\": 5,\n  \"comentario\": \"Excelente servicio profesional\",\n  \"autor\": {\"id\": {{userId}}},\n  \"trabajador\": {\"id\": {{trabajadorId}}}\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/valoraciones",
@@ -799,9 +894,9 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/valoraciones/usuario/{{userId}}",
+              "raw": "{{baseUrl}}/valoraciones/trabajador/{{trabajadorId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["valoraciones", "usuario", "{{userId}}"]
+              "path": ["valoraciones", "trabajador", "{{trabajadorId}}"]
             }
           }
         },
@@ -812,8 +907,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 200 or 404', function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+                  "pm.test('TC-SUB-001: la suscripción del usuario del seed responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -842,8 +937,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 200 or 201', function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "pm.test('TC-DON-001: registrar una donación responde HTTP 201', function () {",
+                  "    pm.response.to.have.status(201);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -864,7 +959,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"monto\": 1500.0,\n  \"metodoPago\": \"MERCADO_PAGO\",\n  \"usuarioId\": {{userId}}\n}"
+              "raw": "{\n  \"monto\": 1500.0,\n  \"mecanismoPago\": \"TRANSFERENCIA\",\n  \"usuario\": {\"id\": {{userId}}}\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/donaciones",
@@ -880,8 +975,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 200 or 201', function () {",
-                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "pm.test('TC-REP-001: crear reporte responde HTTP 201', function () {",
+                  "    pm.response.to.have.status(201);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -902,7 +997,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"motivo\": \"Spam comercial\",\n  \"descripcion\": \"Publicación reiterada fuera de tema\",\n  \"sector\": \"Norte\",\n  \"reportanteId\": {{userId}},\n  \"reportadoId\": 2\n}"
+              "raw": "{\n  \"motivo\": \"Spam comercial\",\n  \"descripcion\": \"Publicación reiterada fuera de tema\",\n  \"sector\": \"Norte\",\n  \"reportante\": {\"id\": {{userId}}},\n  \"reportado\": {\"id\": {{trabajadorId}}}\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/reportes",
@@ -935,15 +1030,245 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/reportes?sector=Norte",
+              "raw": "{{baseUrl}}/reportes/sector/Norte",
               "host": ["{{baseUrl}}"],
-              "path": ["reportes"],
-              "query": [
-                {
-                  "key": "sector",
-                  "value": "Norte"
-                }
-              ]
+              "path": ["reportes", "sector", "Norte"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comunidad / Notificaciones",
+      "description": "Precondición: authToken y userId pertenecen al empleador titular y existe al menos una notificación sin leer, generada por una postulación nueva. otroUsuarioId debe ser distinto del titular; notificacionAjenaId debe pertenecer a otro usuario. Ejecutar en orden.",
+      "item": [
+        {
+          "name": "Notificaciones - Listar del titular",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-NOTIF-004: el titular lista sus notificaciones con HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const items = pm.response.json();",
+                  "    pm.expect(items).to.be.an('array');",
+                  "    const pendiente = items.find((item) => item.leida === false);",
+                  "    pm.expect(pendiente, 'Se requiere una notificación sin leer').to.exist;",
+                  "    pm.environment.set('notificacionId', String(pendiente.id));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notificaciones/usuario/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificaciones", "usuario", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Notificaciones - Contar pendientes antes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-NOTIF-005: el contador devuelve el total numérico con HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.noLeidas).to.be.a('number');",
+                  "    pm.expect(body.noLeidas).to.be.above(0);",
+                  "    pm.environment.set('noLeidasAntes', String(body.noLeidas));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notificaciones/usuario/{{userId}}/no-leidas",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificaciones", "usuario", "{{userId}}", "no-leidas"]
+            }
+          }
+        },
+        {
+          "name": "Notificaciones - Marcar una leída",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-NOTIF-001: la lectura individual responde HTTP 200 y leida=true', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().leida).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notificaciones/{{notificacionId}}/leer",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificaciones", "{{notificacionId}}", "leer"]
+            }
+          }
+        },
+        {
+          "name": "Notificaciones - Verificar decremento",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-NOTIF-006: el contador decrece exactamente en uno', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const antes = Number(pm.collectionVariables.get('noLeidasAntes'));",
+                  "    pm.expect(pm.response.json().noLeidas).to.eql(antes - 1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notificaciones/usuario/{{userId}}/no-leidas",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificaciones", "usuario", "{{userId}}", "no-leidas"]
+            }
+          }
+        },
+        {
+          "name": "Notificaciones - Denegar consulta de otro usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-SEC-004: el tercero recibe HTTP 403', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notificaciones/usuario/{{otroUsuarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificaciones", "usuario", "{{otroUsuarioId}}"]
+            }
+          }
+        },
+        {
+          "name": "Notificaciones - Denegar lectura de notificación ajena",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-SEC-005: el titular recibe HTTP 403 al marcar una notificación ajena', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notificaciones/{{notificacionAjenaId}}/leer",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificaciones", "{{notificacionAjenaId}}", "leer"]
+            }
+          }
+        },
+        {
+          "name": "Notificaciones - Marcar todas leídas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-NOTIF-002: la lectura masiva responde HTTP 204 sin cuerpo', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "    pm.expect(pm.response.text()).to.eql('');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notificaciones/usuario/{{userId}}/leer-todas",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificaciones", "usuario", "{{userId}}", "leer-todas"]
+            }
+          }
+        },
+        {
+          "name": "Notificaciones - Verificar cero pendientes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-NOTIF-007: el contador termina en cero con HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().noLeidas).to.eql(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/notificaciones/usuario/{{userId}}/no-leidas",
+              "host": ["{{baseUrl}}"],
+              "path": ["notificaciones", "usuario", "{{userId}}", "no-leidas"]
             }
           }
         }
@@ -957,8 +1282,64 @@
         "exec": [
           "// Pre-request script to ensure baseUrl is set",
           "if (!pm.collectionVariables.get('baseUrl')) {",
-          "    pm.collectionVariables.set('baseUrl', 'http://localhost:8080');",
+          "    pm.environment.set('baseUrl', 'http://localhost:8081');",
           "}"
+        ],
+        "type": "text/javascript"
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "exec": [
+          "const expectedStatus = {",
+          "  'Auth - Login': 200,",
+          "  'Auth - Register Trabajador': 200,",
+          "  'Auth - Register Empleador': 200,",
+          "  'Auth - Verify Email': 400,",
+          "  'Auth - Change Password': 200,",
+          "  'Auth - Verify Current Password': 200,",
+          "  'Oportunidades - Listar con paginación y filtro': 200,",
+          "  'Oportunidades - Listar todas (sin filtro)': 200,",
+          "  'Oportunidades - Obtener por ID': 200,",
+          "  'Oportunidades - Crear oferta': 201,",
+          "  'Oportunidades - Actualizar oferta': 200,",
+          "  'Oportunidades - Eliminar oferta': 204,",
+          "  'Postulaciones - Crear postulación': 201,",
+          "  'Postulaciones - Obtener por ID': 200,",
+          "  'Postulaciones - Listar todas (admin)': 200,",
+          "  'Postulaciones - Seleccionar postulación': 200,",
+          "  'Postulaciones - Rechazar postulación': 200,",
+          "  'Postulaciones - Eliminar postulación (debe fallar - inmutable)': 405,",
+          "  'Usuarios - Obtener perfil': 200,",
+          "  'Usuarios - Actualizar perfil': 200,",
+          "  'Usuarios - Listar todos (admin)': 200,",
+          "  'Trabajadores - Obtener perfil trabajador': 200,",
+          "  'Trabajadores - Actualizar perfil trabajador': 200,",
+          "  'Empleadores - Obtener perfil empleador': 200,",
+          "  'Empleadores - Actualizar perfil empleador': 200,",
+          "  'Favoritos - Agregar Favorito': 201,",
+          "  'Favoritos - Listar por Usuario': 200,",
+          "  'Valoraciones - Crear Valoración': 201,",
+          "  'Valoraciones - Listar por Destinatario': 200,",
+          "  'Suscripciones - Consultar Estado': 200,",
+          "  'Donaciones - Registrar Donación': 201,",
+          "  'Reportes - Crear Reporte con Sector': 201,",
+          "  'Moderación - Listar y Filtrar Reportes por Sector': 200,",
+          "  'Notificaciones - Listar del titular': 200,",
+          "  'Notificaciones - Contar pendientes antes': 200,",
+          "  'Notificaciones - Marcar una leída': 200,",
+          "  'Notificaciones - Verificar decremento': 200,",
+          "  'Notificaciones - Denegar consulta de otro usuario': 403,",
+          "  'Notificaciones - Denegar lectura de notificación ajena': 403,",
+          "  'Notificaciones - Marcar todas leídas': 204,",
+          "  'Notificaciones - Verificar cero pendientes': 200",
+          "};",
+          "const requestName = pm.info.requestName;",
+          "pm.test('Contrato HTTP exacto: ' + requestName, function () {",
+          "  pm.expect(expectedStatus, 'Request no clasificado: ' + requestName).to.have.property(requestName);",
+          "  pm.response.to.have.status(expectedStatus[requestName]);",
+          "});"
         ],
         "type": "text/javascript"
       }
