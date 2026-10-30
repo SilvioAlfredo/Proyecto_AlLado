@@ -1,5 +1,6 @@
 package com.al_lado.al_lado_project.dto.trabajo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -26,4 +27,15 @@ public class OportunidadLaboralDTO extends PostBaseDTO {
 
     private Set<EtiquetaDTO> etiquetas = new HashSet<>();
     private List<PostulacionResumenDTO> postulaciones = new ArrayList<>();
+
+    // Mapea {"categoria": {"id": 99999}} hacia etiquetas para que el Service lo valide
+    @JsonProperty("categoria")
+    public void setCategoria(EtiquetaDTO categoria) {
+        if (categoria != null) {
+            if (this.etiquetas == null) {
+                this.etiquetas = new HashSet<>();
+            }
+            this.etiquetas.add(categoria);
+        }
+    }
 }
