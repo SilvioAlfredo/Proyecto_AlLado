@@ -1,7 +1,7 @@
 import { LoginForm } from '@/features/auth/components/LoginForm';
 import Link from 'next/link';
 import { ArrowLeft, ArrowUpRight, MapPin, Wrench } from 'lucide-react';
-
+// definimos vista y layout y separar la arquitectura de la logica , no procesa datos ni use states
 export default function LoginPage() {
   return (
     <div className="grid w-full max-w-6xl gap-10 py-6 md:py-10 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-20">

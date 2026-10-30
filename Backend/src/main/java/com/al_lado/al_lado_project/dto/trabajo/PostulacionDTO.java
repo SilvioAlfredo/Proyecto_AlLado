@@ -2,6 +2,7 @@ package com.al_lado.al_lado_project.dto.trabajo;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -9,8 +10,13 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class PostulacionDTO extends PostBaseDTO {
 
-    @Pattern(regexp = "PENDIENTE|SELECCIONADA|RECHAZADA|COMPLETADA|RETIRADA", message = "Estado inválido. Valores permitidos: PENDIENTE, SELECCIONADA, RECHAZADA, COMPLETADA, RETIRADA.")
+    @Pattern(
+            regexp = "PENDIENTE|SELECCIONADA|RECHAZADA|COMPLETADA|RETIRADA",
+            message = "Estado inválido. Valores permitidos: PENDIENTE, SELECCIONADA, RECHAZADA, COMPLETADA, RETIRADA."
+    )
     private String estado;
+
+    @Positive(message = "La remuneración pretendida debe ser un monto mayor a cero.")
     private Double remuneracionPretendida;
 
     @NotNull(message = "La oportunidad laboral a la que aplica es obligatoria.")
