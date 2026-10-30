@@ -18,18 +18,19 @@ export function LoginForm({ adminOnly = false }: { adminOnly?: boolean }) {
   const { login } = useAuth();
   const router = useRouter();
   const [pending, setPending] = useState(false);
-  const [email, setEmail] = useState('');
-  const [contrasena, setContrasena] = useState('');
+  const [email, setEmail] = useState(''); // impusts controladores
+  const [contrasena, setContrasena] = useState('');  // use states
   const [visible, setVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // previene la carga por defecto y activa el pending para desabilitar el boton
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setPending(true);
     try {
       const data = await login({ email: email.trim(), contrasena }, { adminOnly });
-
+// si la respuesta es correcta se redirige al usuario a su panel con router.replace
       router.replace(loginDestination(data.roles, adminOnly));
     } catch (err: unknown) {
       setError(errorMessage(err, 'Error al iniciar sesión'));

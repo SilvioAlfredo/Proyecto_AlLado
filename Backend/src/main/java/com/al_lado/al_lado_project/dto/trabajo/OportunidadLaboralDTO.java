@@ -1,5 +1,6 @@
 package com.al_lado.al_lado_project.dto.trabajo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -19,19 +20,25 @@ public class OportunidadLaboralDTO extends PostBaseDTO {
 
     @Size(max = 100, message = "La ubicación no puede superar los 100 caracteres.")
     private String ubicacion;
+
     @Size(max = 50, message = "La modalidad no puede superar los 50 caracteres.")
     @Pattern(regexp = "PRESENCIAL|REMOTO|HIBRIDO", message = "Modalidad inválida. Valores permitidos: PRESENCIAL, REMOTO, HIBRIDO.")
     private String modalidad;
+
     @Size(max = 100, message = "El rango salarial no puede superar los 100 caracteres.")
     private String rangoSalarial;
+
     @DecimalMin(value = "-90.0")
     @DecimalMax(value = "90.0")
     private Double latitud;
+
     @DecimalMin(value = "-180.0")
     @DecimalMax(value = "180.0")
     private Double longitud;
+
     @Pattern(regexp = "LUNES|MARTES|MIERCOLES|JUEVES|VIERNES|SABADO|DOMINGO")
     private String diaSemanaRequerido;
+
     private java.time.LocalTime horaInicioRequerida;
     private java.time.LocalTime horaFinRequerida;
     private boolean activa;
@@ -39,6 +46,17 @@ public class OportunidadLaboralDTO extends PostBaseDTO {
 
     private Set<EtiquetaDTO> etiquetas = new HashSet<>();
     private List<PostulacionResumenDTO> postulaciones = new ArrayList<>();
+
+    // Mapea {"categoria": {"id": 99999}} hacia etiquetas para que el Service lo valide
+    @JsonProperty("categoria")
+    public void setCategoria(EtiquetaDTO categoria) {
+        if (categoria != null) {
+            if (this.etiquetas == null) {
+                this.etiquetas = new HashSet<>();
+            }
+            this.etiquetas.add(categoria);
+        }
+    }
 
     @AssertTrue(message = "Debe indicar latitud y longitud juntas.")
     public boolean isParCoordenadasValido() {

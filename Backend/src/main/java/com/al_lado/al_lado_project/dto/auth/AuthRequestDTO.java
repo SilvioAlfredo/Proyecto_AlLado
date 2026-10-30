@@ -6,7 +6,7 @@ import lombok.Data;
 
 @Data
 public class AuthRequestDTO {
-
+// se blinda la entrada con datos incorrectos
     @NotBlank(message = "El email es obligatorio.")
     @Email(message = "Debe proporcionar un formato de email válido.")
     private String email;
