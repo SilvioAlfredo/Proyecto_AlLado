@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEmpleador } from '@/features/empleador/hooks/useEmpleador';
 import { empleadorService } from '@/features/usuario/services/empleadorService';
 import { CambiarPasswordForm } from '@/features/auth/components/CambiarPasswordForm';
-import { PageHeader, Avatar } from '@/components/ui/shared';
+import { PageHeader } from '@/components/ui/shared';
 import { Button } from '@/components/ui/button';
 import {
   Field,
@@ -88,12 +88,12 @@ export default function PerfilPage() {
       <QueryStatus pending={perfil.isPending} error={perfil.error} />
       {perfil.data && (
         <>
-          <div className="flex items-center gap-3">
-            <Avatar nombre={perfil.data.nombre} />
-            <div>
-              <p className="font-bold">{perfil.data.nombre}</p>
-              <p className="text-sm text-zinc-400">Empleador</p>
-            </div>
+          <div className="rounded-2xl border border-[#2e2e33] bg-[#1a1a1c] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ffc107]">
+              Cuenta activa
+            </p>
+            <p className="mt-2 text-xl font-bold text-white">{perfil.data.nombre}</p>
+            <p className="text-sm text-zinc-400">Empleador</p>
           </div>
           <div className="grid items-start gap-5 lg:grid-cols-[1.4fr_1fr]">
             <Datos key={perfil.data.id} data={perfil.data} onSaved={refresh} />

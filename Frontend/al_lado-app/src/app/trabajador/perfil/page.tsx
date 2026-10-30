@@ -42,6 +42,29 @@ export default function MiPerfilPage() {
   );
 }
 
+function calcularCompletitud(trabajador: TrabajadorDTO) {
+  const campos = [
+    trabajador.nombre,
+    trabajador.telefono,
+    trabajador.sector,
+    trabajador.biografia,
+    trabajador.fotografia,
+    trabajador.certificados,
+  ];
+  const completos = campos.filter((valor) => !!valor && String(valor).trim().length > 0)
+    .length;
+  const porcentaje = Math.round((completos / campos.length) * 100);
+  const pendientes = [
+    !trabajador.telefono && 'teléfono',
+    !trabajador.sector && 'sector',
+    !trabajador.biografia && 'biografía',
+    !trabajador.fotografia && 'foto',
+    !trabajador.certificados && 'certificados',
+  ].filter(Boolean) as string[];
+
+  return { porcentaje, pendientes };
+}
+
 function Perfil({ trabajador }: { trabajador: TrabajadorDTO }) {
   const [editando, setEditando] = useState(false);
   const [guardado, setGuardado] = useState(false);
@@ -67,6 +90,8 @@ function Perfil({ trabajador }: { trabajador: TrabajadorDTO }) {
       certificados: String(campos.get('certificados')).trim(),
     });
   }
+  const { porcentaje, pendientes } = calcularCompletitud(trabajador);
+
   return (
     <section className={panelTrabajador}>
       {guardado && (
@@ -79,6 +104,28 @@ function Perfil({ trabajador }: { trabajador: TrabajadorDTO }) {
           {errorMessage(guardar.error)}
         </p>
       )}
+      <div className="mb-5 rounded-xl border border-allado-border bg-allado-bg/80 p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
+              Estado del perfil
+            </p>
+            <p className="mt-1 text-lg font-bold text-white">{porcentaje}% completo</p>
+          </div>
+          <span className="rounded-full bg-allado-yellow/10 px-2.5 py-1 text-xs font-bold text-allado-yellow">
+            {pendientes.length ? `${pendientes.length} pendientes` : 'Listo'}
+          </span>
+        </div>
+        {pendientes.length > 0 ? (
+          <p className="mt-3 text-sm text-zinc-300">
+            Siguiente paso: completar {pendientes.join(', ')}.
+          </p>
+        ) : (
+          <p className="mt-3 text-sm text-emerald-300">
+            ¡Todo listo! Tu perfil ya está completo.
+          </p>
+        )}
+      </div>
       {!editando ? (
         <div className="space-y-4">
           <h2 className="text-xl font-bold">{trabajador.nombre}</h2>

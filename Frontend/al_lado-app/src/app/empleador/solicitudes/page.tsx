@@ -19,6 +19,13 @@ export default function MisSolicitudesPage() {
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<unknown>(null);
   const items = solicitudes.data ?? [];
+  const activas = items.filter((o) => o.activa).length;
+  const cerradas = items.length - activas;
+  const propuestasRecibidas = items.reduce((n, o) => n + (o.postulaciones?.length ?? 0), 0);
+  const accionPrioritaria =
+    activas > 0
+      ? `Tenés ${activas} solicitud${activas === 1 ? '' : 'es'} activa${activas === 1 ? '' : 's'} lista${activas === 1 ? '' : 's'} para revisar.`
+      : 'Todavía no tenés solicitudes activas. Publicá una para empezar a recibir propuestas.';
   const filtered = items.filter(
     (o) => tab === 'TODAS' || (tab === 'ACTIVAS' ? o.activa : !o.activa),
   );
@@ -46,6 +53,21 @@ export default function MisSolicitudesPage() {
           </Link>
         }
       />
+      <section className={`${panel} border-l-4 border-l-[#ffc107]`}>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ffc107]">
+          Qué revisar hoy
+        </p>
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-2xl font-black text-white">{items.length}</p>
+            <p className="text-sm text-zinc-400">solicitudes publicadas</p>
+          </div>
+          <span className="rounded-full bg-[#ffc107]/10 px-2.5 py-1 text-xs font-bold text-[#ffc107]">
+            {activas} activas / {cerradas} cerradas
+          </span>
+        </div>
+        <p className="mt-3 text-sm text-zinc-300">{accionPrioritaria}</p>
+      </section>
       <Tabs
         value={tab}
         onChange={setTab}
@@ -53,11 +75,11 @@ export default function MisSolicitudesPage() {
           { value: 'TODAS', label: `Todas · ${items.length}` },
           {
             value: 'ACTIVAS',
-            label: `Activas · ${items.filter((o) => o.activa).length}`,
+            label: `Activas · ${activas}`,
           },
           {
             value: 'CERRADAS',
-            label: `Cerradas · ${items.filter((o) => !o.activa).length}`,
+            label: `Cerradas · ${cerradas}`,
           },
         ]}
       />
@@ -118,10 +140,7 @@ export default function MisSolicitudesPage() {
         <aside className={`${panel} h-fit space-y-4`}>
           <h2 className="font-bold">Tu actividad</h2>
           <p className="text-sm text-zinc-400">{items.length} solicitudes publicadas</p>
-          <p className="text-sm text-zinc-400">
-            {items.reduce((n, o) => n + (o.postulaciones?.length ?? 0), 0)} propuestas
-            recibidas
-          </p>
+          <p className="text-sm text-zinc-400">{propuestasRecibidas} propuestas recibidas</p>
           <hr className="border-[#30302f]" />
           <h3 className="font-bold">Vos administrás</h3>
           <p className="text-sm text-zinc-400">

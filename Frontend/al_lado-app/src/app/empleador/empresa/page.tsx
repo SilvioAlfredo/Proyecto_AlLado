@@ -103,6 +103,19 @@ function EmpresaForm({
 }
 export default function Page() {
   const { perfil, userId, refresh } = useEmpleador();
+  const perfilEmpresa = perfil.data?.perfilEmpresarial;
+  const camposObligatorios = [
+    perfilEmpresa?.nombreEmpresa,
+    perfilEmpresa?.descripcion,
+    perfilEmpresa?.cuit,
+  ];
+  const completado = camposObligatorios.filter(Boolean).length;
+  const completitud = Math.round((completado / camposObligatorios.length) * 100);
+  const siguientePaso =
+    completado < camposObligatorios.length
+      ? 'Faltan datos de tu negocio para completar la presentación y generar mayor confianza.'
+      : 'Tu perfil empresarial está completo y listo para recibir postulantes.';
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -112,31 +125,48 @@ export default function Page() {
       />
       <QueryStatus pending={perfil.isPending} error={perfil.error} />
       {perfil.data && userId && (
-        <div className="grid items-start gap-5 lg:grid-cols-[1fr_280px]">
-          <EmpresaForm
-            key={userId}
-            initial={perfil.data.perfilEmpresarial}
-            empleadorId={userId}
-            onSaved={refresh}
-          />
-          <aside className={`${panel} space-y-4`}>
-            <h2 className="font-bold">Estado de verificación</h2>
-            <p className="text-[#ffc107]">
-              {perfil.data.perfilEmpresarial?.verificado
-                ? 'Empresa verificada'
-                : 'Empresa sin verificar'}
+        <>
+          <section className={`${panel} border-l-4 border-l-[#ffc107]`}>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ffc107]">
+              Estado del perfil
             </p>
-            <p className="text-sm text-zinc-400">
-              La administración revisa y verifica la información del negocio.
-            </p>
-            <Note>
-              El perfil empresarial requiere un plan PRO activo.{' '}
-              <Link href="/empleador/plan" className="text-[#ffc107]">
-                Ver mi plan →
-              </Link>
-            </Note>
-          </aside>
-        </div>
+            <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-2xl font-black text-white">{completitud}%</p>
+                <p className="text-sm text-zinc-400">completitud del negocio</p>
+              </div>
+              <span className="rounded-full bg-[#ffc107]/10 px-2.5 py-1 text-xs font-bold text-[#ffc107]">
+                {perfilEmpresa?.verificado ? 'Verificado' : 'Pendiente de verificación'}
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-zinc-300">{siguientePaso}</p>
+          </section>
+          <div className="grid items-start gap-5 lg:grid-cols-[1fr_280px]">
+            <EmpresaForm
+              key={userId}
+              initial={perfilEmpresa}
+              empleadorId={userId}
+              onSaved={refresh}
+            />
+            <aside className={`${panel} space-y-4`}>
+              <h2 className="font-bold">Estado de verificación</h2>
+              <p className="text-[#ffc107]">
+                {perfilEmpresa?.verificado
+                  ? 'Empresa verificada'
+                  : 'Empresa sin verificar'}
+              </p>
+              <p className="text-sm text-zinc-400">
+                La administración revisa y verifica la información del negocio.
+              </p>
+              <Note>
+                El perfil empresarial requiere un plan PRO activo.{' '}
+                <Link href="/empleador/plan" className="text-[#ffc107]">
+                  Ver mi plan →
+                </Link>
+              </Note>
+            </aside>
+          </div>
+        </>
       )}
     </div>
   );

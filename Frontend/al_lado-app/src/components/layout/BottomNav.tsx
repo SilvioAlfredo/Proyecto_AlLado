@@ -5,13 +5,13 @@ import type { SidebarItem } from './Sidebar';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Briefcase, FileText, User, Users } from 'lucide-react';
+import { Activity, Briefcase, FileText, Users } from 'lucide-react';
 
 const BOTTOM_NAV_ITEMS = [
   { name: 'Trabajos', href: '/trabajador/oportunidades', icon: Briefcase },
   { name: 'Postulaciones', href: '/trabajador/postulaciones', icon: FileText },
+  { name: 'Actividad', href: '/trabajador/actividad', icon: Activity },
   { name: 'Comunidad', href: '/trabajador/comunidad', icon: Users },
-  { name: 'Perfil', href: '/trabajador/perfil', icon: User },
 ];
 
 export default function TrabajadorBottomNav() {

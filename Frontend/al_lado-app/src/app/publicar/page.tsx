@@ -10,8 +10,6 @@ import { obtenerRefSesion } from '@/lib/usuarioRef';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
-// Pantalla "Nueva solicitud" del mockup, adaptada a desktop 2 columnas.
-// Backend: POST /oportunidades {titulo, contenido, ubicacion, modalidad, rangoSalarial, etiquetas}
 export default function PublicarPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -204,7 +202,7 @@ export default function PublicarPage() {
           </Button>
           {!user && (
             <p className="text-center text-xs text-zinc-500">
-              Necesitás iniciar sesión como Empleador. El backend exige rol EMPLEADOR/ADMIN.
+              Necesitás iniciar sesión con una cuenta de empleador para publicar esta solicitud.
             </p>
           )}
         </form>
@@ -217,7 +215,7 @@ export default function PublicarPage() {
             <div className="flex justify-between"><dt className="text-zinc-500">Modalidad</dt><dd className="text-white">{modalidad}</dd></div>
           </dl>
           <div className="rounded-xl bg-[#0b0b0c] p-3 text-xs text-zinc-400">
-            Endpoint real: <code className="text-zinc-200">POST /oportunidades</code> con JWT. Requiere <code className="text-[#ffc107]">ROLE_EMPLEADOR</code>.
+            La publicación ayuda a que profesionales relevantes reciban tu pedido con contexto claro.
           </div>
         </aside>
       </div>

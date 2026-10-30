@@ -12,7 +12,6 @@ import { OportunidadLaboralDTO } from '@/types/trabajo';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import {
-  Bell,
   Search,
   SlidersHorizontal,
   Zap,
@@ -52,7 +51,7 @@ const normalizar = (valor: string) =>
 
 export default function MemberHome() {
   const router = useRouter();
-  const { nombre, user } = useAuth();
+  const { nombre } = useAuth();
   const { oportunidades, loading } = useOportunidades();
   const etiquetas = useQuery({
     queryKey: ['etiquetas'],
@@ -66,7 +65,6 @@ export default function MemberHome() {
   const [categoria, setCategoria] = useState<string | null>(null);
 
   const nombreCorto = nombre?.trim().split(' ')[0] ?? null;
-  const inicial = (nombreCorto ?? user?.email ?? '?').charAt(0).toUpperCase();
 
   const oportunidadesFiltradas = useMemo(() => {
     const f = filtro.toLowerCase();
@@ -93,20 +91,6 @@ export default function MemberHome() {
           <h1 className="text-3xl md:text-4xl font-extrabold text-white">
             {nombreCorto ? `Hola, ${nombreCorto}` : 'Hola'}
           </h1>
-        </div>
-        <div className="flex items-center gap-3">
-          <p className="hidden lg:block text-right text-sm text-zinc-400 leading-tight">
-            Personas de tu barrio
-            <br />
-            para lo que necesitás
-          </p>
-          <button className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#1a1a1c] border border-[#2e2e33]">
-            <Bell size={18} />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#ffc107]" />
-          </button>
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#3a3a3f] font-bold text-white">
-            {inicial}
-          </span>
         </div>
       </section>
 

@@ -31,6 +31,12 @@ function ReportesContent() {
     queryKey: ['admin-reportes', filters],
     queryFn: () => gestionService.reportes(filters.filtro, filters.estado, filters.page),
   });
+  const resumen = {
+    pendientes: query.data?.content.filter((item) => item.estado === 'PENDIENTE').length ?? 0,
+    revision: query.data?.content.filter((item) => item.estado === 'EN_REVISION').length ?? 0,
+    resueltos: query.data?.content.filter((item) => item.estado === 'RESUELTO').length ?? 0,
+    descartados: query.data?.content.filter((item) => item.estado === 'DESCARTADO').length ?? 0,
+  };
 
   return (
     <div className="space-y-6">
@@ -44,6 +50,34 @@ function ReportesContent() {
           </Link>
         }
       />
+      <section className="rounded-2xl border border-[#2e2e33] bg-[#1a1a1c] p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ffc107]">
+          Qué revisar hoy
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div>
+            <p className="text-2xl font-black text-white">{resumen.pendientes}</p>
+            <p className="text-sm text-zinc-400">pendientes</p>
+          </div>
+          <div>
+            <p className="text-2xl font-black text-white">{resumen.revision}</p>
+            <p className="text-sm text-zinc-400">en revisión</p>
+          </div>
+          <div>
+            <p className="text-2xl font-black text-white">{resumen.resueltos}</p>
+            <p className="text-sm text-zinc-400">resueltos</p>
+          </div>
+          <div>
+            <p className="text-2xl font-black text-white">{resumen.descartados}</p>
+            <p className="text-sm text-zinc-400">descartados</p>
+          </div>
+        </div>
+        <p className="mt-3 text-sm text-zinc-300">
+          {resumen.pendientes > 0
+            ? 'Hay reportes pendientes de resolución. Prioriza los casos más urgentes.'
+            : 'No hay reportes pendientes. Revisá el resto de moderación o el foro.'}
+        </p>
+      </section>
       <Tabs
         value={filters.estado}
         onChange={(estado) => setFilters({ ...filters, estado, page: 0 })}

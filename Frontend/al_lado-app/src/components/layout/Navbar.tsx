@@ -9,7 +9,7 @@ import { notificacionesService } from '@/features/notificaciones/services/notifi
 import { notificacionesKeys } from '@/features/notificaciones/queryKeys';
 
 export function Navbar() {
-  const { user, userId, logout } = useAuth();
+  const { user, userId } = useAuth();
   const notices = useQuery({
     queryKey: notificacionesKeys.contador(userId ?? 0),
     enabled: userId != null,
@@ -113,16 +113,13 @@ export function Navbar() {
               </Link>
               <Link
                 href={getDashboardLink()}
-                className="text-sm font-medium text-zinc-300 hover:text-[#ffc107]"
+                aria-label="Mi panel"
+                title="Mi panel"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ffc107] text-sm font-black text-black transition hover:opacity-90"
               >
-                Mi Panel
+                {user.email?.split('@')[0]?.slice(0, 2)?.toUpperCase() || 'U'}
               </Link>
-              <span className="hidden md:inline text-sm text-zinc-500">
-                | {user.email}
-              </span>
-              <Button variant="ghost" size="sm" onClick={logout}>
-                Salir
-              </Button>
+              <span className="hidden md:inline text-sm text-zinc-500">{user.email}</span>
             </>
           ) : (
             <>

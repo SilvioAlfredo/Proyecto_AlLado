@@ -39,15 +39,17 @@ export function StatCard({
   return (
     <div
       className={cn(
-        'rounded-2xl border p-4',
-        highlight ? 'border-[#ffc107] bg-[#fff3c4] text-black' : 'border-[#2e2e33] bg-[#1a1a1c]'
+        'rounded-2xl border p-4 transition-colors',
+        highlight
+          ? 'border-[#ffc107]/60 bg-[#201b11] text-white shadow-[0_0_0_1px_rgba(255,193,7,0.12)]'
+          : 'border-[#2e2e33] bg-[#1a1a1c]'
       )}
     >
-      <p className={cn('text-[11px] font-bold uppercase tracking-wide', highlight ? 'text-black/60' : 'text-zinc-500')}>
+      <p className={cn('text-[11px] font-bold uppercase tracking-wide', highlight ? 'text-[#ffc107]' : 'text-zinc-500')}>
         {label}
       </p>
-      <p className={cn('mt-1 text-2xl font-extrabold', highlight ? 'text-black' : 'text-white')}>{value}</p>
-      {hint && <p className={cn('mt-1 text-xs', highlight ? 'text-black/60' : 'text-zinc-500')}>{hint}</p>}
+      <p className={cn('mt-1 text-2xl font-extrabold', highlight ? 'text-white' : 'text-white')}>{value}</p>
+      {hint && <p className={cn('mt-1 text-xs', highlight ? 'text-zinc-300' : 'text-zinc-500')}>{hint}</p>}
     </div>
   );
 }

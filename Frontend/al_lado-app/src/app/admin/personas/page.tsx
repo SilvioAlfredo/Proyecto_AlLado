@@ -63,6 +63,26 @@ function PersonasContent() {
           </Link>
         }
       />
+      <section className="rounded-xl border border-[#2e2e33] bg-[#1a1a1c] p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ffc107]">
+          Estado del listado
+        </p>
+        <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-2xl font-black text-white">{query.data?.length ?? 0}</p>
+            <p className="text-sm text-zinc-400">
+              {tab === 'TRABAJADOR'
+                ? 'trabajadores'
+                : tab === 'EMPLEADOR'
+                  ? 'empleadores'
+                  : 'administradores'}
+            </p>
+          </div>
+          <span className="rounded-full bg-[#ffc107]/10 px-2.5 py-1 text-xs font-bold text-[#ffc107]">
+            {term ? `Filtro: “${term}”` : 'Sin filtro activo'}
+          </span>
+        </div>
+      </section>
       <div className="flex flex-col justify-between gap-3 xl:flex-row">
         <Tabs
           value={tab}
@@ -95,13 +115,20 @@ function PersonasContent() {
             {people.length} {people.length === 1 ? 'persona' : 'personas'}
           </p>
           {people.length === 0 ? (
-            <Empty
-              mensaje={
-                term
-                  ? 'No hay personas que coincidan con la búsqueda.'
-                  : 'Todavía no hay personas en esta categoría.'
-              }
-            />
+            <div className="space-y-3">
+              <Empty
+                mensaje={
+                  term
+                    ? `No hay personas que coincidan con “${term}”. Probá otra búsqueda o cambiá de filtro.`
+                    : 'Todavía no hay personas en esta categoría.'
+                }
+              />
+              {term && (
+                <Button variant="outline" onClick={() => setSearch('')}>
+                  Limpiar búsqueda
+                </Button>
+              )}
+            </div>
           ) : (
             <div className="grid gap-4 lg:grid-cols-2">
               {people.map((person) => (

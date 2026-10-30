@@ -167,7 +167,7 @@ export function PublicHome() {
           >
             Tu próximo trabajo
             <br />
-            puede estar <span className="text-allado-yellow">al lado.</span>
+            puede estar en <span className="text-allado-yellow">AlLado</span>
           </h1>
           <p className="mt-6 max-w-lg text-base leading-relaxed text-zinc-400 md:text-lg">
             Conectá lo que sabés hacer con quienes lo necesitan. Encontrá oportunidades,

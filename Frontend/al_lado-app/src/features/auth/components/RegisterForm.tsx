@@ -76,7 +76,7 @@ export function RegisterForm({
         <h2 className="mb-4 text-sm font-semibold text-zinc-200">Tus datos personales</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-2 text-xs font-medium text-zinc-300">
-            <span className="block">Nombre</span>
+            <span className="sr-only">Nombre</span>
             <input
               autoComplete="given-name"
               required
@@ -84,11 +84,11 @@ export function RegisterForm({
               className={field}
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              placeholder="Tu nombre"
+              placeholder="Nombre"
             />
           </label>
           <label className="space-y-2 text-xs font-medium text-zinc-300">
-            <span className="block">Apellido</span>
+            <span className="sr-only">Apellido</span>
             <input
               autoComplete="family-name"
               required
@@ -96,11 +96,11 @@ export function RegisterForm({
               className={field}
               value={apellido}
               onChange={(e) => setApellido(e.target.value)}
-              placeholder="Tu apellido"
+              placeholder="Apellido"
             />
           </label>
           <label className="space-y-2 text-xs font-medium text-zinc-300">
-            <span className="block">Correo electrónico</span>
+            <span className="sr-only">Correo electrónico</span>
             <input
               autoComplete="email"
               type="email"
@@ -109,11 +109,11 @@ export function RegisterForm({
               className={field}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="nombre@ejemplo.com"
+              placeholder="Correo electrónico"
             />
           </label>
           <label className="space-y-2 text-xs font-medium text-zinc-300">
-            <span className="block">Teléfono</span>
+            <span className="sr-only">Teléfono</span>
             <input
               autoComplete="tel"
               type="tel"
@@ -123,13 +123,13 @@ export function RegisterForm({
               className={field}
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
-              placeholder="Ej.: +54 351 555 1234"
+              placeholder="Teléfono"
             />
           </label>
         </div>
       </div>
       <div className="block space-y-2 text-xs font-medium text-zinc-300">
-        <label htmlFor="register-password" className="block">
+        <label htmlFor="register-password" className="sr-only">
           Creá una contraseña
         </label>
         <div className="relative">
@@ -144,7 +144,7 @@ export function RegisterForm({
             className={`${field} pr-12`}
             value={contrasena}
             onChange={(e) => setContrasena(e.target.value)}
-            placeholder="Elegí tu contraseña"
+            placeholder="Contraseña"
           />
           <button
             type="button"
@@ -172,9 +172,6 @@ export function RegisterForm({
         {pending ? 'Creando cuenta…' : creado ? 'Cuenta creada' : 'Crear mi cuenta'}
         {!pending && !creado && <ArrowRight size={17} />}
       </button>
-      <p className="text-center text-xs leading-relaxed text-zinc-500">
-        Después podés completar tu perfil con más información sobre vos.
-      </p>
     </form>
   );
 }

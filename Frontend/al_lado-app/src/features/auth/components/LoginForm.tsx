@@ -50,10 +50,7 @@ export function LoginForm({ adminOnly = false }: { adminOnly?: boolean }) {
         </div>
       )}
       <div>
-        <label
-          htmlFor="login-email"
-          className="block text-sm font-medium text-zinc-300 mb-2"
-        >
+        <label htmlFor="login-email" className="sr-only">
           Correo electrónico
         </label>
         <input
@@ -69,14 +66,11 @@ export function LoginForm({ adminOnly = false }: { adminOnly?: boolean }) {
             'focus:outline-none focus:border-[#ffc107] focus:ring-1 ' +
             'focus:ring-[#ffc107] transition'
           }
-          placeholder="tu@email.com"
+          placeholder="Correo electrónico"
         />
       </div>
       <div>
-        <label
-          htmlFor="login-password"
-          className="block text-sm font-medium text-zinc-300 mb-2"
-        >
+        <label htmlFor="login-password" className="sr-only">
           Contraseña
         </label>
         <div className="relative">
@@ -93,7 +87,7 @@ export function LoginForm({ adminOnly = false }: { adminOnly?: boolean }) {
               'focus:outline-none focus:border-[#ffc107] focus:ring-1 ' +
               'focus:ring-[#ffc107] transition'
             }
-            placeholder="Ingresá tu contraseña"
+            placeholder="Contraseña"
             style={{ paddingRight: 48 }}
           />
           <button

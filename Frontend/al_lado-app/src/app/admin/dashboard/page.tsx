@@ -45,6 +45,11 @@ export default function Page() {
     queryFn: () => gestionService.comunicados('', '', 'recientes', 0),
   });
   const metrics = query.data;
+  const reportesPendientes =
+    reports.data?.content?.filter((item) => {
+      const estado = String(item.estado ?? '').toUpperCase();
+      return !['RESUELTO', 'CERRADO', 'ARCHIVADO'].includes(estado);
+    }).length ?? 0;
   const recent = [
     ...(reports.data?.content || []).map((item) => ({
       key: `reporte-${item.id}`,
@@ -80,6 +85,25 @@ export default function Page() {
           </Link>
         }
       />
+      <section className={`${card} border-l-4 border-l-[#ffc107]`}>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ffc107]">
+          Requiere atención
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          <div>
+            <p className="text-2xl font-black text-white">{reportesPendientes}</p>
+            <p className="text-sm text-zinc-400">Reportes abiertos</p>
+          </div>
+          <div>
+            <p className="text-2xl font-black text-white">{notices.data?.content?.length ?? 0}</p>
+            <p className="text-sm text-zinc-400">Comunicados recientes</p>
+          </div>
+          <div>
+            <p className="text-2xl font-black text-white">{metrics?.usuariosInactivos ?? 0}</p>
+            <p className="text-sm text-zinc-400">Usuarios deshabilitados</p>
+          </div>
+        </div>
+      </section>
       {query.isPending ? (
         <p role="status">Cargando métricas…</p>
       ) : query.isError ? (

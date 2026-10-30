@@ -6,48 +6,51 @@ import Link from 'next/link';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { usePathname } from 'next/navigation';
 import {
-  Briefcase,
-  FileText,
-  User,
-  Calendar,
-  FolderOpen,
   Activity,
-  Star,
-  Users,
+  Briefcase,
+  Calendar,
+  FileText,
+  FolderOpen,
+  LogOut,
   Settings,
   ShieldCheck,
-  LogOut,
+  Star,
+  Users,
 } from 'lucide-react';
 
 const MENU_ITEMS = [
   {
     seccion: 'Explorar',
+    icon: Briefcase,
     items: [
       { name: 'Oportunidades', href: '/trabajador/oportunidades', icon: Briefcase },
-      { name: 'Mis Postulaciones', href: '/trabajador/postulaciones', icon: FileText },
+      { name: 'Mis postulaciones', href: '/trabajador/postulaciones', icon: FileText },
     ],
   },
   {
-    seccion: 'Mi Espacio',
+    seccion: 'Mi espacio',
+    icon: FolderOpen,
     items: [
-      { name: 'Mi Perfil', href: '/trabajador/perfil', icon: User },
-      { name: 'Mi Portafolio', href: '/trabajador/portafolio', icon: FolderOpen },
       { name: 'Disponibilidad', href: '/trabajador/disponibilidad', icon: Calendar },
+      { name: 'Mi portafolio', href: '/trabajador/portafolio', icon: FolderOpen },
     ],
   },
   {
     seccion: 'Rendimiento',
+    icon: Activity,
     items: [
-      { name: 'Mi Actividad', href: '/trabajador/actividad', icon: Activity },
+      { name: 'Mi actividad', href: '/trabajador/actividad', icon: Activity },
       { name: 'Valoraciones', href: '/trabajador/valoraciones', icon: Star },
       { name: 'Suscripción PRO', href: '/trabajador/suscripcion', icon: ShieldCheck },
     ],
   },
   {
-    seccion: 'Comunidad & Ajustes',
+    seccion: 'Cuenta y comunidad',
+    icon: Users,
     items: [
       { name: 'Comunidad', href: '/trabajador/comunidad', icon: Users },
       { name: 'Preferencias', href: '/trabajador/preferencias', icon: Settings },
+      { name: 'Seguridad', href: '/trabajador/seguridad', icon: ShieldCheck },
     ],
   },
 ];
@@ -57,61 +60,75 @@ export default function TrabajadorSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-56 shrink-0 bg-[#111] text-zinc-300 flex-col hidden md:flex sticky top-20 h-[calc(100dvh-6rem)] overflow-y-auto rounded-2xl border border-allado-border">
-      <div className="p-6">
-        <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
-          <div className="w-8 h-8 bg-allado-yellow rounded-lg flex items-center justify-center text-black">
-            A
-          </div>
-          AlLado
-        </h2>
+    <aside className="w-full shrink-0 border-b border-[#2e2e33] bg-[#111] p-3 md:sticky md:top-16 md:h-[calc(100vh-4rem)] md:w-64 md:overflow-y-auto md:border-r md:border-b-0 md:p-4">
+      <div className="mb-4 flex items-center gap-3 rounded-2xl border border-[#2e2e33] bg-[#171718] px-3 py-2.5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#ffc107]/15 text-[#ffc107]">
+          <Briefcase className="h-4 w-4" />
+        </div>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">
+            Espacio
+          </p>
+          <p className="text-sm font-bold text-white">Trabajador</p>
+        </div>
       </div>
 
-      <nav className="flex-1 px-4 pb-4 space-y-6">
-        {MENU_ITEMS.map((grupo) => (
-          <div key={grupo.seccion}>
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-2 px-3">
-              {grupo.seccion}
-            </h3>
-            <ul className="space-y-1">
-              {grupo.items.map((item) => {
-                const isActive = pathname.startsWith(item.href);
-                const Icon = item.icon;
-                return (
-                  <li key={item.name}>
+      <nav className="flex gap-3 overflow-x-auto pb-1 md:block md:space-y-4 md:pb-0">
+        {MENU_ITEMS.map((grupo) => {
+          const GroupIcon = grupo.icon;
+          return (
+            <div key={grupo.seccion} className="min-w-[150px] md:min-w-0">
+              <div className="mb-2 flex items-center gap-2 px-2 text-zinc-400">
+                <GroupIcon className="h-3.5 w-3.5 text-[#ffc107]" />
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em]">
+                  {grupo.seccion}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                {grupo.items.map((item) => {
+                  const isActive = pathname.startsWith(item.href);
+                  const Icon = item.icon;
+                  return (
                     <Link
+                      key={item.name}
                       href={item.href}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium ${
+                      aria-current={isActive ? 'page' : undefined}
+                      className={cn(
+                        'flex items-center gap-2.5 rounded-xl px-2.5 py-2 transition-all',
                         isActive
-                          ? 'bg-allado-yellow text-black shadow-md'
-                          : 'hover:bg-allado-card2 hover:text-white'
-                      }`}
+                          ? 'bg-[#ffc107] text-black shadow-md shadow-[#ffc107]/20'
+                          : 'text-zinc-300 hover:bg-[#26262a] hover:text-white',
+                      )}
                     >
-                      <Icon
-                        className={`w-4 h-4 ${isActive ? 'text-black' : 'text-zinc-400'}`}
-                      />
-                      {item.name}
+                      <span
+                        className={cn(
+                          'flex h-7 w-7 items-center justify-center rounded-lg border',
+                          isActive
+                            ? 'border-black/10 bg-black/5 text-black'
+                            : 'border-[#2e2e33] bg-[#1a1a1c] text-zinc-400',
+                        )}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="text-sm font-medium">{item.name}</span>
                     </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </nav>
 
-      <div className="p-4 border-t border-allado-border">
-        <Link
-          href="/login"
-          onClick={(event) => {
-            event.preventDefault();
-            void logout();
-          }}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-sm font-medium text-rose-400 hover:bg-rose-500/10"
-        >
-          <LogOut className="w-4 h-4" /> Cerrar Sesión
-        </Link>
-      </div>
+      <button
+        type="button"
+        onClick={() => void logout()}
+        className="mt-6 flex w-full items-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/5 px-3 py-2.5 text-sm font-medium text-rose-400 transition-colors hover:bg-rose-500/10"
+      >
+        <LogOut className="h-4 w-4" />
+        Cerrar sesión
+      </button>
     </aside>
   );
 }

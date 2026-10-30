@@ -40,6 +40,11 @@ export function ActividadTrabajador() {
       descripcion: `${p.titulo} · ${p.estado}`,
       fecha: formatDate(p.fechaCreacion),
     }));
+  const tieneActividad = actividadReciente.length > 0;
+  const siguientePaso =
+    Number(estadisticas.postulacionesActivas) > 0
+      ? 'Revisá las postulaciones activas y respondé rápido para mejorar tus chances.'
+      : 'Explorá oportunidades nuevas y actualizá tu perfil para aparecer antes en búsquedas.';
 
   return (
     <div className="w-full">
@@ -52,6 +57,24 @@ export function ActividadTrabajador() {
             Aquí tienes el resumen de tu actividad y rendimiento en AlLado.
           </p>
         </div>
+
+        <section className="rounded-2xl border border-allado-border bg-allado-card p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-allado-yellow">
+            Qué revisar hoy
+          </p>
+          <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-2xl font-black text-white">
+                {estadisticas.postulacionesActivas}
+              </p>
+              <p className="text-sm text-zinc-400">postulaciones activas</p>
+            </div>
+            <span className="rounded-full bg-allado-yellow/10 px-2.5 py-1 text-xs font-bold text-allado-yellow">
+              {tieneActividad ? 'Hay actividad reciente' : 'Sin actividad reciente'}
+            </span>
+          </div>
+          <p className="mt-3 text-sm text-zinc-300">{siguientePaso}</p>
+        </section>
 
         {/* KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -152,7 +175,17 @@ export function ActividadTrabajador() {
               </p>
             )}
             {!loading && !error && !actividadReciente.length && (
-              <p className="p-5">Sin postulaciones registradas.</p>
+              <div className="p-5 space-y-3">
+                <p>Sin postulaciones registradas.</p>
+                <div className="flex flex-wrap gap-3 text-sm">
+                  <Link href="/trabajador/oportunidades" className="text-allado-yellow underline">
+                    Explorar oportunidades
+                  </Link>
+                  <Link href="/trabajador/perfil" className="text-allado-yellow underline">
+                    Completar mi perfil
+                  </Link>
+                </div>
+              </div>
             )}
             {actividadReciente.map((item) => (
               <div

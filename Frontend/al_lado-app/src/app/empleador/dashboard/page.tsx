@@ -12,6 +12,18 @@ export default function EmpleadorDashboardPage() {
   const activas = items.filter((o) => o.activa);
   const curso = posts.filter((p) => p.estado === 'SELECCIONADA');
   const completas = posts.filter((p) => p.estado === 'COMPLETADA');
+  const pendientes = posts.filter((p) => p.estado === 'PENDIENTE');
+  const pendientesAccion = [
+    ...(pendientes.length > 0
+      ? [`Hay ${pendientes.length} propuesta${pendientes.length > 1 ? 's' : ''} por revisar.`]
+      : []),
+    ...(activas.length > 0
+      ? [`Tienes ${activas.length} solicitud${activas.length > 1 ? 'es' : ''} activa${activas.length > 1 ? 's' : ''}.`]
+      : []),
+    ...(curso.length > 0
+      ? [`Trabajos en curso: ${curso.length}.`]
+      : []),
+  ];
   return (
     <div className="space-y-6">
       <PageHeader
@@ -28,6 +40,18 @@ export default function EmpleadorDashboardPage() {
         pending={solicitudes.isPending || propuestas.isPending}
         error={solicitudes.error || propuestas.error || favoritos.error}
       />
+      <section className={`${panel} border-l-4 border-l-[#ffc107]`}>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#ffc107]">
+          Qué revisar hoy
+        </p>
+        <div className="mt-3 space-y-2 text-sm text-zinc-300">
+          {pendientesAccion.length > 0 ? (
+            pendientesAccion.map((mensaje) => <p key={mensaje}>{mensaje}</p>)
+          ) : (
+            <p>No tenés tareas pendientes por revisar. Podés publicar una nueva solicitud.</p>
+          )}
+        </div>
+      </section>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           [
