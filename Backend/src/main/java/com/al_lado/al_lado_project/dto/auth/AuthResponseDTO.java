@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AuthResponseDTO {
+// estructura del json que devuelve el token al backend para mantener sesion y roles
     private String token;
     private String email;
     private List<String> roles;
