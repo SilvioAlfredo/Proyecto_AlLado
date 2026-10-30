@@ -1,0 +1,10 @@
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './tests',
+  reporter: 'html',
+  use: {
+    browserName: 'chromium',
+    trace: 'retain-on-failure',
+  },
+});
