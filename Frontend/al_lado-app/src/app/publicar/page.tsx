@@ -2,29 +2,34 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { oportunidadesService } from '@/features/oportunidades/services/oportunidadService';
+import { etiquetasService } from '@/features/oportunidades/services/etiquetasService';
+import { errorMessage } from '@/lib/errors';
 import { obtenerRefSesion } from '@/lib/usuarioRef';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-
-const ESPECIALIDADES = [
-  'Electricidad', 'Plomería', 'Hogar', 'Tecnología', 'Pintura',
-  'Jardinería', 'Carpintería', 'Limpieza', 'Albañilería', 'Gas',
-  'Aire Acondicionado', 'Otros',
-];
 
 // Pantalla "Nueva solicitud" del mockup, adaptada a desktop 2 columnas.
 // Backend: POST /oportunidades {titulo, contenido, ubicacion, modalidad, rangoSalarial, etiquetas}
 export default function PublicarPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const etiquetas = useQuery({
+    queryKey: ['etiquetas'],
+    queryFn: etiquetasService.listar,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
   const [descripcion, setDescripcion] = useState('');
-  const [especialidad, setEspecialidad] = useState('Electricidad');
-  const [ubicacion, setUbicacion] = useState('Villa Urquiza, CABA');
+  const [especialidad, setEspecialidad] = useState('');
+  const [ubicacion, setUbicacion] = useState('');
   const [modalidad, setModalidad] = useState('PRESENCIAL');
   const [rango, setRango] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const especialidades = etiquetas.data ?? [];
+  const sinEspecialidades = !etiquetas.isPending && !especialidades.length;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +38,7 @@ export default function PublicarPage() {
     try {
       const autor = obtenerRefSesion();
       if (!autor?.id) throw new Error('No se encontró tu usuario. Iniciá sesión de nuevo.');
+      if (!especialidad) throw new Error('Elegí una especialidad para publicar.');
       const titulo = descripcion.split('\n')[0]?.slice(0, 80) || `Solicitud de ${especialidad}`;
       await oportunidadesService.crear({
         titulo,
@@ -40,13 +46,13 @@ export default function PublicarPage() {
         autor,
         ubicacion,
         modalidad,
-        rangoSalarial: rango || 'A convenir',
+        rangoSalarial: rango,
         activa: true,
         etiquetas: [{ nombre: especialidad }],
       });
       router.push('/');
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'No se pudo publicar. Verificá sesión de Empleador.');
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo publicar. Verificá sesión de Empleador.'));
     } finally {
       setLoading(false);
     }
@@ -81,31 +87,61 @@ export default function PublicarPage() {
 
           <div>
             <label className="mb-2 block font-bold text-white">🔧 Especialidad</label>
-            <select
-              value={especialidad}
-              onChange={(e) => setEspecialidad(e.target.value)}
-              className="w-full rounded-full border border-[#3a3a3f] bg-[#26262a] px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#ffc107]"
-            >
-              {ESPECIALIDADES.map((e) => (
-                <option key={e}>{e}</option>
-              ))}
-            </select>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {ESPECIALIDADES.map((e) => (
+            {etiquetas.isError ? (
+              <div
+                role="alert"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400"
+              >
+                <span>No pudimos cargar las especialidades.</span>
                 <button
                   type="button"
-                  key={e}
-                  onClick={() => setEspecialidad(e)}
-                  className={`rounded-full border px-4 py-1.5 text-sm transition ${
-                    especialidad === e
-                      ? 'border-[#ffc107] text-[#ffc107]'
-                      : 'border-[#3a3a3f] text-zinc-300 hover:border-zinc-500'
-                  }`}
+                  className="font-semibold underline"
+                  onClick={() => void etiquetas.refetch()}
                 >
-                  {e}
+                  Reintentar
                 </button>
-              ))}
-            </div>
+              </div>
+            ) : sinEspecialidades ? (
+              <p className="rounded-xl border border-dashed border-[#3a3a3f] p-3 text-sm text-zinc-400">
+                Todavía no hay especialidades cargadas. Probá más tarde.
+              </p>
+            ) : (
+              <>
+                <select
+                  required
+                  value={especialidad}
+                  onChange={(e) => setEspecialidad(e.target.value)}
+                  disabled={etiquetas.isPending}
+                  className="w-full rounded-full border border-[#3a3a3f] bg-[#26262a] px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#ffc107]"
+                >
+                  <option value="" disabled>
+                    {etiquetas.isPending ? 'Cargando especialidades…' : 'Seleccioná una especialidad'}
+                  </option>
+                  {especialidades.map((etiqueta) => (
+                    <option key={etiqueta.id ?? etiqueta.nombre} value={etiqueta.nombre}>
+                      {etiqueta.nombre}
+                    </option>
+                  ))}
+                </select>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {especialidades.map((etiqueta) => (
+                    <button
+                      type="button"
+                      key={etiqueta.id ?? etiqueta.nombre}
+                      aria-pressed={especialidad === etiqueta.nombre}
+                      onClick={() => setEspecialidad(etiqueta.nombre)}
+                      className={`rounded-full border px-4 py-1.5 text-sm transition ${
+                        especialidad === etiqueta.nombre
+                          ? 'border-[#ffc107] text-[#ffc107]'
+                          : 'border-[#3a3a3f] text-zinc-300 hover:border-zinc-500'
+                      }`}
+                    >
+                      {etiqueta.nombre}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -114,7 +150,8 @@ export default function PublicarPage() {
               <input
                 value={ubicacion}
                 onChange={(e) => setUbicacion(e.target.value)}
-                className="w-full rounded-full border border-[#3a3a3f] bg-[#26262a] px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#ffc107]"
+                placeholder="Ingresá tu ubicación o barrio"
+                className="w-full rounded-full border border-[#3a3a3f] bg-[#26262a] px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#ffc107]"
               />
               <button type="button" className="mt-2 text-sm font-semibold text-[#ffc107]">
                 ➤ Usar mi ubicación actual
@@ -151,7 +188,18 @@ export default function PublicarPage() {
             </div>
           </div>
 
-          <Button type="submit" disabled={loading || !descripcion} className="w-full h-[52px] text-base">
+          <Button
+            type="submit"
+            disabled={
+              loading ||
+              !descripcion ||
+              !especialidad ||
+              etiquetas.isPending ||
+              etiquetas.isError ||
+              sinEspecialidades
+            }
+            className="w-full h-[52px] text-base"
+          >
             {loading ? 'Publicando...' : '✈ Publicar solicitud'}
           </Button>
           {!user && (
@@ -164,8 +212,8 @@ export default function PublicarPage() {
         <aside className="h-fit space-y-4 rounded-2xl border border-[#2e2e33] bg-[#1a1a1c] p-6 lg:sticky lg:top-20">
           <h3 className="font-bold text-white">Resumen</h3>
           <dl className="space-y-2 text-sm">
-            <div className="flex justify-between"><dt className="text-zinc-500">Especialidad</dt><dd className="font-semibold text-[#ffc107]">{especialidad}</dd></div>
-            <div className="flex justify-between"><dt className="text-zinc-500">Ubicación</dt><dd className="text-white">{ubicacion}</dd></div>
+            <div className="flex justify-between"><dt className="text-zinc-500">Especialidad</dt><dd className="font-semibold text-[#ffc107]">{especialidad || 'Sin definir'}</dd></div>
+            <div className="flex justify-between"><dt className="text-zinc-500">Ubicación</dt><dd className="text-white">{ubicacion || 'Sin definir'}</dd></div>
             <div className="flex justify-between"><dt className="text-zinc-500">Modalidad</dt><dd className="text-white">{modalidad}</dd></div>
           </dl>
           <div className="rounded-xl bg-[#0b0b0c] p-3 text-xs text-zinc-400">

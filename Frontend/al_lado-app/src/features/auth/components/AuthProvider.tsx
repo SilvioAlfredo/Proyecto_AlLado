@@ -11,8 +11,8 @@ import { loginDestination } from '../lib/access';
 const SESSION_EVENT = 'allado-session';
 // Claves de la sesión completa en el navegador (AL-API-005)
 const SESSION_KEYS = ['auth_token', 'user_email', 'user_roles', 'user_id', 'user_nombre'];
-// El snapshot incluye user_id para exponer el identificador en el primer render
-const SNAPSHOT_KEYS = ['auth_token', 'user_email', 'user_roles', 'user_id'];
+// El snapshot incluye user_id y user_nombre para exponer la identidad en el primer render
+const SNAPSHOT_KEYS = ['auth_token', 'user_email', 'user_roles', 'user_id', 'user_nombre'];
 function subscribe(callback: () => void) {
   window.addEventListener('storage', callback);
   window.addEventListener(SESSION_EVENT, callback);
@@ -24,9 +24,13 @@ function subscribe(callback: () => void) {
 function snapshot() {
   return JSON.stringify(SNAPSHOT_KEYS.map((key) => localStorage.getItem(key)));
 }
-function readSession(raw: string): { user: UserSession | null; userId: number | null } {
+function readSession(raw: string): {
+  user: UserSession | null;
+  userId: number | null;
+  nombre: string | null;
+} {
   try {
-    const [token, email, roles, userIdGuardado] = JSON.parse(raw);
+    const [token, email, roles, userIdGuardado, nombreGuardado] = JSON.parse(raw);
     const parsed = JSON.parse(roles || '[]');
     const user =
       token && email && Array.isArray(parsed) && parsed.every((role) => typeof role === 'string')
@@ -36,14 +40,18 @@ function readSession(raw: string): { user: UserSession | null; userId: number | 
     // navegador; no hace falta esperar a la API para conocerlo
     const guardado =
       userIdGuardado && Number.isFinite(Number(userIdGuardado)) ? Number(userIdGuardado) : null;
-    return { user, userId: user ? guardado ?? userIdFromToken(token) : null };
+    return {
+      user,
+      userId: user ? guardado ?? userIdFromToken(token) : null,
+      nombre: user && typeof nombreGuardado === 'string' ? nombreGuardado : null,
+    };
   } catch {
-    return { user: null, userId: null };
+    return { user: null, userId: null, nombre: null };
   }
 }
 export function AuthProvider({ children }: { children: ReactNode }) {
   const raw = useSyncExternalStore(subscribe, snapshot, () => '');
-  const { user, userId: userIdSincronico } = readSession(raw);
+  const { user, userId: userIdSincronico, nombre } = readSession(raw);
   const router = useRouter();
   const queryClient = useQueryClient();
   const identity = useQuery({
@@ -104,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         userId: userIdSincronico ?? identity.data ?? null,
+        nombre,
         loading: raw === '' || (!!user && identity.isPending && userIdSincronico === null),
         login,
         register,

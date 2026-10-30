@@ -6,6 +6,8 @@ export interface UserSession { email: string; roles: string[] }
 export interface AuthContextValue {
   user: UserSession | null;
   userId: number | null;
+  /** Nombre declarado en el registro/login; null si la sesión no lo guardó. */
+  nombre: string | null;
   loading: boolean;
   login: (credentials: AuthRequestDTO, options?: { adminOnly?: boolean }) => ReturnType<typeof authService.login>;
   register: (credentials: RegisterCredentials) => ReturnType<typeof authService.register>;

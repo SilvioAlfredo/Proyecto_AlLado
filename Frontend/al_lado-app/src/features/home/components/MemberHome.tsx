@@ -3,39 +3,70 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { useOportunidades } from '@/features/oportunidades/hooks/useOportunidades';
+import { etiquetasService } from '@/features/oportunidades/services/etiquetasService';
 import { OportunidadCard } from '@/features/oportunidades/components/OportunidadCard';
 import { PostulacionModal } from '@/features/postulaciones/components/PostulacionModal';
 import { OportunidadLaboralDTO } from '@/types/trabajo';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Input } from '@/components/ui/input';
 import {
   Bell,
   Search,
   SlidersHorizontal,
-  MapPin,
   Zap,
   Wrench,
-  Home,
+  House,
   PaintRoller,
   Leaf,
+  Monitor,
+  Hammer,
+  Sparkles,
+  HardHat,
+  Flame,
+  Wind,
 } from 'lucide-react';
 
-const CATEGORIAS = [
-  { nombre: 'Electricidad', activos: 12, icon: Zap, highlight: true },
-  { nombre: 'Plomería', activos: 8, icon: Wrench, highlight: false },
-  { nombre: 'Hogar', activos: 15, icon: Home, highlight: false },
-  { nombre: 'Pintura', activos: 6, icon: PaintRoller, highlight: false },
-  { nombre: 'Jardinería', activos: 9, icon: Leaf, highlight: false },
-  { nombre: 'Tecnología', activos: 7, icon: Zap, highlight: false },
-];
+// Icono por especialidad: el catálogo es el de GET /etiquetas, así que el mapeo
+// es solo decorativo y cualquier nombre desconocido cae en el icono genérico.
+const ICONOS = {
+  electricidad: Zap,
+  plomeria: Wrench,
+  hogar: House,
+  pintura: PaintRoller,
+  jardineria: Leaf,
+  tecnologia: Monitor,
+  carpinteria: Hammer,
+  limpieza: Sparkles,
+  albanileria: HardHat,
+  gas: Flame,
+  'aire acondicionado': Wind,
+};
+
+const normalizar = (valor: string) =>
+  valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
 
 export default function MemberHome() {
   const router = useRouter();
+  const { nombre, user } = useAuth();
   const { oportunidades, loading } = useOportunidades();
+  const etiquetas = useQuery({
+    queryKey: ['etiquetas'],
+    queryFn: etiquetasService.listar,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
   const [selectedOportunidad, setSelectedOportunidad] =
     useState<OportunidadLaboralDTO | null>(null);
   const [filtro, setFiltro] = useState('');
   const [categoria, setCategoria] = useState<string | null>(null);
+
+  const nombreCorto = nombre?.trim().split(' ')[0] ?? null;
+  const inicial = (nombreCorto ?? user?.email ?? '?').charAt(0).toUpperCase();
 
   const oportunidadesFiltradas = useMemo(() => {
     const f = filtro.toLowerCase();
@@ -49,23 +80,19 @@ export default function MemberHome() {
         !categoria ||
         op.titulo.toLowerCase().includes(categoria.toLowerCase()) ||
         op.contenido.toLowerCase().includes(categoria.toLowerCase()) ||
-        op.etiquetas?.some((e) => e.nombre.toLowerCase() === categoria.toLowerCase());
+        op.etiquetas?.some((e) => normalizar(e.nombre) === normalizar(categoria));
       return matchTexto && matchCat;
     });
   }, [oportunidades, filtro, categoria]);
 
   return (
     <div className="space-y-8">
-      {/* Header estilo mockup: Hola Usuario + ubicación */}
+      {/* Header: saludo e inicial con la identidad real de la sesión */}
       <section className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-white">
-            Hola, Usuario
+            {nombreCorto ? `Hola, ${nombreCorto}` : 'Hola'}
           </h1>
-          <p className="mt-1 flex items-center gap-1 text-sm text-zinc-400">
-            <MapPin size={16} className="text-[#ffc107]" />
-            Villa Urquiza, CABA <span className="text-zinc-600">›</span>
-          </p>
         </div>
         <div className="flex items-center gap-3">
           <p className="hidden lg:block text-right text-sm text-zinc-400 leading-tight">
@@ -78,7 +105,7 @@ export default function MemberHome() {
             <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#ffc107]" />
           </button>
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#3a3a3f] font-bold text-white">
-            U
+            {inicial}
           </span>
         </div>
       </section>
@@ -101,32 +128,69 @@ export default function MemberHome() {
         />
       </div>
 
-      {/* Categorías populares — desktop: 6 columnas */}
+      {/* Especialidades reales (GET /etiquetas); sin contadores hasta tener estadísticas globales */}
       <section>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-white">Categorías populares</h2>
-          <button className="text-sm font-semibold text-[#ffc107]">Ver todas ›</button>
+          <h2 className="text-lg font-bold text-white">Especialidades</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {CATEGORIAS.map((c) => (
+        {etiquetas.isPending ? (
+          <div
+            role="status"
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3"
+          >
+            <span className="sr-only">Cargando especialidades…</span>
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-[92px] animate-pulse rounded-2xl bg-[#1a1a1c]" />
+            ))}
+          </div>
+        ) : etiquetas.isError ? (
+          <div
+            role="alert"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300"
+          >
+            <span>No pudimos cargar las especialidades.</span>
             <button
-              key={c.nombre}
-              onClick={() => setCategoria(categoria === c.nombre ? null : c.nombre)}
-              className={`rounded-2xl border p-4 text-center transition ${
-                categoria === c.nombre || c.highlight
-                  ? 'border-[#ffc107] bg-[#ffc107]/10'
-                  : 'border-[#2e2e33] bg-[#1a1a1c] hover:border-zinc-600'
-              }`}
+              type="button"
+              className="font-semibold underline"
+              onClick={() => void etiquetas.refetch()}
             >
-              <c.icon
-                size={28}
-                className={`mx-auto ${categoria === c.nombre || c.highlight ? 'text-[#ffc107]' : 'text-zinc-300'}`}
-              />
-              <p className="mt-2 text-sm font-bold text-white">{c.nombre}</p>
-              <p className="text-xs text-zinc-500">{c.activos} activos</p>
+              Reintentar
             </button>
-          ))}
-        </div>
+          </div>
+        ) : !etiquetas.data?.length ? (
+          <p className="rounded-2xl border border-dashed border-[#3a3a3f] p-6 text-center text-sm text-zinc-400">
+            Todavía no hay especialidades cargadas.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {etiquetas.data.map((etiqueta) => {
+              const Icono =
+                (ICONOS as Record<string, typeof Wrench>)[normalizar(etiqueta.nombre)] ??
+                Wrench;
+              const activa = categoria === etiqueta.nombre;
+              return (
+                <button
+                  key={etiqueta.id ?? etiqueta.nombre}
+                  aria-pressed={activa}
+                  onClick={() =>
+                    setCategoria(categoria === etiqueta.nombre ? null : etiqueta.nombre)
+                  }
+                  className={`rounded-2xl border p-4 text-center transition ${
+                    activa
+                      ? 'border-[#ffc107] bg-[#ffc107]/10'
+                      : 'border-[#2e2e33] bg-[#1a1a1c] hover:border-zinc-600'
+                  }`}
+                >
+                  <Icono
+                    size={28}
+                    className={`mx-auto ${activa ? 'text-[#ffc107]' : 'text-zinc-300'}`}
+                  />
+                  <p className="mt-2 text-sm font-bold text-white">{etiqueta.nombre}</p>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Mis solicitudes activas — desktop: 2-3 columnas */}
