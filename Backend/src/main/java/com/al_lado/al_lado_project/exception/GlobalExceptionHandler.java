@@ -2,6 +2,7 @@ package com.al_lado.al_lado_project.exception;
 
 import com.al_lado.al_lado_project.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,6 +50,7 @@ import java.util.Map;
  *       400 o 409 según el caso.</li>
  * </ul>
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -96,6 +98,7 @@ public class GlobalExceptionHandler {
     // 3. Manejo de violaciones de reglas de negocio (HTTP 400)
     @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<ErrorResponse> handleBusinessRuleException(BusinessRuleException ex, HttpServletRequest request) {
+        log.warn("Regla de negocio violada en {}: {}", request.getRequestURI(), ex.getMessage());
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("Bad Request")
@@ -156,6 +159,7 @@ public class GlobalExceptionHandler {
     // 5. Manejo de errores de autenticación Spring Security (HTTP 401)
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex, HttpServletRequest request) {
+        log.warn("Falló autenticación (credenciales inválidas) en {}", request.getRequestURI(), ex);
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .error("Unauthorized")
@@ -169,6 +173,8 @@ public class GlobalExceptionHandler {
     // 6. Manejo de acceso denegado por roles (HTTP 403)
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex, HttpServletRequest request) {
+        log.warn("Acceso denegado (403) en {} para {}", request.getRequestURI(),
+                request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "anon", ex);
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.FORBIDDEN.value())
                 .error("Forbidden")
@@ -182,6 +188,7 @@ public class GlobalExceptionHandler {
     // 5b. Manejo de fallos de autenticación de cuenta (deshabilitada, bloqueada, expirada) (HTTP 401)
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex, HttpServletRequest request) {
+        log.warn("Falló autenticación (cuenta deshabilitada/bloqueada/expirada) en {}", request.getRequestURI(), ex);
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.UNAUTHORIZED.value())
                 .error("Unauthorized")
@@ -195,6 +202,7 @@ public class GlobalExceptionHandler {
     // 7. Captura de cualquier otra excepción no contemplada (HTTP 500)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, HttpServletRequest request) {
+        log.error("Error inesperado (500) en {}: {}", request.getRequestURI(), ex.getMessage(), ex);
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error("Internal Server Error")

@@ -130,15 +130,13 @@ public interface OportunidadLaboralService {
     List<OportunidadLaboralDTO> buscarPorFiltros(String filtro, String modalidad, List<String> etiquetas);
 
     /**
-     * Busca ofertas activas por texto, modalidad, etiquetas y opción de destacadas.
+     * Busca ofertas activas por texto, modalidad, etiquetas, ubicación y sector, con paginación.
      *
-     * <p>Devuelve la lista completa. Para obtener páginas, utilizar {@code listarOportunidades}
-     * con {@link Pageable}.</p>
-     *
-     * @param filtros puede ser {@code null}; los campos individuales también son opcionales
-     * @return solo ofertas activas que cumplan todos los criterios indicados
+     * @param filtros   puede ser {@code null}; los campos individuales son opcionales
+     * @param pageable  página y tamaño solicitados
+     * @return página de ofertas activas que cumplan todos los criterios indicados
      */
-    List<OportunidadLaboralDTO> listarConFiltros(FiltrosOportunidadesDTO filtros);
+    Page<OportunidadLaboralDTO> listarConFiltros(FiltrosOportunidadesDTO filtros, Pageable pageable);
 
     /**
      * Busca ofertas cuyas etiquetas coincidan con las especialidades del trabajador.

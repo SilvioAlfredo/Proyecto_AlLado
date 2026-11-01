@@ -3,6 +3,7 @@ import { api } from './client';
 import type {
   AuthResponse,
   Comunicado,
+  Contrato,
   DashboardMetrics,
   Donacion,
   Empleador,
@@ -87,6 +88,8 @@ export const trabajadorService = {
       api.get<Trabajador>(`/trabajadores/${id}`),
   actualizar: (id: string | number, dto: { nombre?: string; email?: string; telefono?: string; [k: string]: unknown }): Promise<Trabajador> =>
       api.put<Trabajador>(`/trabajadores/${id}`, dto),
+  estadisticas: (id: string | number): Promise<unknown> =>
+      api.get(`/trabajadores/${id}/estadisticas`),
   estadisticasPorEmail: (email: string): Promise<unknown> =>
       api.get(`/trabajadores/por-email/estadisticas?email=${encodeURIComponent(email)}`),
 };
@@ -261,4 +264,30 @@ export const adminService = {
       api.post<Comunicado>('/comunicados', dto),
   eliminarComunicado: (id: string | number): Promise<unknown> =>
       api.del(`/comunicados/${id}`),
+};
+
+/**
+ * Servicio de historial de contratos (HU-08).
+ * Consume los endpoints del backend implementados en ContratoController.
+ */
+export const contratosService = {
+  /**
+   * Historial de contratos del empleador autenticado.
+   * Devuelve todas las postulaciones de sus ofertas, ordenadas por fecha descendente.
+   */
+  historialEmpleador: (): Promise<Contrato[]> =>
+      api.get<Contrato[]>('/contratos/historial/empleador'),
+
+  /**
+   * Historial de contratos de un trabajador: sus postulaciones con estados de
+   * ejecución (SELECCIONADA, COMPLETADA, RETIRADA, RECHAZADA).
+   */
+  historialTrabajador: (trabajadorId: string | number): Promise<Contrato[]> =>
+      api.get<Contrato[]>(`/contratos/historial/trabajador/${trabajadorId}`),
+
+  /**
+   * Detalle de un contrato/postulación por su ID.
+   */
+  detalle: (id: string | number): Promise<Contrato> =>
+      api.get<Contrato>(`/contratos/${id}`),
 };

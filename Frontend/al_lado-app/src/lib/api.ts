@@ -45,26 +45,21 @@ api.interceptors.response.use(
             const esPeticionDeAuth = urlPeticion.includes('/auth/login') || urlPeticion.includes('/auth/register');
             const enPantallaDeAcceso = ['/login', '/acceso-admin'].includes(window.location.pathname);
 
-            // 401 (token expirado/inválido) y 403 (sin permisos): la sesión ya no
-            // sirve, se borra completa (incluido el identificador del usuario,
-            // AL-API-005) y se vuelve al login para no mostrar datos de la cuenta
+            // 401 (token expirado/inválido): la sesión ya no sirve, se borra
+            // completa y se vuelve al login para no mostrar datos de la cuenta
             // anterior (AL-FE-007 / MEJ-008)
-            if ((status === 401 || status === 403) && !esPeticionDeAuth && !enPantallaDeAcceso) {
+            if (status === 401 && !esPeticionDeAuth && !enPantallaDeAcceso) {
                 ['auth_token', 'user_email', 'user_roles', 'user_id', 'user_nombre'].forEach((key) =>
                     localStorage.removeItem(key)
                 );
                 window.location.href = window.location.pathname.startsWith('/admin') ? '/acceso-admin' : '/login';
             }
 
-            // 403 Forbidden: autenticado pero sin permisos -> NO desloguear, solo registrar / propagar
+            // 403 Forbidden: autenticado pero sin permisos -> NO desloguear,
+            // solo registrar y propagar el error para que el componente lo maneje
             if (status === 403) {
                 console.warn('Acceso denegado (403 Forbidden): El usuario carece de permisos para este recurso.');
             }
-        }
-
-        // Adjuntar mensaje normalizado al error antes de propagarlo
-        if (error.response) {
-            (error.response as any).friendlyMessage = errorMessage;
         }
 
         // Adjuntar mensaje normalizado al error antes de propagarlo

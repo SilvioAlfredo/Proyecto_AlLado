@@ -1,62 +1,83 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { OportunidadLaboralDTO } from '@/types/trabajo';
+import { PaginaDTO } from '@/types/admin';
 import { oportunidadesService } from '../services/oportunidadService';
+import { oportunidadesKeys } from '../queryKeys';
+import { errorMessage } from '@/lib/errors';
 
 export interface FiltrosOportunidades {
   filtro?: string;
   modalidad?: string;
   etiquetas?: string[];
+  soloDestacadas?: boolean;
+  ubicacion?: string;
+  sector?: string;
 }
 
 export interface useOportunidadesReturn {
   oportunidades: OportunidadLaboralDTO[];
+  page: number;
+  totalPages: number;
+  totalElements: number;
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  cargarConFiltros: (filtros: FiltrosOportunidades) => Promise<void>;
+  cargarConFiltros: (filtros: FiltrosOportunidades, page?: number) => Promise<void>;
+  filtro: string | undefined;
+  setFiltro: (f: string) => void;
+  modalidad: string | undefined;
+  setModalidad: (m: string) => void;
+  etiquetas: string[] | undefined;
+  setEtiquetas: (etqs: string[]) => void;
 }
 
-export function useOportunidades() {
-  const [oportunidades, setOportunidades] = useState<OportunidadLaboralDTO[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filtros, setFiltros] = useState<FiltrosOportunidades>({});
+/**
+ * Lista de oportunidades con React Query.
+ *
+ * Los filtros y la página viven en la `queryKey`, así cada combinación se cachea
+ * por separado y `placeholderData` evita parpadeos al cambiar de página.
+ * No hay `useEffect` ni `useState` para traer datos: React Query gestiona el
+ * ciclo de vida, el caché y los reintentos (solo red o 5xx, nunca 4xx).
+ */
+export function useOportunidades(initialFiltros: FiltrosOportunidades = {}): useOportunidadesReturn {
+  const [filtros, setFiltrosState] = useState<FiltrosOportunidades>(initialFiltros);
+  const [page, setPage] = useState(0);
 
-  const fetchOportunidades = useCallback(async (filtros?: FiltrosOportunidades) => {
-    setLoading(true);
-    try {
-      const data = await oportunidadesService.listarConFiltros(filtros);
-      setOportunidades(data);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Error al cargar oportunidades');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const consulta = useQuery<PaginaDTO<OportunidadLaboralDTO>, Error>({
+    queryKey: oportunidadesKeys.lista(filtros, page),
+    queryFn: async () => {
+      return await oportunidadesService.listarConFiltros(filtros, page);
+    },
+    placeholderData: (previousData) => previousData,
+    staleTime: 30_000,
+  });
 
-  useEffect(() => {
-    fetchOportunidades();
-  }, [fetchOportunidades]);
-
-  const crearOportunidad = async (dto: OportunidadLaboralDTO) => {
-    const nueva = await oportunidadesService.crear(dto);
-    setOportunidades((prev) => [nueva, ...prev]);
-    return nueva;
+  const pagina = consulta.data;
+  const cargarConFiltros = async (nuevosFiltros: FiltrosOportunidades, nuevaPage = 0) => {
+    setFiltrosState(nuevosFiltros);
+    setPage(nuevaPage);
+    await consulta.refetch();
   };
 
   return {
-    oportunidades,
-    loading,
-    error,
-    refetch: () => fetchOportunidades(),
-    cargarConFiltros: (filtros: FiltrosOportunidades) => fetchOportunidades(filtros),
+    oportunidades: pagina?.content ?? [],
+    page,
+    totalPages: pagina?.totalPages ?? 0,
+    totalElements: pagina?.totalElements ?? 0,
+    loading: consulta.isPending,
+    error: consulta.error ? errorMessage(consulta.error, 'Error al cargar oportunidades') : null,
+    refetch: async () => {
+      await consulta.refetch();
+    },
+    cargarConFiltros,
     filtro: filtros.filtro,
-    setFiltro: (f: string) => setFiltros({ ...filtros, filtro: f }),
+    setFiltro: (f: string) => setFiltrosState({ ...filtros, filtro: f }),
     modalidad: filtros.modalidad,
-    setModalidad: (m: string) => setFiltros({ ...filtros, modalidad: m }),
+    setModalidad: (m: string) => setFiltrosState({ ...filtros, modalidad: m }),
     etiquetas: filtros.etiquetas,
-    setEtiquetas: (etqs: string[]) => setFiltros({ ...filtros, etiquetas: etqs }),
+    setEtiquetas: (etqs: string[]) => setFiltrosState({ ...filtros, etiquetas: etqs }),
   };
 }

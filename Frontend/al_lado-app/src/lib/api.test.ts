@@ -55,15 +55,19 @@ describe('api', () => {
     expect(localStorage.getItem('user_nombre')).toBeNull();
   });
 
-  it('borra la sesión también con 403', async () => {
+  it('no borra la sesión al recibir 403 (solo con 401)', async () => {
     localStorage.setItem('auth_token', 'jwt');
+    localStorage.setItem('user_email', 'ana@mail.com');
     localStorage.setItem('user_id', '7');
+    localStorage.setItem('user_nombre', 'Ana');
     const error = { config: { url: '/suscripciones' }, response: { status: 403 } };
 
     await expect(interceptores().response(error)).rejects.toBe(error);
 
-    expect(localStorage.getItem('auth_token')).toBeNull();
-    expect(localStorage.getItem('user_id')).toBeNull();
+    expect(localStorage.getItem('auth_token')).toBe('jwt');
+    expect(localStorage.getItem('user_email')).toBe('ana@mail.com');
+    expect(localStorage.getItem('user_id')).toBe('7');
+    expect(localStorage.getItem('user_nombre')).toBe('Ana');
   });
 
   it('no borra la sesión si el fallo es del login mismo', async () => {

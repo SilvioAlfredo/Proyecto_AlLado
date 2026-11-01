@@ -21,5 +21,4 @@ public interface PerfilEmpresarialRepository extends JpaRepository<PerfilEmpresa
 
     List<PerfilEmpresarial> findByVerificadoTrue();
 
-    boolean existsByCuit(String cuit);
 }

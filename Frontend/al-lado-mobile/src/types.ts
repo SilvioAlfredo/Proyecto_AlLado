@@ -168,3 +168,17 @@ export interface Notificacion {
   leida?: boolean;
   fechaCreacion?: string;
 }
+
+/**
+ * Registro del historial de contratos (HU-08).
+ * Se construye a partir de una postulación que ha avanzado a estados de ejecución.
+ */
+export interface Contrato {
+  id: number;
+  estado: string;
+  remuneracionPretendida?: number;
+  fechaCreacion?: string;
+  trabajador?: UsuarioRef;
+  empleador?: UsuarioRef;
+  oportunidad?: { id: number; titulo: string; contenido?: string };
+}

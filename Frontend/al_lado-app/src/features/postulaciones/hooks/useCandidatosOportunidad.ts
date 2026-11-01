@@ -1,34 +1,36 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { PostulacionDTO } from '@/types/trabajo';
 import { postulacionesService } from '../services/postulacionesService';
+import { postulacionesKeys } from '../queryKeys';
+import { errorMessage } from '@/lib/errors';
 
+/**
+ * Candidatos de una oportunidad con React Query.
+ *
+ * La clave incluye el `oportunidadId`, así cada oportunidad tiene su propia
+ * entrada en caché. Se filtra en el cliente porque el endpoint devuelve todas
+ * las postulaciones; si el backend expusiera un filtro por oportunidad, se
+ * movería al `queryFn`.
+ */
 export function useCandidatosOportunidad(oportunidadId?: number | null) {
-  const [candidatos, setCandidatos] = useState<PostulacionDTO[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  const fetchCandidatos = useCallback(async () => {
-    if (!oportunidadId) {
-      setCandidatos([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
+  const consulta = useQuery<PostulacionDTO[], Error>({
+    queryKey: postulacionesKeys.candidatos(oportunidadId ?? 0),
+    enabled: oportunidadId != null,
+    queryFn: async () => {
       const data = await postulacionesService.obtenerTodas();
-      const filtrados = data.filter((p) => p.oportunidadLaboral?.id === oportunidadId);
-      setCandidatos(filtrados);
-    } catch (error) {
-      console.error('Error al cargar candidatos:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [oportunidadId]);
+      return data.filter((p) => p.oportunidadLaboral?.id === oportunidadId);
+    },
+    staleTime: 30_000,
+  });
 
-  useEffect(() => {
-    fetchCandidatos();
-  }, [fetchCandidatos]);
-
-  return { candidatos, loading, refetch: fetchCandidatos };
+  return {
+    candidatos: consulta.data ?? [],
+    loading: consulta.isPending,
+    error: consulta.error
+      ? errorMessage(consulta.error, 'Error al cargar candidatos')
+      : null,
+    refetch: () => consulta.refetch(),
+  };
 }

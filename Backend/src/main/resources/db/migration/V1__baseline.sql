@@ -1,0 +1,15 @@
+-- =============================================================================
+-- Flyway baseline V1 — AlLado (Sprint 4)
+-- =============================================================================
+-- Este archivo representa el estado del esquema al momento de introducir Flyway.
+-- Se genera a partir del esquema actual (ddl-auto=validate) y sirve como punto
+-- de partida para futuras migraciones versionadas (V2__, V3__, ...).
+--
+-- Notas:
+--   - No contiene DDL destructivo: solo documenta la línea base.
+--   - Las tablas existentes son gestionadas por Hibernate (ddl-auto=validate en
+--     producción; en desarrollo se usará validate para detectar derivas).
+-- =============================================================================
+
+-- Marca de baseline (Flyway la registra automáticamente al ejecutar migrate
+-- con baseline-on-migrate=true si el esquema ya tiene objetos).

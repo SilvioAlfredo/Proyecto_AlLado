@@ -102,11 +102,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data;
   };
   const logout = async () => {
-    await authService.logout();
-    SESSION_KEYS.forEach((key) => localStorage.removeItem(key));
-    queryClient.clear();
-    window.dispatchEvent(new Event(SESSION_EVENT));
-    router.replace('/login');
+    try {
+      await authService.logout();
+    } finally {
+      // Limpieza robusta: se ejecuta aunque la llamada al servidor falle.
+      SESSION_KEYS.forEach((key) => localStorage.removeItem(key));
+      queryClient.clear();
+      window.dispatchEvent(new Event(SESSION_EVENT));
+      router.replace('/login');
+    }
   };
   return (
     <AuthContext.Provider

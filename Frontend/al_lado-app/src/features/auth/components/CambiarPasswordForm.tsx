@@ -5,6 +5,7 @@ import { authService } from '@/features/auth/services/authService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { errorMessage } from '@/lib/errors';
 
 // Backend: POST /auth/password {email, currentPassword, newPassword} (autenticado)
 export function CambiarPasswordForm() {
@@ -32,8 +33,8 @@ export function CambiarPasswordForm() {
           setOk(true);
           setActual('');
           setNueva('');
-        } catch (err: any) {
-          setError(err?.response?.data?.message || 'No se pudo cambiar la contraseña.');
+        } catch (err) {
+          setError(errorMessage(err, 'No se pudo cambiar la contraseña.'));
         } finally {
           setLoading(false);
         }

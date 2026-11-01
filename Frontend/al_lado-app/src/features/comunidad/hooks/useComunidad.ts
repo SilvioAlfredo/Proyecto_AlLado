@@ -1,24 +1,42 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PublicacionForoDTO } from '@/types/comunidad';
 import { comunidadService } from '../services/comunidadService';
+import { comunidadKeys } from '../queryKeys';
+import { errorMessage } from '@/lib/errors';
 
 export function useComunidad() {
-  const [publicaciones, setPublicaciones] = useState<PublicacionForoDTO[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const cache = useQueryClient();
 
-  useEffect(() => {
-    comunidadService
-      .getPostsForo()
-      .then(setPublicaciones)
-      .finally(() => setLoading(false));
-  }, []);
+  const consulta = useQuery<PublicacionForoDTO[], Error>({
+    queryKey: comunidadKeys.posts(),
+    queryFn: () => comunidadService.getPostsForo(),
+    staleTime: 30_000,
+  });
 
-  const crearPost = async (dto: Partial<PublicacionForoDTO>) => {
-    const nuevo = await comunidadService.crearPostForo(dto);
-    setPublicaciones((prev) => [nuevo, ...prev]);
+  const crearPost = useMutation({
+    mutationFn: (dto: Partial<PublicacionForoDTO>) =>
+      comunidadService.crearPostForo(dto),
+    onSuccess: (nuevo) => {
+      cache.setQueryData<PublicacionForoDTO[]>(
+        comunidadKeys.posts(),
+        (prev = []) => [nuevo, ...prev]
+      );
+      cache.invalidateQueries({ queryKey: comunidadKeys.todo });
+    },
+  });
+
+  return {
+    publicaciones: consulta.data ?? [],
+    loading: consulta.isPending,
+    error: consulta.error
+      ? errorMessage(consulta.error, 'Error al cargar publicaciones')
+      : null,
+    crearPost: (dto: Partial<PublicacionForoDTO>) => crearPost.mutateAsync(dto),
+    creando: crearPost.isPending,
+    errorCrear: crearPost.error
+      ? errorMessage(crearPost.error, 'Error al crear publicación')
+      : null,
   };
-
-  return { publicaciones, loading, crearPost };
 }

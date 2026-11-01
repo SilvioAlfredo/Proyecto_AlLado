@@ -10,4 +10,6 @@ public class FiltrosOportunidadesDTO {
     private String modalidad;
     private List<String> etiquetas;
     private Boolean soloDestacadas;
+    private String ubicacion;
+    private String sector;
 }

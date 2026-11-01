@@ -5,28 +5,21 @@ import org.openqa.selenium.WebDriver;
 import com.al_lado.e2e.core.E2EConfig;
 
 /**
- * Base de los page objects: conoce el driver activo y la raiz de la aplicacion.
+ * Clase base de los Page Objects.
+ *
+ * <p>Provee atajos de navegaciÃ³n y esperas comunes para evitar repetir cÃ³digo
+ * en cada pÃ¡gina.</p>
  */
 public abstract class BasePage {
 
     protected final WebDriver driver;
-    protected final String baseUrl;
 
-    protected BasePage(WebDriver driver) {
+    public BasePage(WebDriver driver) {
         this.driver = driver;
-        this.baseUrl = E2EConfig.baseUrl();
     }
 
-    /** Navigates to an application route (for example {@code /login}). */
+    /** Navega a una ruta relativa de la aplicaciÃ³n frontend. */
     protected void navigateTo(String path) {
-        driver.get(baseUrl + path);
-    }
-
-    public String currentUrl() {
-        return driver.getCurrentUrl();
-    }
-
-    public String title() {
-        return driver.getTitle();
+        driver.get(E2EConfig.baseUrl() + path);
     }
 }

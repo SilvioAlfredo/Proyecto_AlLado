@@ -317,6 +317,13 @@ public class PostulacionServiceImpl implements PostulacionService {
             ingresosUltimos3Meses = BigDecimal.valueOf(ultimosTresMeses == null ? 0.0 : ultimosTresMeses);
         }
 
+        // Nivel de recomendación: redondeo del promedio de valoraciones (1-5),
+        // con valor mínimo 1 si hay al menos una valoración, o 0 si no hay ninguna.
+        Integer nivelRecomendacion = null;
+        if (cantidadValoraciones != null && cantidadValoraciones > 0 && promedio != null) {
+            nivelRecomendacion = Math.max(1, Math.min(5, promedio.intValue()));
+        }
+
         EstadisticasTrabajadorDTO stats = new EstadisticasTrabajadorDTO();
         stats.setId(id);
         stats.setNombre(trabajador.getNombre());
@@ -330,7 +337,7 @@ public class PostulacionServiceImpl implements PostulacionService {
         stats.setPostulacionesEnviadas((int) enviadas);
         stats.setPostulacionesSeleccionadas((int) seleccionadas);
         stats.setPostulacionesCompletadas((int) completadas);
-        stats.setNivelRecomendacion(4);
+        stats.setNivelRecomendacion(nivelRecomendacion);
         stats.setPerfilCompleto(trabajador.getFotografia() != null && !trabajador.getFotografia().isEmpty());
         stats.setUltimoLogin(null);
         stats.setSuscripcionActiva(suscripcionVigente);

@@ -111,7 +111,8 @@ public class AuthServiceImpl implements AuthService {
         String jwt = jwtUtils.generateToken(usuario);
 
         // Token de verificación de correo: propósito propio, expira y se consume una vez.
-        // El token anterior queda invalidado al emitir uno nuevo.
+        // Se genera y se guarda para el flujo de verificación, pero NO se expone en la
+        // respuesta (AL-SEC-004): con proveedor de correo real, se envía por email.
         JwtUtils.ScopedToken verificacion = jwtUtils.generateVerificationToken(usuario.getEmail());
         usuario.setEmailVerificationToken(verificacion.jti());
         usuario.setEmailVerificationTokenExpiry(expiracionDe(verificacion.token()));
@@ -123,7 +124,6 @@ public class AuthServiceImpl implements AuthService {
                 .email(usuario.getEmail())
                 .nombre(usuario.getNombre())
                 .roles(rolesDe(usuario))
-                .verificacionEmailToken(verificacion.token())
                 .build();
     }
 

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { oportunidadesService } from '@/features/oportunidades/services/oportunidadService';
 import { obtenerRefSesion } from '@/lib/usuarioRef';
+import { errorMessage } from '@/lib/errors';
 
 interface OportunidadFormModalProps {
   isOpen: boolean;
@@ -43,8 +44,8 @@ export function OportunidadFormModal({ isOpen, onClose, onSuccess }: Oportunidad
       });
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || err?.message || 'No se pudo publicar.');
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo publicar.'));
     } finally {
       setLoading(false);
     }

@@ -408,7 +408,7 @@
             "type": "text/javascript"
           }
         }
-      ]
+      }
     },
     {
       "name": "Oportunidades - Actualizar oferta",
@@ -493,7 +493,7 @@
             "type": "text/javascript"
           }
         }
-      ]
+      }
     },
     {
       "name": "Postulaciones - Obtener por ID",
@@ -1035,13 +1035,7 @@
               "path": ["reportes", "sector", "Norte"]
             }
           }
-        }
-      ]
-    },
-    {
-      "name": "Comunidad / Notificaciones",
-      "description": "Precondición: authToken y userId pertenecen al empleador titular y existe al menos una notificación sin leer, generada por una postulación nueva. otroUsuarioId debe ser distinto del titular; notificacionAjenaId debe pertenecer a otro usuario. Ejecutar en orden.",
-      "item": [
+        },
         {
           "name": "Notificaciones - Listar del titular",
           "event": [
@@ -1273,6 +1267,944 @@
           }
         }
       ]
+    },
+    {
+      "name": "Contratos",
+      "item": [
+        {
+          "name": "Contratos - Historial del empleador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-CON-001: historial de contratos del empleador responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contratos/historial/empleador",
+              "host": ["{{baseUrl}}"],
+              "path": ["contratos", "historial", "empleador"]
+            }
+          }
+        },
+        {
+          "name": "Contratos - Historial del trabajador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-CON-002: historial de contratos del trabajador responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contratos/historial/trabajador/{{trabajadorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["contratos", "historial", "trabajador", "{{trabajadorId}}"]
+            }
+          }
+        },
+        {
+          "name": "Contratos - Obtener por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/contratos/{{postulacionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["contratos", "{{postulacionId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Horarios",
+      "item": [
+        {
+          "name": "Horarios - Listar del trabajador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-HOR-001: listar horarios del trabajador responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/horarios/trabajador/{{trabajadorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["horarios", "trabajador", "{{trabajadorId}}"]
+            }
+          }
+        },
+        {
+          "name": "Horarios - Crear horario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-HOR-002: crear horario responde HTTP 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diaSemana\": \"Lunes\",\n  \"horaInicio\": \"09:00\",\n  \"horaFin\": \"12:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/horarios/trabajador/{{trabajadorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["horarios", "trabajador", "{{trabajadorId}}"]
+            }
+          }
+        },
+        {
+          "name": "Horarios - Eliminar horario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-HOR-003: eliminar horario responde HTTP 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/horarios/{{horarioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["horarios", "{{horarioId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Estadísticas",
+      "item": [
+        {
+          "name": "Estadísticas - Obtener del trabajador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-EST-001: estadísticas del trabajador responden HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.be.an('object');",
+                  "    pm.expect(data.ingresosTotales).to.be.a('number');",
+                  "    pm.expect(data.postulacionesCompletadas).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/trabajadores/{{trabajadorId}}/estadisticas",
+              "host": ["{{baseUrl}}"],
+              "path": ["trabajadores", "{{trabajadorId}}", "estadisticas"]
+            }
+          }
+        },
+        {
+          "name": "Estadísticas - Obtener por email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-EST-002: estadísticas por email responden HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/trabajadores/por-email/estadisticas?email={{loginEmail}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["trabajadores", "por-email", "estadisticas"],
+              "query": [
+                {
+                  "key": "email",
+                  "value": "{{loginEmail}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Perfil Empresarial",
+      "item": [
+        {
+          "name": "Perfil Empresarial - Obtener",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-EMP-001: obtener perfil empresarial responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.be.an('object');",
+                  "    pm.expect(data.nombreEmpresa).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/perfiles-empresariales/empleador/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["perfiles-empresariales", "empleador", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Perfil Empresarial - Guardar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-EMP-002: guardar perfil empresarial responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.nombreEmpresa).to.be.a('string');",
+                  "    pm.expect(data.cuit).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreEmpresa\": \"Mi Comercio Test\",\n  \"cuit\": \"20-12345678-9\",\n  \"descripcion\": \"Descripción de mi comercio\",\n  \"sitioWeb\": \"https://comerciotest.com\",\n  \"urlLogo\": \"https://comerciotest.com/logo.png\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/perfiles-empresariales/empleador/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["perfiles-empresariales", "empleador", "{{userId}}"]
+            }
+          }
+        },
+        {
+          "name": "Perfil Empresarial - Verificar (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-EMP-003: verificar perfil empresarial responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.verificado).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/perfiles-empresariales/{{perfilId}}/verificar?supervisorId={{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["perfiles-empresariales", "{{perfilId}}", "verificar"],
+              "query": [
+                {
+                  "key": "supervisorId",
+                  "value": "{{userId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Publicidad",
+      "item": [
+        {
+          "name": "Publicidad - Listar todas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-PUB-001: listar publicidades responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/publicidades",
+              "host": ["{{baseUrl}}"],
+              "path": ["publicidades"]
+            }
+          }
+        },
+        {
+          "name": "Publicidad - Obtener vigentes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-PUB-002: obtener publicidades vigentes responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/publicidades/vigentes",
+              "host": ["{{baseUrl}}"],
+              "path": ["publicidades", "vigentes"]
+            }
+          }
+        },
+        {
+          "name": "Publicidad - Crear",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-PUB-003: crear publicidad responde HTTP 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    pm.collectionVariables.set('publicidadId', pm.response.json().id.toString());",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Mi Anuncio Test\",\n  \"contenido\": \"Descripción de mi anuncio de comercio\",\n  \"urlImagen\": \"https://comerciotest.com/img.png\",\n  \"urlDestino\": \"https://comerciotest.com\",\n  \"fechaInicio\": \"2026-01-01\",\n  \"fechaFin\": \"2026-12-31\",\n  \"activa\": true,\n  \"anunciante\": {\n    \"id\": {{userId}}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/publicidades",
+              "host": ["{{baseUrl}}"],
+              "path": ["publicidades"]
+            }
+          }
+        },
+        {
+          "name": "Publicidad - Actualizar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-PUB-004: actualizar publicidad responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Mi Anuncio Test - ACTUALIZADO\",\n  \"contenido\": \"Descripción actualizada del anuncio\",\n  \"urlImagen\": \"https://comerciotest.com/img2.png\",\n  \"urlDestino\": \"https://comerciotest.com/nuevo\",\n  \"fechaInicio\": \"2026-01-01\",\n  \"fechaFin\": \"2026-12-31\",\n  \"activa\": true,\n  \"anunciante\": {\n    \"id\": {{userId}}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/publicidades/{{publicidadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["publicidades", "{{publicidadId}}"]
+            }
+          }
+        },
+        {
+          "name": "Publicidad - Eliminar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-PUB-005: eliminar publicidad responde HTTP 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/publicidades/{{publicidadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["publicidades", "{{publicidadId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Portafolio",
+      "item": [
+        {
+          "name": "Portafolio - Listar del trabajador",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-POR-001: listar portafolio del trabajador responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/portafolio-items/trabajador/{{trabajadorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["portafolio-items", "trabajador", "{{trabajadorId}}"]
+            }
+          }
+        },
+        {
+          "name": "Portafolio - Crear ítem",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-POR-002: crear ítem de portafolio responde HTTP 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    pm.collectionVariables.set('portafolioId', pm.response.json().id.toString());",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Mi Proyecto Test\",\n  \"descripcion\": \"Descripción de mi proyecto de portafolio\",\n  \"urlArchivo\": \"https://comerciotest.com/proyecto.pdf\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/portafolio-items/trabajador/{{trabajadorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["portafolio-items", "trabajador", "{{trabajadorId}}"]
+            }
+          }
+        },
+        {
+          "name": "Portafolio - Eliminar ítem",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-POR-003: eliminar ítem de portafolio responde HTTP 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/portafolio-items/{{portafolioId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["portafolio-items", "{{portafolioId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Panel Admin",
+      "item": [
+        {
+          "name": "Panel Admin - Métricas del dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-ADM-001: panel de métricas responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data.metricContratos).to.be.a('number');",
+                  "    pm.expect(data.metricTrabajadores).to.be.a('number');",
+                  "    pm.expect(data.totalIngresos).to.be.a('string');",
+                  "    pm.expect(data.dineroComunidad).to.be.a('string');",
+                  "    pm.expect(data.trabajosCompletados).to.be.a('number');",
+                  "    pm.expect(data.tendencias).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "dashboard", "metrics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comunicados",
+      "item": [
+        {
+          "name": "Comunicados - Listar todos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-COM-001: listar comunicados responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/comunicados",
+              "host": ["{{baseUrl}}"],
+              "path": ["comunicados"]
+            }
+          }
+        },
+        {
+          "name": "Comunicados - Obtener por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/comunicados/{{comunicadoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["comunicados", "{{comunicadoId}}"]
+            }
+          }
+        },
+        {
+          "name": "Comunicados - Obtener por alcance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-COM-002: obtener comunicados por alcance responde HTTP 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/comunicados/alcance/GLOBAL",
+              "host": ["{{baseUrl}}"],
+              "path": ["comunicados", "alcance", "GLOBAL"]
+            }
+          }
+        },
+        {
+          "name": "Comunicados - Crear",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-COM-003: crear comunicado responde HTTP 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    pm.collectionVariables.set('comunicadoId', pm.response.json().id.toString());",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"titulo\": \"Comunicado Institucional Test\",\n  \"contenido\": \"Este es un comunicado de prueba para verificar la accesibilidad y funcionalidad.\",\n  \"alcance\": \"GLOBAL\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/comunicados",
+              "host": ["{{baseUrl}}"],
+              "path": ["comunicados"]
+            }
+          }
+        },
+        {
+          "name": "Comunicados - Eliminar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('TC-COM-004: eliminar comunicado responde HTTP 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/comunicados/{{comunicadoId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["comunicados", "{{comunicadoId}}"]
+            }
+          }
+        }
+      ]
     }
   ],
   "event": [
@@ -1333,7 +2265,32 @@
           "  'Notificaciones - Denegar consulta de otro usuario': 403,",
           "  'Notificaciones - Denegar lectura de notificación ajena': 403,",
           "  'Notificaciones - Marcar todas leídas': 204,",
-          "  'Notificaciones - Verificar cero pendientes': 200",
+          "  'Notificaciones - Verificar cero pendientes': 200,",
+          "  'Contratos - Historial del empleador': 200,",
+          "  'Contratos - Historial del trabajador': 200,",
+          "  'Contratos - Obtener por ID': 200,",
+          "  'Horarios - Listar del trabajador': 200,",
+          "  'Horarios - Crear horario': 201,",
+          "  'Horarios - Eliminar horario': 204,",
+          "  'Estadísticas - Obtener del trabajador': 200,",
+          "  'Estadísticas - Obtener por email': 200,",
+          "  'Perfil Empresarial - Obtener': 200,",
+          "  'Perfil Empresarial - Guardar': 200,",
+          "  'Perfil Empresarial - Verificar (Admin)': 200,",
+          "  'Publicidad - Listar todas': 200,",
+          "  'Publicidad - Obtener vigentes': 200,",
+          "  'Publicidad - Crear': 201,",
+          "  'Publicidad - Actualizar': 200,",
+          "  'Publicidad - Eliminar': 204,",
+          "  'Portafolio - Listar del trabajador': 200,",
+          "  'Portafolio - Crear ítem': 201,",
+          "  'Portafolio - Eliminar ítem': 204,",
+          "  'Panel Admin - Métricas del dashboard': 200,",
+          "  'Comunicados - Listar todos': 200,",
+          "  'Comunicados - Obtener por ID': 200,",
+          "  'Comunicados - Obtener por alcance': 200,",
+          "  'Comunicados - Crear': 201,",
+          "  'Comunicados - Eliminar': 204",
           "};",
           "const requestName = pm.info.requestName;",
           "pm.test('Contrato HTTP exacto: ' + requestName, function () {",

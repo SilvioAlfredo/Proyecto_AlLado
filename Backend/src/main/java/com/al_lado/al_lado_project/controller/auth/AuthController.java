@@ -58,10 +58,9 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/verificacion-email")
     public ResponseEntity<Map<String, String>> solicitarVerificacionEmail(Authentication authentication) {
-        String token = authService.solicitarVerificacionEmail(authentication.getName());
+        authService.solicitarVerificacionEmail(authentication.getName());
         Map<String, String> respuesta = new LinkedHashMap<>();
-        respuesta.put("mensaje", "Se generó un token de verificación de correo.");
-        respuesta.put("verificacionEmailToken", token);
+        respuesta.put("mensaje", "Se generó un token de verificación de correo. Revisá tu bandeja de entrada.");
         return ResponseEntity.ok(respuesta);
     }
 

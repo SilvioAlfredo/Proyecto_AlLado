@@ -46,6 +46,11 @@ export const authService = {
     await api.get(`/auth/verify-email?token=${encodeURIComponent(token)}`);
   },
 
+  async reenviarVerificacionEmail(): Promise<void> {
+    // Backend: POST /auth/verificacion-email (autenticado)
+    await api.post('/auth/verificacion-email');
+  },
+
   async changePassword(email: string, currentPassword: string, newPassword: string): Promise<void> {
     // Backend: POST /auth/password {email, currentPassword, newPassword} (autenticado)
     await api.post('/auth/password', { email, currentPassword, newPassword });

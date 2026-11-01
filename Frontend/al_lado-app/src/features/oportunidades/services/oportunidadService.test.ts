@@ -22,6 +22,7 @@ describe('oportunidadesService', () => {
     getApi.get.mockReset();
     getApi.post.mockReset();
     getApi.put.mockReset();
+    getApi.patch.mockReset();
   });
 
   it('contacto pide el contacto del empleador de la oferta', async () => {
@@ -35,22 +36,32 @@ describe('oportunidadesService', () => {
     expect(contacto.email).toBe('empleador@mail.com');
   });
 
-  it('listarConFiltros usa el POST público de filtrado', async () => {
-    getApi.post.mockResolvedValue({ data: [] });
+  it('listarConFiltros usa el POST público de filtrado con paginación', async () => {
+    getApi.post.mockResolvedValue({ data: { content: [], page: 0, totalPages: 0, totalElements: 0 } });
 
     await oportunidadesService.listarConFiltros({ filtro: 'pintura' });
 
-    expect(getApi.post).toHaveBeenCalledWith('/oportunidades/filtrar', { filtro: 'pintura' });
+    expect(getApi.post).toHaveBeenCalledWith(
+      '/oportunidades/filtrar?page=0&size=10',
+      { filtro: 'pintura' }
+    );
   });
 
-  it('cerrar relee la oferta y la actualiza con activa=false', async () => {
-    getApi.get.mockResolvedValue({ data: { id: 7, titulo: 'T', activa: true } });
-    getApi.put.mockResolvedValue({ data: { id: 7, titulo: 'T', activa: false } });
+  it('cerrar usa PATCH /oportunidades/{id}/cerrar', async () => {
+    getApi.patch.mockResolvedValue({ data: { id: 7, titulo: 'T', activa: false } });
 
     const resultado = await oportunidadesService.cerrar(7);
 
-    expect(getApi.put).toHaveBeenCalledWith('/oportunidades/7', expect.objectContaining({ id: 7, activa: false }));
+    expect(getApi.patch).toHaveBeenCalledWith('/oportunidades/7/cerrar');
     expect(resultado.activa).toBe(false);
+  });
+
+  it('propuestasPro pide las ofertas compatibles con el trabajador', async () => {
+    getApi.get.mockResolvedValue({ data: [] });
+
+    await oportunidadesService.propuestasPro(9);
+
+    expect(getApi.get).toHaveBeenCalledWith('/oportunidades/propuestas-pro?trabajadorId=9');
   });
 
   it('propuestasPro pide las ofertas compatibles con el trabajador', async () => {

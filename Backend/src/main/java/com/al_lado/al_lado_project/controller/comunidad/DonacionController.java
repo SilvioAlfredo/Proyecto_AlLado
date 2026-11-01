@@ -1,5 +1,6 @@
 package com.al_lado.al_lado_project.controller.comunidad;
 
+import com.al_lado.al_lado_project.dto.admin.PaginaDTO;
 import com.al_lado.al_lado_project.dto.comunidad.DonacionDTO;
 import com.al_lado.al_lado_project.service.comunidad.DonacionService;
 import jakarta.validation.Valid;
@@ -22,10 +23,10 @@ public class DonacionController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<List<DonacionDTO>> obtenerTodas(
+    public ResponseEntity<PaginaDTO<DonacionDTO>> obtenerTodas(
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "10") int size) {
-        return ResponseEntity.ok(service.obtenerTodas(PageRequest.of(page, size)).getContent());
+        return ResponseEntity.ok(PaginaDTO.from(service.obtenerTodas(PageRequest.of(page, size))));
     }
 
     @GetMapping("/{id}")
@@ -34,11 +35,11 @@ public class DonacionController {
     }
 
     @GetMapping("/usuario/{usuarioId}")
-    public ResponseEntity<List<DonacionDTO>> obtenerPorUsuario(
+    public ResponseEntity<PaginaDTO<DonacionDTO>> obtenerPorUsuario(
             @PathVariable Long usuarioId,
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "10") int size) {
-        return ResponseEntity.ok(service.obtenerPorUsuario(usuarioId, PageRequest.of(page, size)).getContent());
+        return ResponseEntity.ok(PaginaDTO.from(service.obtenerPorUsuario(usuarioId, PageRequest.of(page, size))));
     }
 
     @PostMapping

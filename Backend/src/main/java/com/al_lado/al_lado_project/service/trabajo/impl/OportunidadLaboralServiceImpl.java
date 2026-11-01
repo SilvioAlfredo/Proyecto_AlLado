@@ -101,6 +101,16 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
     }
 
     private Specification<OportunidadLaboral> specBusqueda(String filtro, String modalidad, List<String> etiquetas, boolean soloDestacadas) {
+        return specBusqueda(filtro, modalidad, etiquetas, soloDestacadas, null, null);
+    }
+
+    /**
+     * Specification compartida con filtros opcionales de ubicación y sector.
+     * Todos los criterios son opcionales y se acumulan con AND; dentro del texto
+     * libre van unidos con OR. Devuelve sólo oportunidades activas.
+     */
+    private Specification<OportunidadLaboral> specBusqueda(String filtro, String modalidad, List<String> etiquetas,
+                                                           boolean soloDestacadas, String ubicacion, String sector) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -110,6 +120,20 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
             // HU empleador "Oportunidad laboral pro": filtrar solo destacadas
             if (soloDestacadas) {
                 predicates.add(criteriaBuilder.isTrue(root.get("destacada")));
+            }
+
+            // Ubicación exacta (sin distinguir mayúsculas)
+            if (ubicacion != null && !ubicacion.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.equal(
+                        criteriaBuilder.lower(root.get("ubicacion")),
+                        ubicacion.trim().toLowerCase()));
+            }
+
+            // Sector exacto (sin distinguir mayúsculas)
+            if (sector != null && !sector.trim().isEmpty()) {
+                predicates.add(criteriaBuilder.equal(
+                        criteriaBuilder.lower(root.get("sector")),
+                        sector.trim().toLowerCase()));
             }
 
             boolean hayFiltro = filtro != null && !filtro.trim().isEmpty();
@@ -381,16 +405,19 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
 
     @Override
     @Transactional(readOnly = true)
-    public List<OportunidadLaboralDTO> listarConFiltros(FiltrosOportunidadesDTO filtros) {
+    public Page<OportunidadLaboralDTO> listarConFiltros(FiltrosOportunidadesDTO filtros, Pageable pageable) {
         String filtro = filtros != null ? filtros.getFiltro() : null;
         String modalidad = filtros != null ? filtros.getModalidad() : null;
         List<String> etiquetas = filtros != null && filtros.getEtiquetas() != null
                 ? filtros.getEtiquetas() : null;
         boolean soloDestacadas = filtros != null && Boolean.TRUE.equals(filtros.getSoloDestacadas());
+        String ubicacion = filtros != null ? filtros.getUbicacion() : null;
+        String sector = filtros != null ? filtros.getSector() : null;
 
-        return repository.findAll(specBusqueda(filtro, modalidad, etiquetas, soloDestacadas)).stream()
-                .map(this::proyectar)
-                .collect(Collectors.toList());
+        return repository.findAll(
+                specBusqueda(filtro, modalidad, etiquetas, soloDestacadas, ubicacion, sector),
+                pageable
+        ).map(this::proyectar);
     }
 
     @Override

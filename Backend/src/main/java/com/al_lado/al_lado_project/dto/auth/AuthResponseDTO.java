@@ -31,11 +31,7 @@ public class AuthResponseDTO {
     private List<String> roles;
 
     /**
-     * Token de verificación de correo, solo en el registro.
-     *
-     * <p>Mientras no haya proveedor de correo (AL-SEC-004), el token se devuelve aquí para
-     * que el flujo de verificación sea utilizable. Con el proveedor habilitado se envía por
-     * email y la respuesta lo omite.</p>
+     * Mientras no exista proveedor de correo real (AL-SEC-004), el token de verificación
+     * se gestiona internamente y no se expone en la respuesta de autenticación.
      */
-    private String verificacionEmailToken;
 }

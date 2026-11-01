@@ -51,3 +51,17 @@ export interface PostulacionDTO {
   remuneracionPretendida: number;
   oportunidadLaboral: OportunidadLaboralResumenDTO;
 }
+
+/**
+ * Registro del historial de contratos (HU-08).
+ * Se construye a partir de una postulación que ha avanzado a estados de ejecución.
+ */
+export interface ContratoDTO {
+  id: number;
+  estado: string;
+  remuneracionPretendida?: number;
+  fechaCreacion?: string;
+  trabajador?: UsuarioResumenDTO;
+  empleador?: UsuarioResumenDTO;
+  oportunidad?: OportunidadLaboralResumenDTO;
+}

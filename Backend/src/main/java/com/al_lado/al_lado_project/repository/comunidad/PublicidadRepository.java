@@ -13,8 +13,7 @@ import java.util.List;
 /**
  * Repositorio de publicidades.
  *
- * <p>La consulta relevante para el negocio es {@link #buscarPublicidadesVigentes(LocalDate)}:
- * las demás ({@link #findByActivaTrue()}) no tienen llamadores.</p>
+ * <p>La consulta relevante para el negocio es {@link #buscarPublicidadesVigentes(LocalDate)}.</p>
  */
 @Repository
 public interface PublicidadRepository extends JpaRepository<Publicidad, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<Publicidad> {
@@ -24,9 +23,6 @@ public interface PublicidadRepository extends JpaRepository<Publicidad, Long>, o
 
     @EntityGraph(attributePaths = {"anunciante"})
     List<Publicidad> findByAnuncianteId(Long anuncianteId);
-
-
-    List<Publicidad> findByActivaTrue();
 
     /**
      * Publicidades a mostrar hoy: {@code activa=true} y fecha actual dentro del

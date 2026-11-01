@@ -1,4 +1,11 @@
 // types/admin.ts
+export interface PaginaDTO<T> {
+  content: T[];
+  page: number;
+  totalPages: number;
+  totalElements: number;
+}
+
 export interface TendenciaDTO {
   nombre: string;
   cantidad: number;

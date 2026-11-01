@@ -16,8 +16,6 @@ public interface FavoritoRepository extends JpaRepository<Favorito, Long> {
     @EntityGraph(attributePaths = {"empleador", "trabajador"})
     List<Favorito> findByEmpleadorId(Long empleadorId);
 
-    Optional<Favorito> findByEmpleadorIdAndTrabajadorId(Long empleadorId, Long trabajadorId);
-
     boolean existsByEmpleadorIdAndTrabajadorId(Long empleadorId, Long trabajadorId);
 
     @Modifying

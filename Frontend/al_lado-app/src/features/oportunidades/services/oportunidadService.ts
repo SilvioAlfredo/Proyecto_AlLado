@@ -1,10 +1,14 @@
 import api from '@/lib/api';
 import { OportunidadLaboralDTO } from '@/types/trabajo';
+import { PaginaDTO } from '@/types/admin';
 
 export interface FiltrosOportunidades {
   filtro?: string;
   modalidad?: string;
   etiquetas?: string[];
+  soloDestacadas?: boolean;
+  ubicacion?: string;
+  sector?: string;
 }
 
 // AL-SEC-006: el contacto del empleador no viene en la oferta pública
@@ -42,18 +46,26 @@ export const oportunidadesService = {
     return data;
   },
 
-  // El backend no tiene /cerrar: se cierra con PUT /oportunidades/{id} + activa=false
+  // Cierra (desactiva) una oferta mediante PATCH /oportunidades/{id}/cerrar
   async cerrar(id: number): Promise<OportunidadLaboralDTO> {
-    const actual = await this.obtenerPorId(id);
-    return this.actualizar(id, { ...actual, activa: false });
+    const { data } = await api.patch<OportunidadLaboralDTO>(`/oportunidades/${id}/cerrar`);
+    return data;
   },
 
   async eliminar(id: number): Promise<void> {
     await api.delete(`/oportunidades/${id}`);
   },
 
-  async listarConFiltros(filtros?: FiltrosOportunidades): Promise<OportunidadLaboralDTO[]> {
-    const { data } = await api.post<OportunidadLaboralDTO[]>('/oportunidades/filtrar', filtros || {});
+  async listarConFiltros(
+    filtros?: FiltrosOportunidades,
+    page = 0,
+    size = 10
+  ): Promise<PaginaDTO<OportunidadLaboralDTO>> {
+    const params = new URLSearchParams({ page: String(page), size: String(size) });
+    const { data } = await api.post<PaginaDTO<OportunidadLaboralDTO>>(
+      `/oportunidades/filtrar?${params.toString()}`,
+      filtros || {}
+    );
     return data;
   },
 
