@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 import api from '@/lib/api';
 import { authService } from '../services/authService';
 import { comoApiMock } from '@/test/mocks';
+import { loginDestination } from '../lib/access';
 
 /**
  * AL-API-005: la sesión web se sostiene sobre la identidad mínima.
@@ -148,6 +149,25 @@ describe('AuthProvider', () => {
     await waitFor(() => expect(screen.getByTestId('email')).toHaveTextContent('bruno@mail.com'));
     expect(screen.getByTestId('roles')).toHaveTextContent('ROLE_EMPLEADOR');
     expect(screen.getByTestId('userId')).toHaveTextContent('3');
+  });
+
+  it('normaliza roles sin prefijo y redirige al dashboard correcto', async () => {
+    expect(loginDestination(['TRABAJADOR'])).toBe('/trabajador/dashboard');
+    expect(loginDestination(['EMPLEADOR'])).toBe('/empleador/dashboard');
+    expect(loginDestination(['ADMIN'])).toBe('/admin/dashboard');
+
+    getAuthService.login.mockResolvedValue({
+      token: tokenConUid(11),
+      id: 11,
+      email: 'bruno@mail.com',
+      nombre: 'Bruno',
+      roles: ['EMPLEADOR'],
+    });
+
+    montar();
+    await userEvent.click(screen.getByText('entrar'));
+
+    await waitFor(() => expect(localStorage.getItem('user_roles')).toBe(JSON.stringify(['ROLE_EMPLEADOR'])));
   });
 
   it('ignora una sesión incompleta (sin roles válidos)', async () => {

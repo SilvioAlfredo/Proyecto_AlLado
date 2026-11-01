@@ -7,7 +7,7 @@ import { userIdFromToken } from '@/lib/jwt';
 import type { AuthRequestDTO, AuthResponseDTO, RegisterCredentials } from '@/types/auth';
 import { AuthContext, type UserSession } from '../hooks/useAuth';
 import { authService } from '../services/authService';
-import { loginDestination } from '../lib/access';
+import { loginDestination, normalizeRoles } from '../lib/access';
 const SESSION_EVENT = 'allado-session';
 // Claves de la sesión completa en el navegador (AL-API-005)
 const SESSION_KEYS = ['auth_token', 'user_email', 'user_roles', 'user_id', 'user_nombre'];
@@ -32,9 +32,10 @@ function readSession(raw: string): {
   try {
     const [token, email, roles, userIdGuardado, nombreGuardado] = JSON.parse(raw);
     const parsed = JSON.parse(roles || '[]');
+    const normalizedRoles = Array.isArray(parsed) ? normalizeRoles(parsed.filter((role) => typeof role === 'string')) : [];
     const user =
       token && email && Array.isArray(parsed) && parsed.every((role) => typeof role === 'string')
-        ? { email, roles: parsed }
+        ? { email, roles: normalizedRoles }
         : null;
     // AL-API-005: el id se lee de lo guardado o del claim uid del token, en el
     // navegador; no hace falta esperar a la API para conocerlo
@@ -79,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryClient.clear();
     localStorage.setItem('auth_token', data.token);
     localStorage.setItem('user_email', data.email);
-    localStorage.setItem('user_roles', JSON.stringify(data.roles));
+    localStorage.setItem('user_roles', JSON.stringify(normalizeRoles(data.roles)));
     // Identidad mínima que ya devuelve el backend en login/registro
     const id = data.id ?? userIdFromToken(data.token);
     if (id !== null && id !== undefined) localStorage.setItem('user_id', String(id));
