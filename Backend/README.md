@@ -176,9 +176,11 @@ Sin PRO → `400` con mensaje que indica el plan requerido.
 
 ### Perfiles de configuración
 - `application.properties` contiene valores comunes conservadores: `ddl-auto=validate`, `show-sql=false` y `open-in-view=false`.
-- Desarrollo local: activar `SPRING_PROFILES_ACTIVE=dev`. El perfil `dev` usa PostgreSQL local y habilita `ddl-auto=update`, el log SQL y Open Session in View. Ver `src/main/resources/instrucciones_container` para iniciar PostgreSQL.
+- Desarrollo local: activar SPRING_PROFILES_ACTIVE=dev. El perfil dev usa PostgreSQL local, valida el esquema con ddl-auto=validate y Flyway aplica las migraciones de src/main/resources/db/migration/; mantiene el log SQL y Open Session in View. Ver src/main/resources/instrucciones_container para iniciar PostgreSQL.
 - Producción: activar `SPRING_PROFILES_ACTIVE=prod` y definir `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` y `JWT_SECRET` en el entorno. El perfil valida el esquema, mantiene apagados los logs SQL y no expone mensajes ni stack traces en errores.
 - No guardar credenciales reales en los archivos de propiedades ni activar `dev` en producción.
+- Una base vacía se crea desde las migraciones Flyway. En una base existente, Flyway registra la versión base 1 y Hibernate valida que el esquema ya coincida; revisar y respaldar la base antes de activar el perfil.
+- El perfil e2e usa PostgreSQL y Flyway; e2e-h2 conserva create-drop y deshabilita Flyway. El seed ../datos/seed_tc_db_005.sql se ejecuta aparte en una base de pruebas.
 
 ### JWT
 - `jwt.secret` / `jwt.expiration` (default 86400000 ms = 24 h). **Definir `jwt.secret` en cada entorno**: el default del código es compartido.

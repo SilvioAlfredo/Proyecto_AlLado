@@ -1,5 +1,9 @@
-# Ignorar la carpeta de compilación de Maven
+# Ignorar artefactos generados en cualquier módulo
 target/
+node_modules/
+.next/
+*.class
+*.map
 
 # Ignorar archivos de configuración del IDE (IntelliJ, Eclipse, VS Code)
 .idea/
@@ -34,6 +38,4 @@ __pycache__/
 *.pyc
 
 # Frontend al_lado-app (Next.js) - artefactos de construccion (no versionar)
-Frontend/al_lado-app/node_modules/
-Frontend/al_lado-app/.next/
 Frontend/al_lado-app/tsconfig.tsbuildinfo
