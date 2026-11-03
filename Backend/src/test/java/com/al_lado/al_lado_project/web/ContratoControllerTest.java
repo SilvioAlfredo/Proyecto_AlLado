@@ -60,6 +60,7 @@ class ContratoControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "EMPLEADOR")
     void historialEmpleador_deberiaRetornarContratosParaEmpleadorAutenticado() throws Exception {
         when(service.historialEmpleador()).thenReturn(List.of(dto()));
 

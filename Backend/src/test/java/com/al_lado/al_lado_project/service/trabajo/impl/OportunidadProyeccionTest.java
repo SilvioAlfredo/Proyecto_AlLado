@@ -62,6 +62,7 @@ class OportunidadProyeccionTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         UsuarioResumenMapper resumen = new UsuarioResumenMapper();
         mapper = new OportunidadLaboralMapper(new EtiquetaMapper(),
                 new PostulacionResumenMapper(resumen), resumen);

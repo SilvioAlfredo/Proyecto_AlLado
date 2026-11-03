@@ -16,7 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.MockedStatic;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +55,7 @@ class PortafolioItemServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new PortafolioItemServiceImpl(repository, trabajadorRepository, mapper, suscripcionService);
 
         trabajador = new Trabajador("Trabajador Demo", "trabajador@demo.com", "password");
@@ -70,6 +72,18 @@ class PortafolioItemServiceImplTest {
         entidad.setTitulo("Proyecto de construccion");
     }
 
+    private void autenticarComoTrabajador() {
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(trabajador, null, trabajador.getAuthorities()));
+    }
+
+    private void autenticarComoOtro() {
+        Trabajador otro = new Trabajador("Otro", "otro@demo.com", "password");
+        otro.setId(99L);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(otro, null, otro.getAuthorities()));
+    }
+
     @Test
     void obtenerPorTrabajador_deberiaRetornarItemsDelTrabajador() {
         when(repository.findByTrabajadorId(1L)).thenReturn(List.of(entidad));
@@ -83,65 +97,55 @@ class PortafolioItemServiceImplTest {
 
     @Test
     void agregar_deberiaCrearItemConPROVigente() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(suscripcionService.esProVigente(1L)).thenReturn(true);
-            when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador));
-            when(mapper.toEntity(dto)).thenReturn(entidad);
-            when(repository.save(entidad)).thenReturn(entidad);
-            when(mapper.toDTO(entidad)).thenReturn(dto);
+        autenticarComoTrabajador();
+        when(suscripcionService.esProVigente(1L)).thenReturn(true);
+        when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador));
+        when(mapper.toEntity(dto)).thenReturn(entidad);
+        when(repository.save(entidad)).thenReturn(entidad);
+        when(mapper.toDTO(entidad)).thenReturn(dto);
 
-            PortafolioItemDTO resultado = service.agregar(1L, dto);
+        PortafolioItemDTO resultado = service.agregar(1L, dto);
 
-            assertNotNull(resultado);
-            assertEquals("Proyecto de construccion", resultado.getTitulo());
-            verify(repository, times(1)).save(entidad);
-        }
+        assertNotNull(resultado);
+        assertEquals("Proyecto de construccion", resultado.getTitulo());
+        verify(repository, times(1)).save(entidad);
     }
 
     @Test
     void agregar_deberiaRechazarSiNoTienePROVigente() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(suscripcionService.esProVigente(1L)).thenReturn(false);
+        autenticarComoTrabajador();
+        when(suscripcionService.esProVigente(1L)).thenReturn(false);
 
-            assertThrows(BusinessRuleException.class, () -> service.agregar(1L, dto));
-            verify(repository, never()).save(any());
-        }
+        assertThrows(BusinessRuleException.class, () -> service.agregar(1L, dto));
+        verify(repository, never()).save(any());
     }
 
     @Test
     void agregar_deberiaRechazarSiTrabajadorNoExiste() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(suscripcionService.esProVigente(1L)).thenReturn(true);
-            when(trabajadorRepository.findById(1L)).thenReturn(Optional.empty());
+        autenticarComoTrabajador();
+        when(suscripcionService.esProVigente(1L)).thenReturn(true);
+        when(trabajadorRepository.findById(1L)).thenReturn(Optional.empty());
 
-            assertThrows(ResourceNotFoundException.class, () -> service.agregar(1L, dto));
-        }
+        assertThrows(ResourceNotFoundException.class, () -> service.agregar(1L, dto));
     }
 
     @Test
     void agregar_deberiaRechazarAccesoAjeno() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(2L);
+        autenticarComoOtro();
 
-            assertThrows(org.springframework.security.access.AccessDeniedException.class,
-                    () -> service.agregar(1L, dto));
-        }
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> service.agregar(1L, dto));
     }
 
     @Test
     void eliminar_deberiaEliminarItemDelTitular() {
         entidad.setTrabajador(trabajador);
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findById(1L)).thenReturn(Optional.of(entidad));
+        autenticarComoTrabajador();
+        when(repository.findById(1L)).thenReturn(Optional.of(entidad));
 
-            service.eliminar(1L);
+        service.eliminar(1L);
 
-            verify(repository, times(1)).delete(entidad);
-        }
+        verify(repository, times(1)).delete(entidad);
     }
 
     @Test
@@ -156,11 +160,9 @@ class PortafolioItemServiceImplTest {
         Trabajador otro = new Trabajador("Otro", "otro@demo.com", "password");
         otro.setId(99L);
         entidad.setTrabajador(otro);
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findById(1L)).thenReturn(Optional.of(entidad));
+        autenticarComoTrabajador();
+        when(repository.findById(1L)).thenReturn(Optional.of(entidad));
 
-            assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> service.eliminar(1L));
-        }
+        assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> service.eliminar(1L));
     }
 }

@@ -76,7 +76,7 @@ class ComunicadoControllerTest {
 
         mockMvc.perform(post("/comunicados")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"titulo\":\"Aviso importante\",\"contenido\":\"Nuevas funciones\"}"))
+                        .content("{\"titulo\":\"Aviso importante\",\"contenido\":\"Nuevas funciones\",\"emisor\":{\"id\":1,\"nombre\":\"Admin\",\"email\":\"admin@demo.com\"}}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.titulo").value("Aviso importante"));
     }
@@ -94,7 +94,7 @@ class ComunicadoControllerTest {
     void crear_deberiaRechazarANoAdmin() throws Exception {
         mockMvc.perform(post("/comunicados")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+                        .content("{\"titulo\":\"Aviso importante\",\"contenido\":\"Nuevas funciones\",\"emisor\":{\"id\":1,\"nombre\":\"Admin\",\"email\":\"admin@demo.com\"}}"))
                 .andExpect(status().isForbidden());
     }
 

@@ -1,7 +1,9 @@
 package com.al_lado.al_lado_project.service.comunidad.impl;
+
 import com.al_lado.al_lado_project.entity.comunidad.Donacion;
 import com.al_lado.al_lado_project.entity.usuario.Trabajador;
 import com.al_lado.al_lado_project.entity.usuario.Suscripcion;
+import com.al_lado.al_lado_project.entity.usuario.Administrador;
 import com.al_lado.al_lado_project.exception.BusinessRuleException;
 import com.al_lado.al_lado_project.mappers.comunidad.DonacionMapper;
 import com.al_lado.al_lado_project.repository.comunidad.DonacionRepository;
@@ -11,6 +13,8 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Clock;
@@ -19,6 +23,7 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class TransferenciaVerificacionTest {
     @Mock DonacionRepository repository;
@@ -28,10 +33,19 @@ class TransferenciaVerificacionTest {
     DonacionServiceImpl service;
     Donacion record;
     @BeforeEach void setup() {
+        SecurityContextHolder.clearContext();
         service = new DonacionServiceImpl(repository, usuarios, subs, mapper,
                 Clock.fixed(Instant.parse("2025-05-10T12:00:00Z"), ZoneOffset.UTC));
         record = new Donacion(); record.setEstado("PENDIENTE"); record.setAsuntoTransferencia("REF-123"); record.setMonto(new BigDecimal("12000.00")); record.setUsuario(new Trabajador()); record.getUsuario().setId(3L);
         when(repository.findByIdForUpdate(1L)).thenReturn(Optional.of(record));
+        // Autenticar como administrador para verificar transferencias
+        Administrador admin = new Administrador("Admin", "admin@test.com", "password", "SUPER");
+        admin.setId(1L);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(admin, null, admin.getAuthorities()));
+    }
+    @AfterEach void tearDown() {
+        SecurityContextHolder.clearContext();
     }
     @Test void datosQueNoCoincidenNoSeProcesan() {
         assertThrows(BusinessRuleException.class, () -> service.verificarTransferencia(1L,"OTRO",new BigDecimal("12000")));

@@ -23,7 +23,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -68,7 +70,6 @@ class AdministradorServiceImplTest {
     @Mock
     private OportunidadLaboralRepository oportunidadLaboralRepository;
 
-    @Mock
     private Clock clock;
 
     private AdministradorService service;
@@ -78,6 +79,8 @@ class AdministradorServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        clock = Clock.fixed(Instant.parse("2026-01-15T00:00:00Z"), ZoneId.of("UTC"));
+
         service = new AdministradorServiceImpl(
                 repository, usuarioRepository, mapper, passwordEncoder,
                 donacionRepository, suscripcionRepository, postulacionRepository,
@@ -130,6 +133,7 @@ class AdministradorServiceImplTest {
 
     @Test
     void guardar_deberiaCrearNuevoAdministrador() {
+        dto.setId(null);
         when(usuarioRepository.existsByEmail("admin@demo.com")).thenReturn(false);
         when(mapper.toEntity(dto)).thenReturn(administrador);
         when(passwordEncoder.encode("password123")).thenReturn("hash-encriptado");
@@ -146,6 +150,7 @@ class AdministradorServiceImplTest {
 
     @Test
     void guardar_deberiaRechazarEmailDuplicado() {
+        dto.setId(null);
         when(usuarioRepository.existsByEmail("admin@demo.com")).thenReturn(true);
 
         assertThrows(DuplicateResourceException.class, () -> service.guardar(dto));
@@ -181,8 +186,6 @@ class AdministradorServiceImplTest {
         when(oportunidadLaboralRepository.findTendenciasPorEtiqueta()).thenReturn(List.of());
         when(usuarioRepository.countByHabilitado(true)).thenReturn(45L);
         when(usuarioRepository.countByHabilitado(false)).thenReturn(5L);
-        when(clock.instant()).thenReturn(java.time.Instant.parse("2026-01-15T00:00:00Z"));
-        when(clock.getZone()).thenReturn(java.time.ZoneId.of("UTC"));
 
         DashboardMetricsDTO resultado = service.obtenerMetricasDashboard();
 

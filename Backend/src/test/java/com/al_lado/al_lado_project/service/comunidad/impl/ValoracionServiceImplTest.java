@@ -62,6 +62,7 @@ class ValoracionServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new ValoracionServiceImpl(repository, postulacionRepository, empleadorRepository, trabajadorRepository, mapper);
         // El autor de la valoracion es el empleador 2.
         Empleador auth = new Empleador();

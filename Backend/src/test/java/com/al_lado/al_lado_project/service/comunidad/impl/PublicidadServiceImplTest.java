@@ -16,7 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.MockedStatic;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -56,13 +57,14 @@ class PublicidadServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new PublicidadServiceImpl(repository, empleadorRepository, mapper, suscripcionService);
 
         empleador = new Empleador("Empleador Demo", "empleador@demo.com", "password");
         empleador.setId(1L);
 
         dto = new PublicidadDTO();
-        dto.setId(1L);
+        dto.setId(null);
         dto.setTitulo("Mi Comercio");
         dto.setContenido("Descripcion del anuncio");
         dto.setUrlImagen("https://comercio.com/img.png");
@@ -83,8 +85,14 @@ class PublicidadServiceImplTest {
         entidad.setAnunciante(empleador);
     }
 
+    private void autenticarComoEmpleador() {
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(empleador, null, empleador.getAuthorities()));
+    }
+
     @Test
     void obtenerVigentes_deberiaRetornarAnunciosVigentes() {
+        autenticarComoEmpleador();
         when(repository.buscarPublicidadesVigentes(LocalDate.now())).thenReturn(List.of(entidad));
         when(mapper.toDTO(entidad)).thenReturn(dto);
 
@@ -96,73 +104,64 @@ class PublicidadServiceImplTest {
 
     @Test
     void guardar_deberiaCrearPublicidadConPROVigente() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(suscripcionService.esProVigente(1L)).thenReturn(true);
-            when(empleadorRepository.findById(1L)).thenReturn(Optional.of(empleador));
-            when(mapper.toEntity(dto)).thenReturn(entidad);
-            when(repository.save(entidad)).thenReturn(entidad);
-            when(mapper.toDTO(entidad)).thenReturn(dto);
+        autenticarComoEmpleador();
+        when(suscripcionService.esProVigente(1L)).thenReturn(true);
+        when(empleadorRepository.findById(1L)).thenReturn(Optional.of(empleador));
+        when(mapper.toEntity(dto)).thenReturn(entidad);
+        when(repository.save(entidad)).thenReturn(entidad);
+        when(mapper.toDTO(entidad)).thenReturn(dto);
 
-            PublicidadDTO resultado = service.guardar(dto);
+        PublicidadDTO resultado = service.guardar(dto);
 
-            assertNotNull(resultado);
-            assertEquals("Mi Comercio", resultado.getTitulo());
-            verify(repository, times(1)).save(entidad);
-        }
+        assertNotNull(resultado);
+        assertEquals("Mi Comercio", resultado.getTitulo());
+        verify(repository, times(1)).save(entidad);
     }
 
     @Test
     void guardar_deberiaRechazarSiAnuncianteNoTienePROVigente() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(suscripcionService.esProVigente(1L)).thenReturn(false);
+        autenticarComoEmpleador();
+        when(suscripcionService.esProVigente(1L)).thenReturn(false);
 
-            assertThrows(BusinessRuleException.class, () -> service.guardar(dto));
-            verify(repository, never()).save(any());
-        }
+        assertThrows(BusinessRuleException.class, () -> service.guardar(dto));
+        verify(repository, never()).save(any());
     }
 
     @Test
     void guardar_deberiaRechazarSiFechasInvalidas() {
         dto.setFechaFin(LocalDate.of(2025, 1, 1));
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
+        autenticarComoEmpleador();
 
-            assertThrows(BusinessRuleException.class, () -> service.guardar(dto));
-        }
+        assertThrows(BusinessRuleException.class, () -> service.guardar(dto));
     }
 
     @Test
     void guardar_deberiaRechazarSiAnuncianteNulo() {
         dto.setAnunciante(null);
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
+        autenticarComoEmpleador();
 
-            assertThrows(BusinessRuleException.class, () -> service.guardar(dto));
-        }
+        assertThrows(BusinessRuleException.class, () -> service.guardar(dto));
     }
 
     @Test
     void guardar_deberiaRechazarAccesoAjeno() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(2L);
+        Empleador otro = new Empleador("Otro", "otro@demo.com", "password");
+        otro.setId(2L);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(otro, null, otro.getAuthorities()));
 
-            assertThrows(org.springframework.security.access.AccessDeniedException.class,
-                    () -> service.guardar(dto));
-        }
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> service.guardar(dto));
     }
 
     @Test
     void eliminar_deberiaEliminarPublicidadDelTitular() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findById(1L)).thenReturn(Optional.of(entidad));
+        autenticarComoEmpleador();
+        when(repository.findById(1L)).thenReturn(Optional.of(entidad));
 
-            service.eliminar(1L);
+        service.eliminar(1L);
 
-            verify(repository, times(1)).delete(entidad);
-        }
+        verify(repository, times(1)).delete(entidad);
     }
 
     @Test
@@ -174,6 +173,7 @@ class PublicidadServiceImplTest {
 
     @Test
     void obtenerPorAnunciante_deberiaRetornarAnunciosDelAnunciante() {
+        autenticarComoEmpleador();
         when(repository.findByAnuncianteId(1L)).thenReturn(List.of(entidad));
         when(mapper.toDTO(entidad)).thenReturn(dto);
 

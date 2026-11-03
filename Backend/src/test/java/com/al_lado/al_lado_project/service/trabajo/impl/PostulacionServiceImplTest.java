@@ -62,6 +62,7 @@ class PostulacionServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         // Se construye a mano para no depender de la inyección por nombre de @InjectMocks
         service = new PostulacionServiceImpl(
                 postulacionRepository,

@@ -15,12 +15,14 @@ import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
 import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.trabajo.ContratoService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.MockedStatic;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -59,6 +61,7 @@ class ContratoServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new ContratoServiceImpl(repository, trabajadorRepository, mapper);
 
         empleador = new Empleador("Empleador Demo", "empleador@demo.com", "password");
@@ -98,158 +101,154 @@ class ContratoServiceImplTest {
         contratoDTO.setEmpleador(empleadorResumen);
     }
 
+    private void autenticarComoEmpleador() {
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(empleador, null, empleador.getAuthorities()));
+    }
+
+    private void autenticarComoTrabajador() {
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(trabajador, null, trabajador.getAuthorities()));
+    }
+
+    private void autenticarComoTercero() {
+        Usuario tercero = new Trabajador("Tercero", "tercero@demo.com", "password");
+        tercero.setId(99L);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(tercero, null, tercero.getAuthorities()));
+    }
+
+    private void limpiarContexto() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     void historialEmpleador_deberiaRetornarContratosDeSusOfertas() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUser).thenReturn(empleador);
-            when(repository.findByOportunidadLaboralAutorId(1L)).thenReturn(List.of(postulacion));
-            when(mapper.toDTO(postulacion)).thenReturn(contratoDTO);
+        autenticarComoEmpleador();
+        when(repository.findByOportunidadLaboralAutorId(1L)).thenReturn(List.of(postulacion));
 
-            List<ContratoDTO> resultado = service.historialEmpleador();
+        List<ContratoDTO> resultado = service.historialEmpleador();
 
-            assertEquals(1, resultado.size());
-            assertEquals(100L, resultado.get(0).getId());
-            assertEquals(Postulacion.ESTADO_COMPLETADA, resultado.get(0).getEstado());
-            verify(repository, times(1)).findByOportunidadLaboralAutorId(1L);
-        }
+        assertEquals(1, resultado.size());
+        assertEquals(100L, resultado.get(0).getId());
+        assertEquals(Postulacion.ESTADO_COMPLETADA, resultado.get(0).getEstado());
+        verify(repository, times(1)).findByOportunidadLaboralAutorId(1L);
     }
 
     @Test
     void historialEmpleador_deberiaRechazarSiNoHaySesion() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUser).thenReturn(null);
+        limpiarContexto();
 
-            assertThrows(AccessDeniedException.class, () -> service.historialEmpleador());
-        }
+        assertThrows(AccessDeniedException.class, () -> service.historialEmpleador());
     }
 
     @Test
     void historialEmpleador_deberiaRechazarSiNoEsEmpleador() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUser).thenReturn(trabajador);
+        autenticarComoTrabajador();
 
-            assertThrows(AccessDeniedException.class, () -> service.historialEmpleador());
-        }
+        assertThrows(AccessDeniedException.class, () -> service.historialEmpleador());
     }
 
     @Test
     void historialTrabajador_deberiaRetornarContratosDelTrabajador() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(2L);
-            when(trabajadorRepository.findById(2L)).thenReturn(Optional.of(trabajador));
-            when(repository.findByAutorId(2L)).thenReturn(List.of(postulacion));
-            when(mapper.toDTO(postulacion)).thenReturn(contratoDTO);
+        autenticarComoTrabajador();
+        when(trabajadorRepository.findById(2L)).thenReturn(Optional.of(trabajador));
+        when(repository.findByAutorId(2L)).thenReturn(List.of(postulacion));
 
-            List<ContratoDTO> resultado = service.historialTrabajador(2L);
+        List<ContratoDTO> resultado = service.historialTrabajador(2L);
 
-            assertEquals(1, resultado.size());
-            assertEquals(100L, resultado.get(0).getId());
-            verify(trabajadorRepository, times(1)).findById(2L);
-            verify(repository, times(1)).findByAutorId(2L);
-        }
+        assertEquals(1, resultado.size());
+        assertEquals(100L, resultado.get(0).getId());
+        verify(trabajadorRepository, times(1)).findById(2L);
+        verify(repository, times(1)).findByAutorId(2L);
     }
 
     @Test
     void historialTrabajador_deberiaExcluirPostulacionesPendientes() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(2L);
+        autenticarComoTrabajador();
 
-            Postulacion pendiente = new Postulacion("P", "C", trabajador, oportunidad, 5000.0);
-            pendiente.setId(200L);
-            pendiente.setEstado(Postulacion.ESTADO_PENDIENTE);
-            pendiente.setFechaCreacion(LocalDateTime.of(2026, 2, 1, 10, 0));
+        Postulacion pendiente = new Postulacion("P", "C", trabajador, oportunidad, 5000.0);
+        pendiente.setId(200L);
+        pendiente.setEstado(Postulacion.ESTADO_PENDIENTE);
+        pendiente.setFechaCreacion(LocalDateTime.of(2026, 2, 1, 10, 0));
 
-            when(trabajadorRepository.findById(2L)).thenReturn(Optional.of(trabajador));
-            when(repository.findByAutorId(2L)).thenReturn(List.of(postulacion, pendiente));
-            when(mapper.toDTO(postulacion)).thenReturn(contratoDTO);
+        when(trabajadorRepository.findById(2L)).thenReturn(Optional.of(trabajador));
+        when(repository.findByAutorId(2L)).thenReturn(List.of(postulacion, pendiente));
 
-            List<ContratoDTO> resultado = service.historialTrabajador(2L);
+        List<ContratoDTO> resultado = service.historialTrabajador(2L);
 
-            assertEquals(1, resultado.size());
-            verify(mapper, times(1)).toDTO(postulacion);
-            verify(mapper, never()).toDTO(pendiente);
-        }
+        assertEquals(1, resultado.size());
+        assertEquals(100L, resultado.get(0).getId());
+        assertEquals(Postulacion.ESTADO_COMPLETADA, resultado.get(0).getEstado());
     }
 
     @Test
     void historialTrabajador_deberiaRechazarSiTrabajadorNoExiste() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(2L);
-            when(trabajadorRepository.findById(2L)).thenReturn(Optional.empty());
+        autenticarComoTrabajador();
+        when(trabajadorRepository.findById(2L)).thenReturn(Optional.empty());
 
-            assertThrows(ResourceNotFoundException.class, () -> service.historialTrabajador(2L));
-        }
+        assertThrows(ResourceNotFoundException.class, () -> service.historialTrabajador(2L));
     }
 
     @Test
     void historialTrabajador_deberiaRechazarAccesoAjeno() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
+        autenticarComoEmpleador();
 
-            assertThrows(AccessDeniedException.class, () -> service.historialTrabajador(2L));
-            verify(trabajadorRepository, never()).findById(anyLong());
-        }
+        assertThrows(AccessDeniedException.class, () -> service.historialTrabajador(2L));
+        verify(trabajadorRepository, never()).findById(anyLong());
     }
 
     @Test
     void obtenerPorId_deberiaRetornarContratoParaElTitular() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findById(100L)).thenReturn(Optional.of(postulacion));
-            when(mapper.toDTO(postulacion)).thenReturn(contratoDTO);
+        autenticarComoEmpleador();
+        when(repository.findById(100L)).thenReturn(Optional.of(postulacion));
 
-            ContratoDTO resultado = service.obtenerPorId(100L);
+        ContratoDTO resultado = service.obtenerPorId(100L);
 
-            assertNotNull(resultado);
-            assertEquals(100L, resultado.getId());
-            verify(repository, times(1)).findById(100L);
-        }
+        assertNotNull(resultado);
+        assertEquals(100L, resultado.getId());
+        verify(repository, times(1)).findById(100L);
     }
 
     @Test
     void obtenerPorId_deberiaRechazarSiContratoNoExiste() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findById(999L)).thenReturn(Optional.empty());
+        autenticarComoEmpleador();
+        when(repository.findById(999L)).thenReturn(Optional.empty());
 
-            assertThrows(ResourceNotFoundException.class, () -> service.obtenerPorId(999L));
-        }
+        assertThrows(ResourceNotFoundException.class, () -> service.obtenerPorId(999L));
     }
 
     @Test
     void obtenerPorId_deberiaRechazarAccesoAjeno() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            Usuario tercero = new Usuario("Tercero", "tercero@demo.com", "password") {};
-            tercero.setId(99L);
-            mocked.when(SecurityUtils::currentUser).thenReturn(tercero);
-            when(repository.findById(100L)).thenReturn(Optional.of(postulacion));
+        autenticarComoTercero();
+        when(repository.findById(100L)).thenReturn(Optional.of(postulacion));
 
-            assertThrows(AccessDeniedException.class, () -> service.obtenerPorId(100L));
-        }
+        assertThrows(AccessDeniedException.class, () -> service.obtenerPorId(100L));
     }
 
     @Test
     void historialEmpleador_deberiaOrdenarPorFechaDescendente() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUser).thenReturn(empleador);
+        autenticarComoEmpleador();
 
-            Postulacion masReciente = new Postulacion("R", "C", trabajador, oportunidad, 8000.0);
-            masReciente.setId(300L);
-            masReciente.setEstado(Postulacion.ESTADO_SELECCIONADA);
-            masReciente.setFechaCreacion(LocalDateTime.of(2026, 3, 1, 10, 0));
+        Postulacion masReciente = new Postulacion("R", "C", trabajador, oportunidad, 8000.0);
+        masReciente.setId(300L);
+        masReciente.setEstado(Postulacion.ESTADO_SELECCIONADA);
+        masReciente.setFechaCreacion(LocalDateTime.of(2026, 3, 1, 10, 0));
 
-            when(repository.findByOportunidadLaboralAutorId(1L)).thenReturn(List.of(postulacion, masReciente));
-            when(mapper.toDTO(postulacion)).thenReturn(contratoDTO);
-            ContratoDTO dtoReciente = new ContratoDTO();
-            dtoReciente.setId(300L);
-            dtoReciente.setFechaCreacion(LocalDateTime.of(2026, 3, 1, 10, 0));
-            when(mapper.toDTO(masReciente)).thenReturn(dtoReciente);
+        when(repository.findByOportunidadLaboralAutorId(1L)).thenReturn(List.of(postulacion, masReciente));
+        ContratoDTO dtoReciente = new ContratoDTO();
+        dtoReciente.setId(300L);
+        dtoReciente.setFechaCreacion(LocalDateTime.of(2026, 3, 1, 10, 0));
 
-            List<ContratoDTO> resultado = service.historialEmpleador();
+        List<ContratoDTO> resultado = service.historialEmpleador();
 
-            assertEquals(2, resultado.size());
-            assertEquals(300L, resultado.get(0).getId());
-            assertEquals(100L, resultado.get(1).getId());
-        }
+        assertEquals(2, resultado.size());
+        assertEquals(300L, resultado.get(0).getId());
+        assertEquals(100L, resultado.get(1).getId());
     }
 }

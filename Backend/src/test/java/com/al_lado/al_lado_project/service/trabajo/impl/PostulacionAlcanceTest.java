@@ -61,6 +61,7 @@ class PostulacionAlcanceTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new PostulacionServiceImpl(postulacionRepository, trabajadorRepository,
                 oportunidadLaboralRepository, valoracionRepository,
                 new PostulacionMapper(new UsuarioResumenMapper(), new OportunidadLaboralResumenMapper()),

@@ -15,7 +15,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.MockedStatic;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -51,6 +52,7 @@ class HorarioDisponibilidadServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new HorarioDisponibilidadServiceImpl(repository, trabajadorRepository, mapper);
 
         trabajador = new Trabajador("Trabajador Demo", "trabajador@demo.com", "password");
@@ -60,6 +62,18 @@ class HorarioDisponibilidadServiceImplTest {
         dtoValido.setDiaSemana("Lunes");
         dtoValido.setHoraInicio(LocalTime.of(9, 0));
         dtoValido.setHoraFin(LocalTime.of(12, 0));
+    }
+
+    private void autenticarComoTrabajador() {
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(trabajador, null, trabajador.getAuthorities()));
+    }
+
+    private void autenticarComoOtro() {
+        Trabajador otro = new Trabajador("Otro", "otro@demo.com", "password");
+        otro.setId(99L);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(otro, null, otro.getAuthorities()));
     }
 
     @Test
@@ -76,51 +90,44 @@ class HorarioDisponibilidadServiceImplTest {
 
     @Test
     void agregar_deberiaCrearHorarioValido() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador));
-            when(repository.findByTrabajadorIdAndDiaSemanaIgnoreCase(1L, "Lunes")).thenReturn(List.of());
-            HorarioDisponibilidad entidad = new HorarioDisponibilidad();
-            when(mapper.toEntity(dtoValido)).thenReturn(entidad);
-            when(repository.save(entidad)).thenReturn(entidad);
+        autenticarComoTrabajador();
+        when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador));
+        when(repository.findByTrabajadorIdAndDiaSemanaIgnoreCase(1L, "Lunes")).thenReturn(List.of());
+        HorarioDisponibilidad entidad = new HorarioDisponibilidad();
+        when(mapper.toEntity(dtoValido)).thenReturn(entidad);
+        when(repository.save(entidad)).thenReturn(entidad);
+        when(mapper.toDTO(entidad)).thenReturn(dtoValido);
 
-            HorarioDisponibilidadDTO resultado = service.agregar(1L, dtoValido);
+        HorarioDisponibilidadDTO resultado = service.agregar(1L, dtoValido);
 
-            assertNotNull(resultado);
-            verify(repository, times(1)).save(entidad);
-        }
+        assertNotNull(resultado);
+        verify(repository, times(1)).save(entidad);
     }
 
     @Test
     void agregar_deberiaRechazarHorasNulas() {
         dtoValido.setHoraInicio(null);
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
+        autenticarComoTrabajador();
 
-            assertThrows(BusinessRuleException.class, () -> service.agregar(1L, dtoValido));
-            verify(repository, never()).save(any());
-        }
+        assertThrows(BusinessRuleException.class, () -> service.agregar(1L, dtoValido));
+        verify(repository, never()).save(any());
     }
 
     @Test
     void agregar_deberiaRechazarHoraFinAntesDeInicio() {
         dtoValido.setHoraInicio(LocalTime.of(12, 0));
         dtoValido.setHoraFin(LocalTime.of(9, 0));
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
+        autenticarComoTrabajador();
 
-            assertThrows(BusinessRuleException.class, () -> service.agregar(1L, dtoValido));
-        }
+        assertThrows(BusinessRuleException.class, () -> service.agregar(1L, dtoValido));
     }
 
     @Test
     void agregar_deberiaRechazarDiaSemanaVacio() {
         dtoValido.setDiaSemana("   ");
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
+        autenticarComoTrabajador();
 
-            assertThrows(BusinessRuleException.class, () -> service.agregar(1L, dtoValido));
-        }
+        assertThrows(BusinessRuleException.class, () -> service.agregar(1L, dtoValido));
     }
 
     @Test
@@ -129,32 +136,26 @@ class HorarioDisponibilidadServiceImplTest {
         existente.setHoraInicio(LocalTime.of(10, 0));
         existente.setHoraFin(LocalTime.of(11, 0));
 
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findByTrabajadorIdAndDiaSemanaIgnoreCase(1L, "Lunes")).thenReturn(List.of(existente));
+        autenticarComoTrabajador();
+        when(repository.findByTrabajadorIdAndDiaSemanaIgnoreCase(1L, "Lunes")).thenReturn(List.of(existente));
 
-            assertThrows(BusinessRuleException.class, () -> service.agregar(1L, dtoValido));
-        }
+        assertThrows(BusinessRuleException.class, () -> service.agregar(1L, dtoValido));
     }
 
     @Test
     void agregar_deberiaRechazarSiTrabajadorNoExiste() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(trabajadorRepository.findById(1L)).thenReturn(Optional.empty());
+        autenticarComoTrabajador();
+        when(trabajadorRepository.findById(1L)).thenReturn(Optional.empty());
 
-            assertThrows(ResourceNotFoundException.class, () -> service.agregar(1L, dtoValido));
-        }
+        assertThrows(ResourceNotFoundException.class, () -> service.agregar(1L, dtoValido));
     }
 
     @Test
     void agregar_deberiaRechazarAccesoAjeno() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(2L);
+        autenticarComoOtro();
 
-            assertThrows(org.springframework.security.access.AccessDeniedException.class,
-                    () -> service.agregar(1L, dtoValido));
-        }
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> service.agregar(1L, dtoValido));
     }
 
     @Test
@@ -162,14 +163,12 @@ class HorarioDisponibilidadServiceImplTest {
         HorarioDisponibilidad horario = new HorarioDisponibilidad();
         horario.setId(1L);
         horario.setTrabajador(trabajador);
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findById(1L)).thenReturn(Optional.of(horario));
+        autenticarComoTrabajador();
+        when(repository.findById(1L)).thenReturn(Optional.of(horario));
 
-            service.eliminar(1L);
+        service.eliminar(1L);
 
-            verify(repository, times(1)).delete(horario);
-        }
+        verify(repository, times(1)).delete(horario);
     }
 
     @Test
@@ -186,11 +185,9 @@ class HorarioDisponibilidadServiceImplTest {
         HorarioDisponibilidad horario = new HorarioDisponibilidad();
         horario.setId(1L);
         horario.setTrabajador(otro);
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findById(1L)).thenReturn(Optional.of(horario));
+        autenticarComoTrabajador();
+        when(repository.findById(1L)).thenReturn(Optional.of(horario));
 
-            assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> service.eliminar(1L));
-        }
+        assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> service.eliminar(1L));
     }
 }

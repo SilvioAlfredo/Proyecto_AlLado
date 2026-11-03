@@ -44,6 +44,7 @@ class EstadisticasTrabajadorTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new PostulacionServiceImpl(postulacionRepository, trabajadorRepository,
                 oportunidadRepository, valoracionRepository, mapper, notificacionService);
         trabajador = new Trabajador();

@@ -22,6 +22,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -55,8 +56,8 @@ class DonacionControllerTest {
     private DonacionDTO dto() {
         DonacionDTO dto = new DonacionDTO();
         dto.setId(1L);
-        dto.setMonto(15000.0);
-        dto.setAsunto("APORTE PRO");
+        dto.setMonto(new BigDecimal("15000.0"));
+        dto.setAsuntoTransferencia("APORTE PRO");
         dto.setEstado("PENDIENTE");
         return dto;
     }
@@ -75,18 +76,18 @@ class DonacionControllerTest {
     @Test
     @WithMockUser(roles = "EMPLEADOR")
     void obtenerPorUsuario_deberiaRetornarDonacionesDelUsuario() throws Exception {
-        when(service.obtenerPorUsuario(1L, any())).thenReturn(
+        when(service.obtenerPorUsuario(eq(1L), any(org.springframework.data.domain.Pageable.class))).thenReturn(
                 new org.springframework.data.domain.PageImpl<>(List.of(dto()), org.springframework.data.domain.PageRequest.of(0, 10), 1));
 
         mockMvc.perform(get("/donaciones/usuario/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].asunto").value("APORTE PRO"));
+                .andExpect(jsonPath("$.content[0].asuntoTransferencia").value("APORTE PRO"));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void verificarTransferencia_deberiaVerificarDonacion() throws Exception {
-        when(service.verificarTransferencia(1L, "APORTE PRO", new BigDecimal("15000.0"))).thenReturn(dto());
+        when(service.verificarTransferencia(eq(1L), eq("APORTE PRO"), any(BigDecimal.class))).thenReturn(dto());
 
         mockMvc.perform(post("/donaciones/1/verificar")
                         .param("asunto", "APORTE PRO")
@@ -110,7 +111,7 @@ class DonacionControllerTest {
 
         mockMvc.perform(post("/donaciones")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"monto\":15000.0,\"asunto\":\"APORTE PRO\"}"))
+                        .content("{\"monto\":15000.0,\"moneda\":\"ARS\",\"estado\":\"PENDIENTE\",\"usuario\":{\"id\":1,\"nombre\":\"Usuario Demo\",\"email\":\"usuario@demo.com\"}}"))
                 .andExpect(status().isCreated());
     }
 

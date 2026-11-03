@@ -88,7 +88,7 @@ class PublicidadControllerTest {
 
         mockMvc.perform(post("/publicidades")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"titulo\":\"Mi Anuncio\",\"fechaInicio\":\"2026-01-01\",\"fechaFin\":\"2026-12-31\"}"))
+                        .content("{\"titulo\":\"Mi Anuncio\",\"fechaInicio\":\"2026-01-01\",\"fechaFin\":\"2026-12-31\",\"anunciante\":{\"id\":1,\"nombre\":\"Empleador\",\"email\":\"empleador@demo.com\"}}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.titulo").value("Mi Anuncio"));
     }
@@ -106,7 +106,7 @@ class PublicidadControllerTest {
     void guardar_deberiaRechazarATrabajador() throws Exception {
         mockMvc.perform(post("/publicidades")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+                        .content("{\"titulo\":\"Mi Anuncio\",\"fechaInicio\":\"2026-01-01\",\"fechaFin\":\"2026-12-31\",\"anunciante\":{\"id\":1,\"nombre\":\"Empleador\",\"email\":\"empleador@demo.com\"}}"))
                 .andExpect(status().isForbidden());
     }
 

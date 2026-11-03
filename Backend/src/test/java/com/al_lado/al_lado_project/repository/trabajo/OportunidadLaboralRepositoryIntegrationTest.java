@@ -9,7 +9,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.autoconfigure.orm.jpa.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.MethodMode;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
@@ -25,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@DirtiesContext(methodMode = MethodMode.BEFORE_METHOD)
 class OportunidadLaboralRepositoryIntegrationTest {
 
     @Autowired
@@ -81,6 +84,7 @@ class OportunidadLaboralRepositoryIntegrationTest {
 
         OportunidadLaboral oferta = new OportunidadLaboral("Oferta Mes", "D", empleador, "Barrio", "PRESENCIAL", "$10000");
         oferta.setActiva(true);
+        oferta.setFechaCreacion(LocalDateTime.of(2026, 1, 15, 10, 0));
         repository.save(oferta);
 
         long cantidad = repository.countByAutorIdAndActivaAndFechaCreacionBetween(
@@ -94,7 +98,7 @@ class OportunidadLaboralRepositoryIntegrationTest {
         OportunidadLaboral o1 = new OportunidadLaboral("Oferta Pintura", "D", empleador, "Barrio", "PRESENCIAL", "$10000");
         o1.addEtiqueta(etiquetaPintura);
         OportunidadLaboral o2 = new OportunidadLaboral("Oferta Electricidad", "D", empleador, "Barrio", "REMOTO", "$20000");
-        o2.addEtiqueta(EtiquetaElectricidad);
+        o2.addEtiqueta(etiquetaElectricidad);
         repository.save(o1);
         repository.save(o2);
 

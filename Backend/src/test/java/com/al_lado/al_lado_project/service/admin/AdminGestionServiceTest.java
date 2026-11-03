@@ -42,6 +42,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -140,18 +141,18 @@ class AdminGestionServiceTest {
     @Test
     void publicidades_deberiaFiltrarPorEstadoVigentes() {
         PageRequest pageable = PageRequest.of(0, 10);
-        when(publicidades.findAll(any(), eq(pageable))).thenReturn(new PageImpl<>(List.of(), pageable));
+        when(publicidades.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
         var resultado = gestion.publicidades("", "VIGENTES", pageable);
 
         assertNotNull(resultado);
-        verify(publicidades, times(1)).findAll(any(), eq(pageable));
+        verify(publicidades, times(1)).findAll(any(Specification.class), eq(pageable));
     }
 
     @Test
     void empresas_deberiaFiltrarPorEstadoVerificadas() {
         PageRequest pageable = PageRequest.of(0, 10);
-        when(empresas.findAll(any(), eq(pageable))).thenReturn(new PageImpl<>(List.of(), pageable));
+        when(empresas.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
         var resultado = gestion.empresas("", "VERIFICADAS", pageable);
 
@@ -161,7 +162,7 @@ class AdminGestionServiceTest {
     @Test
     void reportes_deberiaFiltrarPorEstadoPendiente() {
         PageRequest pageable = PageRequest.of(0, 10);
-        when(reportes.findAll(any(), eq(pageable))).thenReturn(new PageImpl<>(List.of(), pageable));
+        when(reportes.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
         var resultado = gestion.reportes("", "PENDIENTE", pageable);
 
@@ -171,7 +172,7 @@ class AdminGestionServiceTest {
     @Test
     void suscripciones_deberiaFiltrarPorEstadoActivas() {
         PageRequest pageable = PageRequest.of(0, 10);
-        when(suscripciones.findAll(any(), eq(pageable))).thenReturn(new PageImpl<>(List.of(), pageable));
+        when(suscripciones.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
         var resultado = gestion.suscripciones("", "ACTIVAS", pageable);
 
@@ -181,7 +182,7 @@ class AdminGestionServiceTest {
     @Test
     void foro_deberiaRetornarPublicacionesSinFiltro() {
         PageRequest pageable = PageRequest.of(0, 10);
-        when(foro.findAll(any(), eq(pageable))).thenReturn(new PageImpl<>(List.of(), pageable));
+        when(foro.findAll(any(Specification.class), eq(pageable))).thenReturn(new PageImpl<>(List.of(), pageable, 0));
 
         var resultado = gestion.foro("", pageable);
 

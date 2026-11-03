@@ -3,7 +3,9 @@ package com.al_lado.al_lado_project.service.usuario.impl;
 import com.al_lado.al_lado_project.dto.usuario.SuscripcionDTO;
 import com.al_lado.al_lado_project.dto.usuario.UsuarioResumenDTO;
 import com.al_lado.al_lado_project.entity.usuario.Suscripcion;
+import com.al_lado.al_lado_project.entity.usuario.Trabajador;
 import com.al_lado.al_lado_project.entity.usuario.Usuario;
+import com.al_lado.al_lado_project.entity.usuario.Administrador;
 import com.al_lado.al_lado_project.exception.BusinessRuleException;
 import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
 import com.al_lado.al_lado_project.mappers.usuario.SuscripcionMapper;
@@ -13,12 +15,13 @@ import com.al_lado.al_lado_project.repository.trabajo.OportunidadLaboralReposito
 import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.usuario.SuscripcionService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.MockedStatic;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -29,7 +32,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.eq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -54,7 +57,6 @@ class SuscripcionServiceImplTest {
     @Mock
     private SuscripcionMapper mapper;
 
-    @Mock
     private Clock clock;
 
     private SuscripcionService service;
@@ -65,10 +67,13 @@ class SuscripcionServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
+        clock = Clock.fixed(Instant.parse("2026-01-15T00:00:00Z"), ZoneId.of("UTC"));
+
         service = new SuscripcionServiceImpl(
                 repository, usuarioRepository, oportunidadLaboralRepository, mapper, clock);
 
-        usuario = new Usuario("Usuario Demo", "usuario@demo.com", "password");
+        usuario = new Trabajador("Usuario Demo", "usuario@demo.com", "password");
         usuario.setId(1L);
 
         dto = new SuscripcionDTO();
@@ -88,136 +93,138 @@ class SuscripcionServiceImplTest {
         entidad.setActiva(true);
     }
 
+    private void autenticarComoUsuario() {
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities()));
+    }
+
+    private void autenticarComoOtro() {
+        Trabajador otro = new Trabajador("Otro", "otro@demo.com", "password");
+        otro.setId(2L);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(otro, null, otro.getAuthorities()));
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     void crear_deberiaCrearPlanBasicoParaUsuarioNoAdmin() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            mocked.when(SecurityUtils::isAdmin()).thenReturn(false);
-            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-            when(repository.existsByUsuarioId(1L)).thenReturn(false);
-            when(clock.instant()).thenReturn(Instant.parse("2026-01-15T00:00:00Z"));
-            when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
-            when(mapper.toEntity(dto)).thenReturn(entidad);
-            when(repository.save(entidad)).thenReturn(entidad);
-            when(mapper.toDTO(entidad)).thenReturn(dto);
+        autenticarComoUsuario();
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(repository.existsByUsuarioId(1L)).thenReturn(false);
+        when(mapper.toEntity(dto)).thenReturn(entidad);
+        when(repository.save(entidad)).thenReturn(entidad);
+        when(mapper.toDTO(entidad)).thenReturn(dto);
 
-            SuscripcionDTO resultado = service.crear(dto);
+        SuscripcionDTO resultado = service.crear(dto);
 
-            assertNotNull(resultado);
-            assertEquals("BASICO", resultado.getNivel());
-            verify(repository, times(1)).save(entidad);
-        }
+        assertNotNull(resultado);
+        assertEquals("BASICO", resultado.getNivel());
+        verify(repository, times(1)).save(entidad);
     }
 
     @Test
     void crear_deberiaRechazarPROParaUsuarioNoAdmin() {
         dto.setNivel("PRO");
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            mocked.when(SecurityUtils::isAdmin()).thenReturn(false);
-            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        autenticarComoUsuario();
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
 
-            assertThrows(AccessDeniedException.class, () -> service.crear(dto));
-        }
+        assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> service.crear(dto));
     }
 
     @Test
     void crear_deberiaPermitirPROParaAdmin() {
         dto.setNivel("PRO");
         dto.setFechaFin(LocalDate.of(2027, 1, 1));
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            mocked.when(SecurityUtils::isAdmin()).thenReturn(true);
-            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-            when(repository.existsByUsuarioId(1L)).thenReturn(false);
-            when(mapper.toEntity(dto)).thenReturn(entidad);
-            when(repository.save(entidad)).thenReturn(entidad);
-            when(mapper.toDTO(entidad)).thenReturn(dto);
+        // Autenticar como Administrador para permitir crear PRO
+        Administrador admin = new Administrador("Admin", "admin@demo.com", "password", "SUPER");
+        admin.setId(1L);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(admin, null, admin.getAuthorities()));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(repository.existsByUsuarioId(1L)).thenReturn(false);
+        when(mapper.toEntity(dto)).thenReturn(entidad);
+        when(repository.save(entidad)).thenReturn(entidad);
+        when(mapper.toDTO(entidad)).thenReturn(dto);
 
-            SuscripcionDTO resultado = service.crear(dto);
+        SuscripcionDTO resultado = service.crear(dto);
 
-            assertNotNull(resultado);
-            assertEquals("PRO", resultado.getNivel());
-            verify(repository, times(1)).save(entidad);
-        }
+        assertNotNull(resultado);
+        assertEquals("PRO", resultado.getNivel());
+        verify(repository, times(1)).save(entidad);
     }
 
     @Test
     void crear_deberiaReactivarSuscripcionExistente() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            mocked.when(SecurityUtils::isAdmin()).thenReturn(false);
-            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-            when(repository.existsByUsuarioId(1L)).thenReturn(true);
-            when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(entidad));
-            when(clock.instant()).thenReturn(Instant.parse("2026-01-15T00:00:00Z"));
-            when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
-            when(repository.save(entidad)).thenReturn(entidad);
-            when(mapper.toDTO(entidad)).thenReturn(dto);
+        autenticarComoUsuario();
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(repository.existsByUsuarioId(1L)).thenReturn(true);
+        when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(entidad));
+        when(repository.save(entidad)).thenReturn(entidad);
+        when(mapper.toDTO(entidad)).thenReturn(dto);
 
-            SuscripcionDTO resultado = service.crear(dto);
+        SuscripcionDTO resultado = service.crear(dto);
 
-            assertNotNull(resultado);
-            verify(repository, times(1)).save(entidad);
-        }
+        assertNotNull(resultado);
+        verify(repository, times(1)).save(entidad);
     }
 
     @Test
     void crear_deberiaRechazarNivelInvalido() {
         dto.setNivel("PREMIUM");
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
+        autenticarComoUsuario();
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
 
-            assertThrows(BusinessRuleException.class, () -> service.crear(dto));
-        }
+        assertThrows(BusinessRuleException.class, () -> service.crear(dto));
     }
 
     @Test
     void cancelar_deberiaDesactivarSuscripcion() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findById(1L)).thenReturn(Optional.of(entidad));
-            when(repository.save(entidad)).thenReturn(entidad);
-            when(mapper.toDTO(entidad)).thenReturn(dto);
+        autenticarComoUsuario();
+        when(repository.findById(1L)).thenReturn(Optional.of(entidad));
+        when(repository.save(entidad)).thenReturn(entidad);
+        when(mapper.toDTO(entidad)).thenReturn(dto);
 
-            SuscripcionDTO resultado = service.cancelar(1L);
+        SuscripcionDTO resultado = service.cancelar(1L);
 
-            assertFalse(entidad.isActiva());
-            verify(repository, times(1)).save(entidad);
-        }
+        assertFalse(entidad.isActiva());
+        verify(repository, times(1)).save(entidad);
     }
 
     @Test
     void cancelar_deberiaRechazarAccesoAjeno() {
-        entidad.getUsuario().setId(2L);
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findById(1L)).thenReturn(Optional.of(entidad));
+        SecurityContextHolder.clearContext();
+        // La entidad tiene usuario con id 1L (del setUp); autenticamos como otro usuario
+        Usuario tercero = new Trabajador("Tercero", "tercero@demo.com", "password");
+        tercero.setId(99L);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(tercero, null, tercero.getAuthorities()));
+        when(repository.findById(1L)).thenReturn(Optional.of(entidad));
 
-            assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> service.cancelar(1L));
-        }
+        assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> service.cancelar(1L));
     }
 
     @Test
     void esProVigente_deberiaRetornarTrueParaPROVigente() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            Suscripcion pro = new Suscripcion();
-            pro.setNivel("PRO");
-            pro.setActiva(true);
-            pro.setFechaInicio(LocalDate.of(2026, 1, 1));
-            pro.setFechaFin(LocalDate.of(2027, 1, 1));
-            when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(pro));
-            when(clock.instant()).thenReturn(Instant.parse("2026-06-01T00:00:00Z"));
-            when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
+        autenticarComoUsuario();
+        Suscripcion pro = new Suscripcion();
+        pro.setNivel("PRO");
+        pro.setActiva(true);
+        pro.setFechaInicio(LocalDate.of(2026, 1, 1));
+        pro.setFechaFin(LocalDate.of(2027, 1, 1));
+        when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(pro));
 
-            boolean resultado = service.esProVigente(1L);
+        boolean resultado = service.esProVigente(1L);
 
-            assertTrue(resultado);
-        }
+        assertTrue(resultado);
     }
 
     @Test
     void puedePublicarOferta_deberiaPermitirTresOfertasParaBasico() {
+        autenticarComoUsuario();
         Suscripcion basico = new Suscripcion();
         basico.setNivel("BASICO");
         basico.setActiva(true);
@@ -235,6 +242,7 @@ class SuscripcionServiceImplTest {
 
     @Test
     void puedePublicarOferta_deberiaRechazarCuartoOfertaParaBasico() {
+        autenticarComoUsuario();
         Suscripcion basico = new Suscripcion();
         basico.setNivel("BASICO");
         basico.setActiva(true);
@@ -252,20 +260,17 @@ class SuscripcionServiceImplTest {
 
     @Test
     void puedePublicarOferta_deberiaPermitirIlimitadoParaPROVigente() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            Suscripcion pro = new Suscripcion();
-            pro.setNivel("PRO");
-            pro.setActiva(true);
-            pro.setFechaInicio(LocalDate.of(2026, 1, 1));
-            pro.setFechaFin(LocalDate.of(2027, 1, 1));
-            when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-            when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(pro));
-            when(clock.instant()).thenReturn(Instant.parse("2026-06-01T00:00:00Z"));
-            when(clock.getZone()).thenReturn(ZoneId.of("UTC"));
+        autenticarComoUsuario();
+        Suscripcion pro = new Suscripcion();
+        pro.setNivel("PRO");
+        pro.setActiva(true);
+        pro.setFechaInicio(LocalDate.of(2026, 1, 1));
+        pro.setFechaFin(LocalDate.of(2027, 1, 1));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(repository.findByUsuarioId(1L)).thenReturn(Optional.of(pro));
 
-            boolean resultado = service.puedePublicarOferta(1L);
+        boolean resultado = service.puedePublicarOferta(1L);
 
-            assertTrue(resultado);
-        }
+        assertTrue(resultado);
     }
 }

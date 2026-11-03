@@ -1,6 +1,7 @@
 package com.al_lado.al_lado_project.web;
 
 import com.al_lado.al_lado_project.controller.trabajo.OportunidadLaboralController;
+import com.al_lado.al_lado_project.dto.trabajo.FiltrosOportunidadesDTO;
 import com.al_lado.al_lado_project.dto.trabajo.OportunidadLaboralDTO;
 import com.al_lado.al_lado_project.security.config.SecurityConfig;
 import com.al_lado.al_lado_project.security.jwt.JwtAuthenticationFilter;
@@ -14,8 +15,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -56,7 +59,7 @@ class OportunidadControllerContractTest {
 
         mockMvc.perform(get("/oportunidades"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].titulo").value("Albañil"));
+                .andExpect(jsonPath("$.content[0].titulo").value("Albañil"));
     }
 
     @Test
@@ -94,25 +97,25 @@ class OportunidadControllerContractTest {
     @Test
     @WithMockUser(roles = "TRABAJADOR")
     void filtrarAutenticadoDevuelveLista() throws Exception {
-        when(service.listarConFiltros(any())).thenReturn(List.of());
+        when(service.listarConFiltros(any(FiltrosOportunidadesDTO.class), any(Pageable.class))).thenReturn(Page.empty());
 
         mockMvc.perform(post("/oportunidades/filtrar")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test
     void filtrarPublicoSinTokenDevuelveLista() throws Exception {
         // La home pública del frontend llama a POST /oportunidades/filtrar sin JWT
-        when(service.listarConFiltros(any())).thenReturn(List.of());
+        when(service.listarConFiltros(any(FiltrosOportunidadesDTO.class), any(Pageable.class))).thenReturn(Page.empty());
 
         mockMvc.perform(post("/oportunidades/filtrar")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray());
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test

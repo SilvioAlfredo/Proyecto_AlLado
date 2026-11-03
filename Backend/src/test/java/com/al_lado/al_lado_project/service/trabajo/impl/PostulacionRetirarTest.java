@@ -54,6 +54,7 @@ class PostulacionRetirarTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new PostulacionServiceImpl(
                 postulacionRepository, trabajadorRepository, oportunidadLaboralRepository,
                 valoracionRepository, mapper, notificacionService);

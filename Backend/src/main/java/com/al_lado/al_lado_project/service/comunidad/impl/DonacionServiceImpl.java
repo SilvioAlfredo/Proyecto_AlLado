@@ -102,6 +102,9 @@ public class DonacionServiceImpl implements DonacionService {
     @Override
     @Transactional
     public DonacionDTO verificarTransferencia(Long id, String asuntoEsperado, BigDecimal montoEsperado) {
+        if (!SecurityUtils.isAdmin()) {
+            throw new org.springframework.security.access.AccessDeniedException("Solo un administrador puede verificar transferencias.");
+        }
         Donacion donacion = repository.findByIdForUpdate(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Donación no encontrada con ID: " + id));
 

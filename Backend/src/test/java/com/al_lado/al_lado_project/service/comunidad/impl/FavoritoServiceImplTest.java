@@ -11,13 +11,15 @@ import com.al_lado.al_lado_project.repository.comunidad.FavoritoRepository;
 import com.al_lado.al_lado_project.repository.usuario.EmpleadorRepository;
 import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
 import com.al_lado.al_lado_project.security.SecurityUtils;
+import com.al_lado.al_lado_project.security.config.SecurityConfig;
 import com.al_lado.al_lado_project.service.comunidad.FavoritoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.MockedStatic;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +58,7 @@ class FavoritoServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new FavoritoServiceImpl(repository, empleadorRepository, trabajadorRepository, mapper);
 
         empleador = new Empleador("Empleador Demo", "empleador@demo.com", "password");
@@ -71,113 +74,107 @@ class FavoritoServiceImplTest {
         favoritoDTO.setId(10L);
     }
 
+    private void autenticarComoEmpleador() {
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(empleador, null, empleador.getAuthorities()));
+    }
+
+    private void autenticarComoOtro() {
+        Empleador otro = new Empleador("Otro", "otro@demo.com", "password");
+        otro.setId(99L);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(otro, null, otro.getAuthorities()));
+    }
+
     @Test
     void obtenerPorEmpleador_deberiaRetornarFavoritosDelEmpleador() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findByEmpleadorId(1L)).thenReturn(List.of(favorito));
-            when(mapper.toDTO(favorito)).thenReturn(favoritoDTO);
+        autenticarComoEmpleador();
+        when(repository.findByEmpleadorId(1L)).thenReturn(List.of(favorito));
+        when(mapper.toDTO(favorito)).thenReturn(favoritoDTO);
 
-            List<FavoritoDTO> resultado = service.obtenerPorEmpleador(1L);
+        List<FavoritoDTO> resultado = service.obtenerPorEmpleador(1L);
 
-            assertEquals(1, resultado.size());
-            assertEquals(10L, resultado.get(0).getId());
-            verify(repository, times(1)).findByEmpleadorId(1L);
-        }
+        assertEquals(1, resultado.size());
+        assertEquals(10L, resultado.get(0).getId());
+        verify(repository, times(1)).findByEmpleadorId(1L);
     }
 
     @Test
     void obtenerPorEmpleador_deberiaRechazarAccesoAjeno() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(2L);
+        autenticarComoOtro();
 
-            assertThrows(org.springframework.security.access.AccessDeniedException.class,
-                    () -> service.obtenerPorEmpleador(1L));
-            verify(repository, never()).findByEmpleadorId(anyLong());
-        }
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> service.obtenerPorEmpleador(1L));
+        verify(repository, never()).findByEmpleadorId(anyLong());
     }
 
     @Test
     void agregar_deberiaCrearFavoritoCuandoNoExiste() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.existsByEmpleadorIdAndTrabajadorId(1L, 2L)).thenReturn(false);
-            when(empleadorRepository.findById(1L)).thenReturn(Optional.of(empleador));
-            when(trabajadorRepository.findById(2L)).thenReturn(Optional.of(trabajador));
-            when(repository.save(any(Favorito.class))).thenReturn(favorito);
-            when(mapper.toDTO(favorito)).thenReturn(favoritoDTO);
+        autenticarComoEmpleador();
+        when(repository.existsByEmpleadorIdAndTrabajadorId(1L, 2L)).thenReturn(false);
+        when(empleadorRepository.findById(1L)).thenReturn(Optional.of(empleador));
+        when(trabajadorRepository.findById(2L)).thenReturn(Optional.of(trabajador));
+        when(repository.save(any(Favorito.class))).thenReturn(favorito);
+        when(mapper.toDTO(favorito)).thenReturn(favoritoDTO);
 
-            FavoritoDTO resultado = service.agregar(1L, 2L);
+        FavoritoDTO resultado = service.agregar(1L, 2L);
 
-            assertNotNull(resultado);
-            assertEquals(10L, resultado.getId());
-            verify(repository, times(1)).save(any(Favorito.class));
-        }
+        assertNotNull(resultado);
+        assertEquals(10L, resultado.getId());
+        verify(repository, times(1)).save(any(Favorito.class));
     }
 
     @Test
     void agregar_deberiaRechadarSiYaEsFavorito() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.existsByEmpleadorIdAndTrabajadorId(1L, 2L)).thenReturn(true);
+        autenticarComoEmpleador();
+        when(repository.existsByEmpleadorIdAndTrabajadorId(1L, 2L)).thenReturn(true);
 
-            assertThrows(DuplicateResourceException.class, () -> service.agregar(1L, 2L));
-            verify(repository, never()).save(any());
-        }
+        assertThrows(DuplicateResourceException.class, () -> service.agregar(1L, 2L));
+        verify(repository, never()).save(any());
     }
 
     @Test
     void agregar_deberiaRechazarSiEmpleadorNoExiste() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.existsByEmpleadorIdAndTrabajadorId(1L, 2L)).thenReturn(false);
-            when(empleadorRepository.findById(1L)).thenReturn(Optional.empty());
+        autenticarComoEmpleador();
+        when(repository.existsByEmpleadorIdAndTrabajadorId(1L, 2L)).thenReturn(false);
+        when(empleadorRepository.findById(1L)).thenReturn(Optional.empty());
 
-            assertThrows(ResourceNotFoundException.class, () -> service.agregar(1L, 2L));
-        }
+        assertThrows(ResourceNotFoundException.class, () -> service.agregar(1L, 2L));
     }
 
     @Test
     void agregar_deberiaRechazarSiTrabajadorNoExiste() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.existsByEmpleadorIdAndTrabajadorId(1L, 2L)).thenReturn(false);
-            when(empleadorRepository.findById(1L)).thenReturn(Optional.of(empleador));
-            when(trabajadorRepository.findById(2L)).thenReturn(Optional.empty());
+        autenticarComoEmpleador();
+        when(repository.existsByEmpleadorIdAndTrabajadorId(1L, 2L)).thenReturn(false);
+        when(empleadorRepository.findById(1L)).thenReturn(Optional.of(empleador));
+        when(trabajadorRepository.findById(2L)).thenReturn(Optional.empty());
 
-            assertThrows(ResourceNotFoundException.class, () -> service.agregar(1L, 2L));
-        }
+        assertThrows(ResourceNotFoundException.class, () -> service.agregar(1L, 2L));
     }
 
     @Test
     void quitar_deberiaEliminarFavoritoExistente() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.existsByEmpleadorIdAndTrabajadorId(1L, 2L)).thenReturn(true);
+        autenticarComoEmpleador();
+        when(repository.existsByEmpleadorIdAndTrabajadorId(1L, 2L)).thenReturn(true);
 
-            service.quitar(1L, 2L);
+        service.quitar(1L, 2L);
 
-            verify(repository, times(1)).deleteByEmpleadorIdAndTrabajadorId(1L, 2L);
-        }
+        verify(repository, times(1)).deleteByEmpleadorIdAndTrabajadorId(1L, 2L);
     }
 
     @Test
     void quitar_deberiaRechazarSiFavoritoNoExiste() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.existsByEmpleadorIdAndTrabajadorId(1L, 2L)).thenReturn(false);
+        autenticarComoEmpleador();
+        when(repository.existsByEmpleadorIdAndTrabajadorId(1L, 2L)).thenReturn(false);
 
-            assertThrows(ResourceNotFoundException.class, () -> service.quitar(1L, 2L));
-        }
+        assertThrows(ResourceNotFoundException.class, () -> service.quitar(1L, 2L));
     }
 
     @Test
     void quitar_deberiaRechazarAccesoAjeno() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(2L);
+        autenticarComoOtro();
 
-            assertThrows(org.springframework.security.access.AccessDeniedException.class,
-                    () -> service.quitar(1L, 2L));
-        }
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> service.quitar(1L, 2L));
     }
 }

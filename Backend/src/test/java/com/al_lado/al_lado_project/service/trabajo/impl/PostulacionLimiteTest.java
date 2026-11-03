@@ -67,6 +67,7 @@ class PostulacionLimiteTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new PostulacionServiceImpl(
                 postulacionRepository,
                 trabajadorRepository,

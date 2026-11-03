@@ -22,6 +22,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -63,8 +64,8 @@ class ValoracionControllerTest {
     @Test
     @WithMockUser(roles = "EMPLEADOR")
     void obtenerPorTrabajador_deberiaRetornarValoraciones() throws Exception {
-        when(service.obtenerPorTrabajador(1L, any())).thenReturn(
-                new org.springframework.data.domain.PageImpl<>(List.of(dto()), PageRequest.of(0, 10), 1));
+        when(service.obtenerPorTrabajador(eq(1L), any(org.springframework.data.domain.Pageable.class))).thenReturn(
+                new org.springframework.data.domain.PageImpl<>(List.of(dto()), org.springframework.data.domain.PageRequest.of(0, 10), 1));
 
         mockMvc.perform(get("/valoraciones/trabajador/1"))
                 .andExpect(status().isOk())
@@ -88,7 +89,7 @@ class ValoracionControllerTest {
 
         mockMvc.perform(post("/valoraciones")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"puntuacion\":5,\"comentario\":\"Excelente servicio\"}"))
+                        .content("{\"puntuacion\":5,\"comentario\":\"Excelente servicio\",\"autor\":{\"id\":1,\"nombre\":\"Empleador\",\"email\":\"empleador@demo.com\"},\"trabajador\":{\"id\":2,\"nombre\":\"Trabajador\",\"email\":\"trabajador@demo.com\"}}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.puntuacion").value(5));
     }
@@ -106,7 +107,7 @@ class ValoracionControllerTest {
     void crear_deberiaRechazarATrabajador() throws Exception {
         mockMvc.perform(post("/valoraciones")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
+                        .content("{\"puntuacion\":5,\"comentario\":\"Excelente servicio\",\"autor\":{\"id\":1,\"nombre\":\"Empleador\",\"email\":\"empleador@demo.com\"},\"trabajador\":{\"id\":2,\"nombre\":\"Trabajador\",\"email\":\"trabajador@demo.com\"}}"))
                 .andExpect(status().isForbidden());
     }
 

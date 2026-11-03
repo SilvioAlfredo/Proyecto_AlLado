@@ -41,6 +41,7 @@ class NotificacionServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new NotificacionServiceImpl(repository, usuarioRepository,
                 new NotificacionMapper(new UsuarioResumenMapper()));
     }

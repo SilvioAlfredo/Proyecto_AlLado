@@ -43,6 +43,7 @@ class ComunicadoEmisorPrincipioTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new ComunicadoServiceImpl(repository, administradorRepository,
                 new ComunicadoMapper(new UsuarioResumenMapper()));
     }

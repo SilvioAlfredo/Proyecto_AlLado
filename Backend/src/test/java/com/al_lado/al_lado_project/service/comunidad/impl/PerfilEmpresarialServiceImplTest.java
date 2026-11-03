@@ -15,12 +15,15 @@ import com.al_lado.al_lado_project.security.SecurityUtils;
 import com.al_lado.al_lado_project.service.comunidad.PerfilEmpresarialService;
 import com.al_lado.al_lado_project.service.usuario.SuscripcionService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.MockedStatic;
-import org.springframework.security.access.AccessDeniedException;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.Optional;
 
@@ -36,6 +39,7 @@ import static org.mockito.Mockito.*;
  * y verificacion por administrador.</p>
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class PerfilEmpresarialServiceImplTest {
 
     @Mock
@@ -61,6 +65,7 @@ class PerfilEmpresarialServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new PerfilEmpresarialServiceImpl(
                 repository, empleadorRepository, administradorRepository, mapper, suscripcionService);
 
@@ -79,113 +84,118 @@ class PerfilEmpresarialServiceImplTest {
         perfil.setEmpleador(empleador);
     }
 
+    private void autenticarComoEmpleador() {
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(empleador, null, empleador.getAuthorities()));
+    }
+
+    private void autenticarComoAdmin() {
+        Administrador admin = new Administrador("Admin", "admin@demo.com", "password", "SUPER");
+        admin.setId(1L);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(admin, null, admin.getAuthorities()));
+    }
+
+    private void autenticarComoOtro() {
+        Empleador otro = new Empleador("Otro", "otro@demo.com", "password");
+        otro.setId(2L);
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(otro, null, otro.getAuthorities()));
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
     void guardar_deberiaCrearPerfilEmpresarialConPROVigente() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(suscripcionService.esProVigente(1L)).thenReturn(true);
-            when(empleadorRepository.findById(1L)).thenReturn(Optional.of(empleador));
-            when(repository.findByEmpleadorId(1L)).thenReturn(Optional.empty());
-            when(mapper.toEntity(dto)).thenReturn(perfil);
-            when(repository.save(perfil)).thenReturn(perfil);
-            when(mapper.toDTO(perfil)).thenReturn(dto);
+        autenticarComoEmpleador();
+        when(suscripcionService.esProVigente(1L)).thenReturn(true);
+        when(empleadorRepository.findById(1L)).thenReturn(Optional.of(empleador));
+        when(repository.findByEmpleadorId(1L)).thenReturn(Optional.empty());
+        when(mapper.toEntity(dto)).thenReturn(perfil);
+        when(repository.save(perfil)).thenReturn(perfil);
+        when(mapper.toDTO(perfil)).thenReturn(dto);
 
-            PerfilEmpresarialDTO resultado = service.guardar(1L, dto);
+        PerfilEmpresarialDTO resultado = service.guardar(1L, dto);
 
-            assertNotNull(resultado);
-            assertEquals("Mi Comercio", resultado.getNombreEmpresa());
-            verify(repository, times(1)).save(perfil);
-        }
+        assertNotNull(resultado);
+        assertEquals("Mi Comercio", resultado.getNombreEmpresa());
+        verify(repository, times(1)).save(perfil);
     }
 
     @Test
     void guardar_deberiaRechazarSiNoTienePROVigente() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(suscripcionService.esProVigente(1L)).thenReturn(false);
+        autenticarComoEmpleador();
+        when(suscripcionService.esProVigente(1L)).thenReturn(false);
 
-            assertThrows(BusinessRuleException.class, () -> service.guardar(1L, dto));
-            verify(repository, never()).save(any());
-        }
+        assertThrows(BusinessRuleException.class, () -> service.guardar(1L, dto));
+        verify(repository, never()).save(any());
     }
 
     @Test
     void guardar_deberiaRechazarSiCUITYaRegistradoPorOtroEmpleador() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(suscripcionService.esProVigente(1L)).thenReturn(true);
-            when(empleadorRepository.findById(1L)).thenReturn(Optional.of(empleador));
-            when(repository.findByEmpleadorId(1L)).thenReturn(Optional.empty());
+        autenticarComoEmpleador();
+        when(suscripcionService.esProVigente(1L)).thenReturn(true);
+        when(empleadorRepository.findById(1L)).thenReturn(Optional.of(empleador));
+        when(repository.findByEmpleadorId(1L)).thenReturn(Optional.empty());
 
-            PerfilEmpresarial existente = new PerfilEmpresarial();
-            existente.setId(2L);
-            Empleador otro = new Empleador("Otro", "otro@demo.com", "password");
-            otro.setId(2L);
-            existente.setEmpleador(otro);
-            when(repository.findByCuit("20-12345678-9")).thenReturn(Optional.of(existente));
+        PerfilEmpresarial existente = new PerfilEmpresarial();
+        existente.setId(2L);
+        Empleador otro = new Empleador("Otro", "otro@demo.com", "password");
+        otro.setId(2L);
+        existente.setEmpleador(otro);
+        when(repository.findByCuit("20-12345678-9")).thenReturn(Optional.of(existente));
 
-            assertThrows(DuplicateResourceException.class, () -> service.guardar(1L, dto));
-        }
+        assertThrows(DuplicateResourceException.class, () -> service.guardar(1L, dto));
     }
 
     @Test
     void guardar_deberiaRechazarAccesoAjeno() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::currentUserId).thenReturn(2L);
+        autenticarComoOtro();
 
-            assertThrows(org.springframework.security.access.AccessDeniedException.class,
-                    () -> service.guardar(1L, dto));
-        }
+        assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                () -> service.guardar(1L, dto));
     }
 
     @Test
     void verificar_deberiaMarcarPerfilComoVerificadoPorAdmin() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::isAdmin()).thenReturn(true);
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findById(1L)).thenReturn(Optional.of(perfil));
-            Administrador admin = new Administrador();
-            admin.setId(1L);
-            when(administradorRepository.findById(1L)).thenReturn(Optional.of(admin));
-            perfil.setVerificado(false);
-            when(repository.save(perfil)).thenReturn(perfil);
-            when(mapper.toDTO(perfil)).thenReturn(dto);
+        autenticarComoAdmin();
+        when(repository.findById(1L)).thenReturn(Optional.of(perfil));
+        Administrador admin = new Administrador();
+        admin.setId(1L);
+        when(administradorRepository.findById(1L)).thenReturn(Optional.of(admin));
+        perfil.setVerificado(false);
+        when(repository.save(perfil)).thenReturn(perfil);
+        when(mapper.toDTO(perfil)).thenReturn(dto);
 
-            PerfilEmpresarialDTO resultado = service.verificar(1L, 1L);
+        PerfilEmpresarialDTO resultado = service.verificar(1L, 1L);
 
-            assertTrue(perfil.isVerificado());
-            verify(repository, times(1)).save(perfil);
-        }
+        assertTrue(perfil.isVerificado());
+        verify(repository, times(1)).save(perfil);
     }
 
     @Test
     void verificar_deberiaRechazarSiNoEsAdmin() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::isAdmin()).thenReturn(false);
+        autenticarComoOtro();
 
-            assertThrows(AccessDeniedException.class, () -> service.verificar(1L, 1L));
-        }
+        assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> service.verificar(1L, 1L));
     }
 
     @Test
     void verificar_deberiaRechazarSiSupervisorNoCoincide() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::isAdmin()).thenReturn(true);
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
+        autenticarComoEmpleador();
 
-            assertThrows(AccessDeniedException.class, () -> service.verificar(1L, 2L));
-        }
+        assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> service.verificar(1L, 2L));
     }
 
     @Test
     void verificar_deberiaRechazarSiPerfilNoExiste() {
-        try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
-            mocked.when(SecurityUtils::isAdmin()).thenReturn(true);
-            mocked.when(SecurityUtils::currentUserId).thenReturn(1L);
-            when(repository.findById(999L)).thenReturn(Optional.empty());
+        autenticarComoAdmin();
+        when(repository.findById(999L)).thenReturn(Optional.empty());
 
-            assertThrows(ResourceNotFoundException.class, () -> service.verificar(999L, 1L));
-        }
+        assertThrows(ResourceNotFoundException.class, () -> service.verificar(999L, 1L));
     }
 
     @Test

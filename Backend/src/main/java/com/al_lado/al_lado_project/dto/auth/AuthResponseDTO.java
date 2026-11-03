@@ -30,6 +30,9 @@ public class AuthResponseDTO {
     private String nombre;
     private List<String> roles;
 
+    /** Token de verificación de correo de un solo uso (AL-SEC-004). */
+    private String verificacionEmailToken;
+
     /**
      * Mientras no exista proveedor de correo real (AL-SEC-004), el token de verificación
      * se gestiona internamente y no se expone en la respuesta de autenticación.

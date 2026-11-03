@@ -54,6 +54,7 @@ class PublicacionForoServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         service = new PublicacionForoServiceImpl(repository, usuarioRepository, mapper);
 
         Trabajador auth = new Trabajador();

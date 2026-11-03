@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.persistence.*;
+import jakarta.persistence.PrePersist;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -76,13 +77,13 @@ public abstract class Usuario implements UserDetails {
     private Long id;
 
     @Column(nullable = false, length = 100)
-    private String nombre;
+    private String nombre = "";
 
     @Column(nullable = false, unique = true, length = 150)
     private String email;
 
     @Column(nullable = false, length = 20)
-    private String telefono; // RF-01, HU-04: campo teléfono obligatorio con código de país
+    private String telefono = ""; // RF-01, HU-04: campo teléfono obligatorio con código de país
 
     @Column(nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
@@ -107,6 +108,7 @@ public abstract class Usuario implements UserDetails {
         this.nombre = nombre;
         this.email = email;
         this.password = password;
+        this.telefono = "";
     }
 
     /**
@@ -170,6 +172,16 @@ public abstract class Usuario implements UserDetails {
 
     @Column(name = "habilitado", nullable = false)
     private boolean habilitado = true;
+
+    @PrePersist
+    void garantizarCamposObligatorios() {
+        if (nombre == null) {
+            nombre = "";
+        }
+        if (telefono == null) {
+            telefono = "";
+        }
+    }
 
     @Column(name = "email_verificado", nullable = false)
     private boolean emailVerificado = false;

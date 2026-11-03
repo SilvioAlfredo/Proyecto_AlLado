@@ -68,6 +68,7 @@ class TrabajadorProyeccionTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
         mapper = new TrabajadorMapper(etiquetaMapper, postulacionResumenMapper, portafolioItemMapper,
                 horarioDisponibilidadMapper, preferenciaNotificacionMapper);
         service = new TrabajadorServiceImpl(repository, usuarioRepository, etiquetaRepository,

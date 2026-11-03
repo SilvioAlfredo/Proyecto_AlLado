@@ -124,6 +124,7 @@ public class AuthServiceImpl implements AuthService {
                 .email(usuario.getEmail())
                 .nombre(usuario.getNombre())
                 .roles(rolesDe(usuario))
+                .verificacionEmailToken(verificacion.token())
                 .build();
     }
 

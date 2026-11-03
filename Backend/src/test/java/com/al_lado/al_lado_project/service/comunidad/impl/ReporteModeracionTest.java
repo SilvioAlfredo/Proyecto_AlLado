@@ -52,6 +52,7 @@ class ReporteModeracionTest {
         verify(repository, never()).save(any());
     }
     @Test void sinModeradorAutenticadoNoSeGuarda() {
+        SecurityContextHolder.clearContext();
         var report = new Reporte(); report.setEstado("PENDIENTE");
         when(repository.findById(1L)).thenReturn(Optional.of(report));
         assertThrows(BusinessRuleException.class, () -> service.resolver(1L, null, "EN_REVISION"));
