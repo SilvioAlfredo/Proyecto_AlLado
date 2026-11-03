@@ -27,8 +27,10 @@ export const perfilEmpresarialService = {
    * @returns Perfil verificado. Repetir la operación conserva al supervisor original.
    */
   async verificar(id: number, supervisorId?: number): Promise<PerfilEmpresarialDTO> {
+    // axios: la config (params) va en el 3er argumento; el 2º es el body.
     const { data } = await api.put<PerfilEmpresarialDTO>(
       `/perfiles-empresariales/${id}/verificar`,
+      undefined,
       { params: supervisorId == null ? {} : { supervisorId } },
     );
     return data;

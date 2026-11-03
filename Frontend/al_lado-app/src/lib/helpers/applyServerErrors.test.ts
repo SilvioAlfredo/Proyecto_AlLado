@@ -22,7 +22,7 @@ describe('applyServerErrors', () => {
           },
         },
       },
-    } as any;
+    };
 
     const mensaje = applyServerErrors(error, setFieldError, 'Fallo genérico');
 
@@ -41,7 +41,7 @@ describe('applyServerErrors', () => {
     const error = {
       isAxiosError: true,
       response: { status: 500, data: { message: 'Error interno del servidor' } },
-    } as any;
+    };
 
     const mensaje = applyServerErrors(error, setFieldError, 'Fallo genérico');
 

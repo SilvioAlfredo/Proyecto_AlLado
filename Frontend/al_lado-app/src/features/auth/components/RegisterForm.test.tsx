@@ -1,6 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RegisterForm } from './RegisterForm';
+import { AuthProvider } from './AuthProvider';
 import { authService } from '../services/authService';
 
 /**
@@ -13,10 +15,24 @@ vi.mock('../services/authService', () => ({
   authService: { register: vi.fn() },
 }));
 
+// AuthProvider usa el router de Next; en jsdom no hay app router.
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: vi.fn() }),
+}));
+
 const mockRegister = vi.mocked(authService.register);
 
 function renderRegister() {
-  return render(<RegisterForm onRegisterSuccess={vi.fn()} />);
+  return render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      {/* El registro real llega a authService a través del AuthProvider. */}
+      <AuthProvider>
+        <RegisterForm />
+      </AuthProvider>
+    </QueryClientProvider>,
+  );
 }
 
 describe('RegisterForm', () => {
@@ -36,13 +52,16 @@ describe('RegisterForm', () => {
 
     fireEvent.change(screen.getByLabelText(/nombre/i), { target: { value: 'Ana' } });
     fireEvent.change(screen.getByLabelText(/apellido/i), { target: { value: 'Gomez' } });
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'ana@mail.com' } });
+    fireEvent.change(screen.getByLabelText(/correo/i), { target: { value: 'ana@mail.com' } });
     fireEvent.change(screen.getByLabelText(/teléfono/i), { target: { value: '+5491100000000' } });
-    fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: 'Clave123!' } });
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'Clave123!' } });
     fireEvent.click(screen.getByRole('button', { name: /registrarme/i }));
 
     await waitFor(() => expect(mockRegister).toHaveBeenCalledWith({
-      nombre: 'Ana Gomez',
+      // El mock reemplaza a authService.register, que es quien combina
+      // nombre + apellido antes de enviarlo al backend.
+      nombre: 'Ana',
+      apellido: 'Gomez',
       email: 'ana@mail.com',
       contrasena: 'Clave123!',
       telefono: '+5491100000000',
@@ -53,11 +72,11 @@ describe('RegisterForm', () => {
   it('rechaza contraseña menor a 8 caracteres', async () => {
     renderRegister();
 
-    fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: 'corta' } });
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'corta' } });
     fireEvent.click(screen.getByRole('button', { name: /registrarme/i }));
 
     await waitFor(() =>
-      expect(screen.getByText(/mínimo 8 caracteres/i)).toBeInTheDocument(),
+      expect(screen.getByText(/al menos 8 caracteres/i)).toBeInTheDocument(),
     );
     expect(mockRegister).not.toHaveBeenCalled();
   });
@@ -74,10 +93,10 @@ describe('RegisterForm', () => {
 
     fireEvent.change(screen.getByLabelText(/nombre/i), { target: { value: 'Empresa' } });
     fireEvent.change(screen.getByLabelText(/apellido/i), { target: { value: 'ABC' } });
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'e@mail.com' } });
+    fireEvent.change(screen.getByLabelText(/correo/i), { target: { value: 'e@mail.com' } });
     fireEvent.change(screen.getByLabelText(/teléfono/i), { target: { value: '+5491100000000' } });
-    fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: 'Clave123!' } });
-    fireEvent.click(screen.getByLabelText(/empleador/i));
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'Clave123!' } });
+    fireEvent.click(screen.getByRole('button', { name: /quiero contratar/i }));
     fireEvent.click(screen.getByRole('button', { name: /registrarme/i }));
 
     await waitFor(() => expect(mockRegister).toHaveBeenCalledWith(

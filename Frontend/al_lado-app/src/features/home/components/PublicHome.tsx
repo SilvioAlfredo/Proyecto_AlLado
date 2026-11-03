@@ -125,7 +125,7 @@ export function PublicHome() {
   });
   const filtered = useMemo(
     () =>
-      (query.data ?? [])
+      (query.data?.content ?? [])
         .filter(
           (o) =>
             o.activa &&

@@ -1,17 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { comunidadService } from '@/features/comunidad/services/comunidadService';
+import { errorMessage } from '@/lib/errors';
 import { formatDate } from '@/lib/utils';
 
 interface ReporteItem {
@@ -36,18 +28,18 @@ export default function AdminPublicacionesPage() {
       try {
         const data = await comunidadService.obtenerReportes();
         setReportes(
-          data.map((r: any) => ({
+          data.map((r) => ({
             id: r.id?.toString() || '',
-            tipo: r.tipo || 'reporte',
-            contenido: r.contenido || r.descripcion || 'Sin contenido',
+            tipo: 'reporte',
+            contenido: r.descripcion || 'Sin contenido',
             motivoReporte: r.motivo || 'No especificado',
             createdAt: r.fechaCreacion || new Date().toISOString(),
-            autorNombre: r.autor?.nombre || 'Anónimo',
+            autorNombre: r.reportante?.nombre || 'Anónimo',
             estatus: r.estado || 'PENDIENTE',
           })),
         );
-      } catch (err: any) {
-        setError(err?.response?.data?.message || 'Error al cargar reportes');
+      } catch (err) {
+        setError(errorMessage(err, 'Error al cargar reportes'));
       } finally {
         setLoading(false);
       }

@@ -51,6 +51,10 @@ export function PostulacionModal({
       setErrorMsg('Por favor completa tu propuesta económica y mensaje.');
       return;
     }
+    if (!(Number(tarifaPropuesta) > 0)) {
+      setErrorMsg('La remuneración debe ser mayor a cero.');
+      return;
+    }
 
     try {
       setEnviando(true);
@@ -114,12 +118,13 @@ export function PostulacionModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-zinc-200 block mb-1">
+              <label htmlFor="postulacion-cotizacion" className="text-xs font-semibold text-zinc-200 block mb-1">
                 Tu cotización ($)
               </label>
               <div className="relative">
                 <DollarSign className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <Input
+                  id="postulacion-cotizacion"
                   type="number"
                   min="0"
                   step="0.01"
@@ -133,12 +138,13 @@ export function PostulacionModal({
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-zinc-200 block mb-1">
+              <label htmlFor="postulacion-plazo" className="text-xs font-semibold text-zinc-200 block mb-1">
                 Plazo estimado (días)
               </label>
               <div className="relative">
                 <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <Input
+                  id="postulacion-plazo"
                   type="number"
                   min="1"
                   className="pl-9"
@@ -151,10 +157,11 @@ export function PostulacionModal({
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-zinc-200 block mb-1">
+            <label htmlFor="postulacion-mensaje" className="text-xs font-semibold text-zinc-200 block mb-1">
               Mensaje o propuesta para el cliente
             </label>
             <textarea
+              id="postulacion-mensaje"
               rows={4}
               className="w-full bg-allado-card2 text-white placeholder:text-zinc-500 text-sm rounded-xl border border-allado-border p-3 focus:outline-none focus:ring-2 focus:ring-allado-yellow focus:border-transparent resize-none"
               placeholder="Explica tu experiencia previa, herramientas que utilizas o disponibilidad horaria..."

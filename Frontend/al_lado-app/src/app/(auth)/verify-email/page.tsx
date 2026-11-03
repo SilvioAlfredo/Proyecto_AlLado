@@ -8,18 +8,21 @@ import { authService } from '@/features/auth/services/authService';
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
-  const [estado, setEstado] = useState<'cargando' | 'ok' | 'error'>('cargando');
+  const [resultado, setResultado] = useState<'ok' | 'error' | null>(null);
+
+  // Sin token no hay nada que verificar: el estado de error se deriva en el
+  // render (no se setea dentro del effect, para no encadenar renders).
+  const estado: 'cargando' | 'ok' | 'error' = !token
+    ? 'error'
+    : (resultado ?? 'cargando');
 
   useEffect(() => {
-    if (!token) {
-      setEstado('error');
-      return;
-    }
+    if (!token) return;
     // Backend: GET /auth/verify-email?token=
     authService
       .verifyEmail(token)
-      .then(() => setEstado('ok'))
-      .catch(() => setEstado('error'));
+      .then(() => setResultado('ok'))
+      .catch(() => setResultado('error'));
   }, [token]);
 
   return (

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useTrabajadorQuery } from '@/features/usuario/hooks/useTrabajadorQuery';
 import { valoracionesService } from '@/features/comunidad/services/valoracionesService';
 import { EstadoTrabajador } from '@/features/usuario/components/TrabajadorPage';

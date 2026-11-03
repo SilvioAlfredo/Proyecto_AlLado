@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import type { LucideIcon } from 'lucide-react';
 import {
   AlertTriangle,
   BadgeDollarSign,
@@ -21,7 +22,10 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
-const groups = [
+/** Tupla [etiqueta, ruta, icono] de una entrada del menú administrativo. */
+type AdminLink = [label: string, href: string, Icon: LucideIcon];
+
+const groups: { title: string; icon: LucideIcon; links: AdminLink[] }[] = [
   {
     title: 'Inicio',
     icon: LayoutDashboard,

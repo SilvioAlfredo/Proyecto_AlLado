@@ -15,9 +15,10 @@ vi.mock('../services/adminService', () => ({
 
 function crearWrapper() {
   const cliente = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={cliente}>{children}</QueryClientProvider>
-  );
+  function Wrapper({ children }: { children: React.ReactNode }) {
+    return <QueryClientProvider client={cliente}>{children}</QueryClientProvider>;
+  }
+  return Wrapper;
 }
 
 describe('useAdminMetrics', () => {
@@ -50,7 +51,7 @@ describe('useAdminMetrics', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data?.totalIngresos).toBe('$150000');
     expect(result.current.data?.metricContratos).toBe(100);
-    expect(result.current.data?.trabajadoresCompletados).toBe(40);
+    expect(result.current.data?.trabajosCompletados).toBe(40);
     expect(adminService.getMetrics).toHaveBeenCalledTimes(1);
   });
 

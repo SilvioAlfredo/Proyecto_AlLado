@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useStats } from './useStats';
+import { AuthContext, type AuthContextValue } from '@/features/auth/hooks/useAuth';
 import { trabajadorService } from '@/features/usuario/services/trabajadorService';
 import { comoApiMock } from '@/test/mocks';
 import api from '@/lib/api';
@@ -20,11 +21,26 @@ vi.mock('@/features/usuario/services/trabajadorService', () => ({
 
 const getApi = comoApiMock(api);
 
-function crearWrapper() {
+function crearWrapper(userId: number | null = null) {
   const cliente = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={cliente}>{children}</QueryClientProvider>
-  );
+  // useStats lee userId de la sesión; el wrapper provee un contexto mínimo.
+  const valorAuth: AuthContextValue = {
+    user: userId ? { email: 'test@mail.com', roles: ['ROLE_TRABAJADOR'] } : null,
+    userId,
+    nombre: null,
+    loading: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+  };
+  function Wrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <QueryClientProvider client={cliente}>
+        <AuthContext.Provider value={valorAuth}>{children}</AuthContext.Provider>
+      </QueryClientProvider>
+    );
+  }
+  return Wrapper;
 }
 
 describe('useStats', () => {
@@ -75,7 +91,7 @@ describe('useStats', () => {
       ultimoLogin: null, suscripcionActiva: false,
     });
 
-    const { result } = renderHook(() => useStats(), { wrapper });
+    const { result } = renderHook(() => useStats(), { wrapper: crearWrapper(99) });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(trabajadorService.obtenerEstadisticas).toHaveBeenCalledWith(99);

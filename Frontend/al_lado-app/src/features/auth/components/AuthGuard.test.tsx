@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import { AuthGuard } from './AuthGuard';
 import { useAuth } from '../hooks/useAuth';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -14,14 +14,17 @@ vi.mock('../hooks/useAuth', () => ({
   useAuth: vi.fn(),
 }));
 
-const mockUseAuth = useAuth as unknown as ReturnType<typeof vi.fn>;
+// El router se define con vi.hoisted porque vi.mock se eleva al inicio del
+// archivo: la fábrica necesita tener mockRouter disponible al ejecutarse.
+const { mockRouter } = vi.hoisted(() => ({
+  mockRouter: { replace: vi.fn() },
+}));
 
-function crearWrapper() {
-  const cliente = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={cliente}>{children}</QueryClientProvider>
-  );
-}
+vi.mock('next/navigation', () => ({
+  useRouter: () => mockRouter,
+}));
+
+const mockUseAuth = useAuth as unknown as ReturnType<typeof vi.fn>;
 
 function renderGuard(props: { allowedRoles?: string[]; fallbackUrl?: string }) {
   const { allowedRoles, fallbackUrl } = props;
@@ -37,6 +40,7 @@ function renderGuard(props: { allowedRoles?: string[]; fallbackUrl?: string }) {
 describe('AuthGuard', () => {
   beforeEach(() => {
     mockUseAuth.mockReset();
+    mockRouter.replace.mockClear();
   });
 
   it('muestra un spinner mientras carga la sesión', () => {
@@ -68,10 +72,6 @@ describe('AuthGuard', () => {
   });
 
   it('redirige al fallbackUrl si no hay sesión', () => {
-    const mockRouter = { replace: vi.fn() };
-    vi.mock('next/navigation', () => ({
-      useRouter: () => mockRouter,
-    }));
     mockUseAuth.mockReturnValue({ user: null, loading: false });
 
     renderGuard({ fallbackUrl: '/acceso-admin' });
@@ -80,10 +80,6 @@ describe('AuthGuard', () => {
   });
 
   it('redirige a / si el usuario no tiene el rol requerido', () => {
-    const mockRouter = { replace: vi.fn() };
-    vi.mock('next/navigation', () => ({
-      useRouter: () => mockRouter,
-    }));
     mockUseAuth.mockReturnValue({
       user: { email: 'ana@mail.com', roles: ['ROLE_TRABAJADOR'] },
       loading: false,
@@ -95,10 +91,6 @@ describe('AuthGuard', () => {
   });
 
   it('no redirige si el usuario tiene el rol requerido', () => {
-    const mockRouter = { replace: vi.fn() };
-    vi.mock('next/navigation', () => ({
-      useRouter: () => mockRouter,
-    }));
     mockUseAuth.mockReturnValue({
       user: { email: 'ana@mail.com', roles: ['ROLE_ADMIN'] },
       loading: false,

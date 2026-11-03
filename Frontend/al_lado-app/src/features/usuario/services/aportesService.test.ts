@@ -42,7 +42,10 @@ describe('suscripcionesService', () => {
   });
 
   it('crear registra una nueva suscripción', async () => {
-    const dto = { nivel: 'BASICO', usuario: { id: 7 } };
+    const dto = {
+      nivel: 'BASICO',
+      usuario: { id: 7, nombre: 'Ana', email: 'ana@mail.com' },
+    };
     getApi.post.mockResolvedValue({ data: { id: 1, ...dto } });
 
     const creada = await suscripcionesService.crear(dto);
@@ -94,7 +97,11 @@ describe('donacionesService', () => {
   });
 
   it('crear registra una nueva donación', async () => {
-    const dto = { monto: 15000, asunto: 'APORTE PRO', usuario: { id: 7 } };
+    const dto = {
+      monto: 15000,
+      asunto: 'APORTE PRO',
+      usuario: { id: 7, nombre: 'Ana', email: 'ana@mail.com' },
+    };
     getApi.post.mockResolvedValue({ data: { id: 1, ...dto } });
 
     const creada = await donacionesService.crear(dto);

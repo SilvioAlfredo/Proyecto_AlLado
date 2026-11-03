@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { authService } from '@/features/auth/services/authService';
+import { errorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -20,8 +21,8 @@ export default function ForgotPasswordPage() {
       // Backend: POST /auth/password/forgot {email}
       await authService.forgotPassword(email);
       setEnviado(true);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'No se pudo enviar el email.');
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo enviar el email.'));
     } finally {
       setLoading(false);
     }

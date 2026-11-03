@@ -45,7 +45,16 @@ describe('postulacionesService', () => {
       contenido: 'Mensaje de postulación',
       estado: 'PENDIENTE',
       remuneracionPretendida: 1000,
-      oportunidadLaboral: { id: 7 },
+      oportunidadLaboral: {
+        id: 7,
+        titulo: 'Postulación',
+        contenido: 'Mensaje de postulación',
+        ubicacion: 'Barrio Centro',
+        modalidad: 'PRESENCIAL',
+        rangoSalarial: '$1000',
+        activa: true,
+        fechaCreacion: '2026-01-01',
+      },
     };
     getApi.post.mockResolvedValue({ data: dto });
 

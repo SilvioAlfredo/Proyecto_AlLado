@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Salidas generadas: documentación TypeDoc, informes y traces de Playwright,
+    // y reportes JUnit. No son código fuente y solo aportan ruido al lint.
+    "docs/**",
+    "results/**",
+    "test-results/**",
   ]),
 ]);
 

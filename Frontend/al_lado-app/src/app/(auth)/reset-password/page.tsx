@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { authService } from '@/features/auth/services/authService';
+import { errorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -28,8 +29,8 @@ function ResetPasswordForm() {
       // Backend: POST /auth/password/reset {token, newPassword} (token viene en ?token= del email)
       await authService.resetPassword(token, password);
       setSuccess(true);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'No se pudo actualizar la contraseña.');
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo actualizar la contraseña.'));
     } finally {
       setLoading(false);
     }

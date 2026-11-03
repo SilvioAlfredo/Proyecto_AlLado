@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { OportunidadFormModal } from './OportunidadFormModal';
 import { oportunidadesService } from '../services/oportunidadService';
+import type { OportunidadLaboralDTO } from '@/types/trabajo';
 
 /**
  * HU-01: Empleador publica ofertas de trabajo.
@@ -13,10 +14,25 @@ vi.mock('../services/oportunidadService', () => ({
   oportunidadesService: { crear: vi.fn() },
 }));
 
+// El autor de la oferta sale de la sesión guardada en el navegador.
+vi.mock('@/lib/usuarioRef', () => ({
+  obtenerRefSesion: () => ({ id: 7, nombre: 'Ana', email: 'ana@mail.com' }),
+}));
+
 const mockCrear = vi.mocked(oportunidadesService.crear);
 
+const ofertaCreada: OportunidadLaboralDTO = {
+  id: 7,
+  titulo: 'Oferta Test',
+  contenido: 'Descripción test',
+  ubicacion: 'Barrio',
+  modalidad: 'PRESENCIAL',
+  rangoSalarial: '$10000',
+  activa: true,
+};
+
 function renderForm() {
-  return render(<OportunidadFormModal onClose={vi.fn()} onOfertaCreada={vi.fn()} />);
+  return render(<OportunidadFormModal isOpen onClose={vi.fn()} onSuccess={vi.fn()} />);
 }
 
 describe('OportunidadFormModal', () => {
@@ -25,7 +41,7 @@ describe('OportunidadFormModal', () => {
   });
 
   it('envía los datos de la oferta al crear', async () => {
-    mockCrear.mockResolvedValue({ id: 7, activa: true });
+    mockCrear.mockResolvedValue(ofertaCreada);
 
     renderForm();
 
@@ -33,7 +49,7 @@ describe('OportunidadFormModal', () => {
     fireEvent.change(screen.getByLabelText(/descripción/i), { target: { value: 'Reparar pared del baño' } });
     fireEvent.change(screen.getByLabelText(/ubicación/i), { target: { value: 'Barrio Centro' } });
     fireEvent.change(screen.getByLabelText(/modalidad/i), { target: { value: 'PRESENCIAL' } });
-    fireEvent.change(screen.getByLabelText(/rango salarial/i), { target: { value: '$15000' } });
+    fireEvent.change(screen.getByLabelText(/presupuesto/i), { target: { value: '$15000' } });
     fireEvent.click(screen.getByRole('button', { name: /publicar/i }));
 
     await waitFor(() => expect(mockCrear).toHaveBeenCalledWith(
@@ -53,20 +69,16 @@ describe('OportunidadFormModal', () => {
   });
 
   it('muestra mensaje de éxito tras publicar', async () => {
-    mockCrear.mockResolvedValue({ id: 7, activa: true });
+    mockCrear.mockResolvedValue(ofertaCreada);
     const onOfertaCreada = vi.fn();
 
-    renderForm();
-    // Re-render con el callback
-    const { rerender } = render(
-      <OportunidadFormModal onClose={vi.fn()} onOfertaCreada={onOfertaCreada} open={true} />,
-    );
+    render(<OportunidadFormModal isOpen onClose={vi.fn()} onSuccess={onOfertaCreada} />);
 
     fireEvent.change(screen.getByLabelText(/título/i), { target: { value: 'Oferta Test' } });
     fireEvent.change(screen.getByLabelText(/descripción/i), { target: { value: 'Descripción test' } });
     fireEvent.change(screen.getByLabelText(/ubicación/i), { target: { value: 'Barrio' } });
     fireEvent.change(screen.getByLabelText(/modalidad/i), { target: { value: 'PRESENCIAL' } });
-    fireEvent.change(screen.getByLabelText(/rango salarial/i), { target: { value: '$10000' } });
+    fireEvent.change(screen.getByLabelText(/presupuesto/i), { target: { value: '$10000' } });
     fireEvent.click(screen.getByRole('button', { name: /publicar/i }));
 
     await waitFor(() => expect(onOfertaCreada).toHaveBeenCalled());

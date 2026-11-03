@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
@@ -35,8 +35,11 @@ api.interceptors.response.use(
         if (typeof responseData === 'string' && responseData.trim() !== '') {
             errorMessage = responseData;
         } else if (responseData && typeof responseData === 'object') {
-            const dataObj = responseData as Record<string, any>;
-            errorMessage = dataObj.message || dataObj.error || errorMessage;
+            const dataObj = responseData as Record<string, unknown>;
+            const mensaje = dataObj.message ?? dataObj.error;
+            if (typeof mensaje === 'string' && mensaje !== '') {
+                errorMessage = mensaje;
+            }
         }
 
         if (typeof window !== 'undefined') {
@@ -64,7 +67,8 @@ api.interceptors.response.use(
 
         // Adjuntar mensaje normalizado al error antes de propagarlo
         if (error.response) {
-            (error.response as any).friendlyMessage = errorMessage;
+            (error.response as AxiosResponse & { friendlyMessage?: string }).friendlyMessage =
+                errorMessage;
         }
 
         return Promise.reject(error);

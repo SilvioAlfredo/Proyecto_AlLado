@@ -25,7 +25,10 @@ export function Field({
   className,
   ...rest
 }: FieldProps) {
-  const id = (children.props as { id?: string }).id || `field-${Math.random().toString(36).slice(2)}`;
+  // useId genera un id estable entre renders (Math.random en render es impuro
+  // y cambia en cada uno, rompiendo la asociación label/control).
+  const idGenerado = React.useId();
+  const id = (children.props as { id?: string }).id || idGenerado;
 
   return (
     <div className={cn('space-y-2', className)} {...rest}>
@@ -34,14 +37,17 @@ export function Field({
           {label}
         </label>
       )}
-      {React.cloneElement(children as any, {
-        id,
-        'aria-describedby': cn(
-          error ? `${id}-error` : undefined,
-          hint ? `${id}-hint` : undefined
-        ),
-        ...(error ? { 'aria-invalid': true } : {}),
-      })}
+      {React.cloneElement(
+        children as React.ReactElement<{ id?: string } & React.HTMLAttributes<HTMLElement>>,
+        {
+          id,
+          'aria-describedby': cn(
+            error ? `${id}-error` : undefined,
+            hint ? `${id}-hint` : undefined,
+          ),
+          ...(error ? { 'aria-invalid': true } : {}),
+        },
+      )}
       {error && (
         <p id={`${id}-error`} role="alert" className="text-xs text-red-400">
           {error}

@@ -2,20 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { trabajadorService } from '@/features/usuario/services/trabajadorService';
 import { empleadorService } from '@/features/usuario/services/empleadorService';
 import { usuariosService } from '@/features/usuario/services/usuariosService';
+import { errorMessage } from '@/lib/errors';
 import { TrabajadorDTO, EmpleadorDTO } from '@/types/usuario';
 
 export default function AdminUsuariosPage() {
@@ -24,26 +17,29 @@ export default function AdminUsuariosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filtro, setFiltro] = useState('');
+  const [recarga, setRecarga] = useState(0);
 
-  const recargar = async () => {
-    setLoading(true);
-    try {
-      const [t, e] = await Promise.all([
-        trabajadorService.obtenerTodos(),
-        empleadorService.obtenerTodos(),
-      ]);
-      setTrabajadores(t);
-      setEmpleadores(e);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Error al cargar usuarios');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // El loader vive dentro del effect (patrón de publicaciones/page.tsx): así
+  // el estado solo se setea tras el await y no se encadenan renders. El
+  // contador `recarga` dispara la recarga desde un handler de eventos.
   useEffect(() => {
-    recargar();
-  }, []);
+    const cargar = async () => {
+      setLoading(true);
+      try {
+        const [t, e] = await Promise.all([
+          trabajadorService.obtenerTodos(),
+          empleadorService.obtenerTodos(),
+        ]);
+        setTrabajadores(t);
+        setEmpleadores(e);
+      } catch (err) {
+        setError(errorMessage(err, 'Error al cargar usuarios'));
+      } finally {
+        setLoading(false);
+      }
+    };
+    cargar();
+  }, [recarga]);
 
   const alternarBloqueo = async (
     id: number | undefined,
@@ -62,9 +58,10 @@ export default function AdminUsuariosPage() {
         }
         await usuariosService.deshabilitar(id);
       }
-      await recargar();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'No se pudo cambiar el estado.');
+      setLoading(true);
+      setRecarga((n) => n + 1);
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo cambiar el estado.'));
     }
   };
 

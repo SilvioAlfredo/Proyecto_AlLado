@@ -1,6 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { LoginForm } from './LoginForm';
+import { AuthProvider } from './AuthProvider';
 import { authService } from '../services/authService';
 
 /**
@@ -13,10 +15,24 @@ vi.mock('../services/authService', () => ({
   authService: { login: vi.fn() },
 }));
 
+// AuthProvider y LoginForm usan el router de Next; en jsdom no hay app router.
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: vi.fn() }),
+}));
+
 const mockLogin = vi.mocked(authService.login);
 
 function renderLogin() {
-  return render(<LoginForm onLoginSuccess={vi.fn()} />);
+  return render(
+    <QueryClientProvider
+      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+    >
+      {/* El login real llega a authService a través del AuthProvider. */}
+      <AuthProvider>
+        <LoginForm />
+      </AuthProvider>
+    </QueryClientProvider>,
+  );
 }
 
 describe('LoginForm', () => {
@@ -34,8 +50,8 @@ describe('LoginForm', () => {
 
     renderLogin();
 
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'ana@mail.com' } });
-    fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: 'Clave123!' } });
+    fireEvent.change(screen.getByLabelText(/correo/i), { target: { value: 'ana@mail.com' } });
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'Clave123!' } });
     fireEvent.click(screen.getByRole('button', { name: /entrar/i }));
 
     await waitFor(() => expect(mockLogin).toHaveBeenCalledWith({
@@ -49,8 +65,8 @@ describe('LoginForm', () => {
 
     renderLogin();
 
-    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'ana@mail.com' } });
-    fireEvent.change(screen.getByLabelText(/contraseña/i), { target: { value: 'clave' } });
+    fireEvent.change(screen.getByLabelText(/correo/i), { target: { value: 'ana@mail.com' } });
+    fireEvent.change(screen.getByLabelText('Contraseña'), { target: { value: 'clave' } });
     fireEvent.click(screen.getByRole('button', { name: /entrar/i }));
 
     await waitFor(() =>

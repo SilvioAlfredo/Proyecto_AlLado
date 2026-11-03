@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEstadisticasTrabajador } from './useEstadisticasTrabajador';
-import { trabajadorService } from '../../usuario/services/trabajadorService';
+import { AuthContext, type AuthContextValue } from '@/features/auth/hooks/useAuth';
+import { trabajadorService } from '../services/trabajadorService';
 
 /**
  * HU-12: Trabajador visualiza estadísticas de ingresos.
@@ -10,7 +11,7 @@ import { trabajadorService } from '../../usuario/services/trabajadorService';
  * Integración del hook useEstadisticasTrabajador con React Query y el servicio
  * de estadísticas del trabajador.
  */
-vi.mock('../../usuario/services/trabajadorService', () => ({
+vi.mock('../services/trabajadorService', () => ({
   trabajadorService: { obtenerEstadisticas: vi.fn() },
 }));
 
@@ -18,9 +19,24 @@ const mockTrabajadorService = vi.mocked(trabajadorService);
 
 function crearWrapper() {
   const cliente = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={cliente}>{children}</QueryClientProvider>
-  );
+  // useTrabajadorQuery exige un usuario de sesión con rol TRABAJADOR.
+  const valorAuth: AuthContextValue = {
+    user: { email: 'ana@mail.com', roles: ['ROLE_TRABAJADOR'] },
+    userId: 7,
+    nombre: 'Ana',
+    loading: false,
+    login: vi.fn(),
+    register: vi.fn(),
+    logout: vi.fn(),
+  };
+  function Wrapper({ children }: { children: React.ReactNode }) {
+    return (
+      <QueryClientProvider client={cliente}>
+        <AuthContext.Provider value={valorAuth}>{children}</AuthContext.Provider>
+      </QueryClientProvider>
+    );
+  }
+  return Wrapper;
 }
 
 describe('useEstadisticasTrabajador', () => {

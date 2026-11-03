@@ -26,6 +26,9 @@ export function LoginForm({ adminOnly = false }: { adminOnly?: boolean }) {
   // previene la carga por defecto y activa el pending para desabilitar el boton
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Sin datos no se llama al backend: los inputs tienen `required` para el
+    // navegador y acá se cubre también la validación en memoria.
+    if (!email.trim() || !contrasena) return;
     setError(null);
     setPending(true);
     try {
