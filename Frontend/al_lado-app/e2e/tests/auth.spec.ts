@@ -18,7 +18,7 @@ test.describe('AUT-E2E-01: Registro, autenticación y cierre de sesión', () => 
     await expect.poll(() => registerPage.nombreInput.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true);
     await expect(page).toHaveURL('/register');
     await evidencia(page, 'Campos obligatorios impiden registro vacio');
-    await registerPage.register('Usuario E2E', 'Trabajador', email, 'Clave123!', '+5493510000000', 'TRABAJADOR');
+    await registerPage.register('Usuario E2E', 'Trabajador', email, 'Demo1234*', '+5493510000000', 'TRABAJADOR');
     await expect(page.getByRole('status').filter({ hasText: 'Cuenta creada correctamente.' })).toBeVisible();
     await expect(registerPage.emailInput).toHaveValue(email);
     await evidencia(page, 'Registro exitoso del trabajador');
@@ -40,11 +40,11 @@ test.describe('AUT-E2E-01: Registro, autenticación y cierre de sesión', () => 
     const loginPage = new LoginPage(page);
     const email = `e2e.login.${Date.now()}@demo.com`;
     await registerPage.goto();
-    await registerPage.register('Usuario Login', 'Persistente', email, 'Clave123!', '+5493510000000', 'TRABAJADOR');
+    await registerPage.register('Usuario Login', 'Persistente', email, 'Demo1234*', '+5493510000000', 'TRABAJADOR');
     await expect(page.getByRole('status').filter({ hasText: 'Cuenta creada correctamente.' })).toBeVisible();
 
     await loginPage.goto();
-    await loginPage.login(email, 'Clave123!');
+    await loginPage.login(email, 'Demo1234*');
     await expect(page).toHaveURL('/trabajador/dashboard');
     await expect(page.getByText(email, { exact: true })).toBeVisible();
     const token = await page.evaluate(() => ({
@@ -66,10 +66,10 @@ test.describe('AUT-E2E-01: Registro, autenticación y cierre de sesión', () => 
     const loginPage = new LoginPage(page);
     const email = `e2e.logout.${Date.now()}@demo.com`;
     await registerPage.goto();
-    await registerPage.register('Usuario Logout', 'Session', email, 'Clave123!', '+5493510000000', 'TRABAJADOR');
+    await registerPage.register('Usuario Logout', 'Session', email, 'Demo1234*', '+5493510000000', 'TRABAJADOR');
     await expect(page.getByRole('status').filter({ hasText: 'Cuenta creada correctamente.' })).toBeVisible();
     await loginPage.goto();
-    await loginPage.login(email, 'Clave123!');
+    await loginPage.login(email, 'Demo1234*');
     await expect(page).toHaveURL('/trabajador/dashboard');
     expect(await page.evaluate(() => localStorage.getItem('auth_token'))).toBeTruthy();
 

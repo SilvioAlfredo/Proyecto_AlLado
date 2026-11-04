@@ -8,6 +8,8 @@ import { oportunidadesService } from '../services/oportunidadService';
 import { oportunidadesKeys } from '../queryKeys';
 import { errorMessage } from '@/lib/errors';
 
+const OPORTUNIDADES_PAGE_SIZE = 100;
+
 export interface FiltrosOportunidades {
   filtro?: string;
   modalidad?: string;
@@ -49,7 +51,11 @@ export function useOportunidades(initialFiltros: FiltrosOportunidades = {}): use
   const consulta = useQuery<PaginaDTO<OportunidadLaboralDTO>, Error>({
     queryKey: oportunidadesKeys.lista(filtros, page),
     queryFn: async () => {
-      return await oportunidadesService.listarConFiltros(filtros, page);
+      return await oportunidadesService.listarConFiltros(
+        filtros,
+        page,
+        OPORTUNIDADES_PAGE_SIZE,
+      );
     },
     placeholderData: (previousData) => previousData,
     staleTime: 30_000,

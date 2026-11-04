@@ -31,7 +31,13 @@ export function Feedback({
   };
 
   return (
-    <div className={cn(base, variants[variant], className)}>{children}</div>
+    <div
+      role={variant === 'error' ? 'alert' : 'status'}
+      aria-live={variant === 'error' ? 'assertive' : 'polite'}
+      className={cn(base, variants[variant], className)}
+    >
+      {children}
+    </div>
   );
 }
 

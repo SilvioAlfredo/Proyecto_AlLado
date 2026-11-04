@@ -10,14 +10,14 @@ async function evidencia(page: Page, nombre: string) {
 async function crearCuenta(page: Page, email: string, rol: 'TRABAJADOR' | 'EMPLEADOR') {
   const registerPage = new RegisterPage(page);
   await registerPage.goto();
-  await registerPage.register('Usuario E2E', rol === 'EMPLEADOR' ? 'Empleador' : 'Trabajador', email, 'Clave123!', '+5493510000000', rol);
+  await registerPage.register('Usuario E2E', rol === 'EMPLEADOR' ? 'Empleador' : 'Trabajador', email, 'Demo1234*', '+5493510000000', rol);
   await expect(page.getByRole('status').filter({ hasText: 'Cuenta creada correctamente.' })).toBeVisible();
 }
 
 async function ingresar(page: Page, email: string, rol: 'trabajador' | 'empleador') {
   const loginPage = new LoginPage(page);
   await loginPage.goto();
-  await loginPage.login(email, 'Clave123!');
+  await loginPage.login(email, 'Demo1234*');
   await expect(page).toHaveURL(`/` + rol + '/dashboard');
 }
 
@@ -137,4 +137,3 @@ test.describe('AUT-E2E-03: Alta y validación de postulaciones', () => {
     await evidencia(page, 'Rechazo visible de la segunda postulacion');
   });
 });
-
