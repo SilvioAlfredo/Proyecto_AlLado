@@ -5,7 +5,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@ActiveProfiles("e2e-h2")
+@ActiveProfiles("e2e")
 class AlLadoProjectApplicationTests {
 
 	@Test

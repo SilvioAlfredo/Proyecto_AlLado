@@ -60,14 +60,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/oportunidades/*/contacto").authenticated()
 
                         // 3. Endpoints públicos de lectura (catálogos/foro)
-                        .requestMatchers(HttpMethod.GET, "/oportunidades/**", "/comunicados/**", "/publicidades/**", "/foro/**").permitAll()
+                        // Las oportunidades NO son públicas: solo Trabajador y ADMIN
+                        // pueden verlas. Un Empleador autenticado no debe acceder.
+                        .requestMatchers(HttpMethod.GET, "/comunicados/**", "/publicidades/**", "/foro/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/oportunidades/**").hasAnyRole("TRABAJADOR", "ADMIN")
 
                         // 3b. Búsqueda y catálogos que el frontend consume sin JWT
                         // (home pública usa POST /oportunidades/filtrar; los GET son
                         // solo lectura de directorio, las mutaciones siguen protegidas
                         // por @PreAuthorize). Los patrones de un segmento NO alcanzan
                         // a /{id}/estadisticas ni /por-email/estadisticas.
-                        .requestMatchers(HttpMethod.POST, "/oportunidades/filtrar").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/oportunidades/filtrar").hasAnyRole("TRABAJADOR", "ADMIN")
                         .requestMatchers(HttpMethod.GET,
                                 "/etiquetas/**",
                                 "/trabajadores", "/trabajadores/{id}",

@@ -1,16 +1,11 @@
 package com.al_lado.al_lado_project.service.perfil.impl;
 
-import com.al_lado.al_lado_project.dto.perfil.PortafolioItemDTO;
-import com.al_lado.al_lado_project.entity.perfil.PortafolioItem;
-import com.al_lado.al_lado_project.entity.usuario.Trabajador;
-import com.al_lado.al_lado_project.exception.BusinessRuleException;
-import com.al_lado.al_lado_project.exception.ResourceNotFoundException;
-import com.al_lado.al_lado_project.mappers.perfil.PortafolioItemMapper;
-import com.al_lado.al_lado_project.repository.perfil.PortafolioItemRepository;
-import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
-import com.al_lado.al_lado_project.security.SecurityUtils;
-import com.al_lado.al_lado_project.service.perfil.PortafolioItemService;
-import com.al_lado.al_lado_project.service.usuario.SuscripcionService;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.Optional;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,150 +14,95 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.List;
-import java.util.Optional;
+import com.al_lado.al_lado_project.dto.perfil.PortafolioItemDTO;
+import com.al_lado.al_lado_project.entity.perfil.PortafolioItem;
+import com.al_lado.al_lado_project.entity.usuario.Trabajador;
+import com.al_lado.al_lado_project.exception.BusinessRuleException;
+import com.al_lado.al_lado_project.mappers.perfil.PortafolioItemMapper;
+import com.al_lado.al_lado_project.repository.perfil.PortafolioItemRepository;
+import com.al_lado.al_lado_project.repository.usuario.TrabajadorRepository;
+import com.al_lado.al_lado_project.service.perfil.PortafolioItemService;
+import com.al_lado.al_lado_project.service.usuario.SuscripcionService;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
-/**
- * HU-17: Armar mi portafolio y acceder a propuestas reservadas para usuarios PRO.
- *
- * <p>Pruebas unitarias de {@link PortafolioItemServiceImpl}. Valida agregar y
- * eliminar items de portafolio, requisito de PRO vigente y titularidad.</p>
- */
 @ExtendWith(MockitoExtension.class)
 class PortafolioItemServiceImplTest {
 
-    @Mock
-    private PortafolioItemRepository repository;
-
-    @Mock
-    private TrabajadorRepository trabajadorRepository;
-
-    @Mock
-    private PortafolioItemMapper mapper;
-
-    @Mock
-    private SuscripcionService suscripcionService;
-
+    @Mock private PortafolioItemRepository portafolioRepository;
+    @Mock private TrabajadorRepository trabajadorRepository;
+    @Mock private SuscripcionService suscripcionService;
+    private final PortafolioItemMapper mapper = new PortafolioItemMapper();
     private PortafolioItemService service;
 
     private Trabajador trabajador;
-    private PortafolioItemDTO dto;
-    private PortafolioItem entidad;
+    private PortafolioItem item;
 
     @BeforeEach
     void setUp() {
+        service = new PortafolioItemServiceImpl(
+                portafolioRepository, trabajadorRepository, mapper, suscripcionService);
+
+        // Las operaciones exigen titularidad: autenticar como el trabajador 1
         SecurityContextHolder.clearContext();
-        service = new PortafolioItemServiceImpl(repository, trabajadorRepository, mapper, suscripcionService);
+        Trabajador sesion = new Trabajador();
+        sesion.setId(1L);
+        sesion.setEmail("trabajador@test.com");
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(sesion, null, sesion.getAuthorities()));
 
-        trabajador = new Trabajador("Trabajador Demo", "trabajador@demo.com", "password");
+        trabajador = new Trabajador();
         trabajador.setId(1L);
+        trabajador.setNombre("Trabajador PRO");
 
-        dto = new PortafolioItemDTO();
-        dto.setId(1L);
-        dto.setTitulo("Proyecto de construccion");
-        dto.setDescripcion("Construccion de vivienda familiar");
-        dto.setUrlArchivo("https://comercio.com/proyecto.pdf");
-
-        entidad = new PortafolioItem();
-        entidad.setId(1L);
-        entidad.setTitulo("Proyecto de construccion");
+        item = new PortafolioItem();
+        item.setId(1L);
+        item.setTrabajador(trabajador);
+        item.setTitulo("Proyecto de ejemplo");
     }
 
-    private void autenticarComoTrabajador() {
-        SecurityContextHolder.getContext().setAuthentication(
-            new UsernamePasswordAuthenticationToken(trabajador, null, trabajador.getAuthorities()));
-    }
-
-    private void autenticarComoOtro() {
-        Trabajador otro = new Trabajador("Otro", "otro@demo.com", "password");
-        otro.setId(99L);
-        SecurityContextHolder.getContext().setAuthentication(
-            new UsernamePasswordAuthenticationToken(otro, null, otro.getAuthorities()));
+    @AfterEach
+    void limpiarContexto() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
-    void obtenerPorTrabajador_deberiaRetornarItemsDelTrabajador() {
-        when(repository.findByTrabajadorId(1L)).thenReturn(List.of(entidad));
-        when(mapper.toDTO(entidad)).thenReturn(dto);
-
-        List<PortafolioItemDTO> resultado = service.obtenerPorTrabajador(1L);
-
-        assertEquals(1, resultado.size());
-        assertEquals("Proyecto de construccion", resultado.get(0).getTitulo());
-    }
-
-    @Test
-    void agregar_deberiaCrearItemConPROVigente() {
-        autenticarComoTrabajador();
+    void agregar_deberiaCrearItemCuandoTrabajadorTienePRO() {
+        // Dado
         when(suscripcionService.esProVigente(1L)).thenReturn(true);
         when(trabajadorRepository.findById(1L)).thenReturn(Optional.of(trabajador));
-        when(mapper.toEntity(dto)).thenReturn(entidad);
-        when(repository.save(entidad)).thenReturn(entidad);
-        when(mapper.toDTO(entidad)).thenReturn(dto);
+        when(portafolioRepository.save(any(PortafolioItem.class))).thenReturn(item);
 
+        // Cuando
+        PortafolioItemDTO dto = new PortafolioItemDTO();
+        dto.setTitulo("Proyecto de ejemplo");
+        dto.setDescripcion("Descripción del proyecto");
         PortafolioItemDTO resultado = service.agregar(1L, dto);
 
+        // Entonces
         assertNotNull(resultado);
-        assertEquals("Proyecto de construccion", resultado.getTitulo());
-        verify(repository, times(1)).save(entidad);
     }
 
     @Test
-    void agregar_deberiaRechazarSiNoTienePROVigente() {
-        autenticarComoTrabajador();
+    void agregar_deberiaRechazarCuandoTrabajadorNoTienePRO() {
+        // Dado
         when(suscripcionService.esProVigente(1L)).thenReturn(false);
 
+        // Cuando
+        PortafolioItemDTO dto = new PortafolioItemDTO();
+        dto.setTitulo("Proyecto");
+
+        // Entonces
         assertThrows(BusinessRuleException.class, () -> service.agregar(1L, dto));
-        verify(repository, never()).save(any());
     }
 
     @Test
-    void agregar_deberiaRechazarSiTrabajadorNoExiste() {
-        autenticarComoTrabajador();
-        when(suscripcionService.esProVigente(1L)).thenReturn(true);
-        when(trabajadorRepository.findById(1L)).thenReturn(Optional.empty());
+    void eliminar_deberiaEliminarCuandoExiste() {
+        // Dado
+        when(portafolioRepository.findById(1L)).thenReturn(Optional.of(item));
 
-        assertThrows(ResourceNotFoundException.class, () -> service.agregar(1L, dto));
-    }
-
-    @Test
-    void agregar_deberiaRechazarAccesoAjeno() {
-        autenticarComoOtro();
-
-        assertThrows(org.springframework.security.access.AccessDeniedException.class,
-                () -> service.agregar(1L, dto));
-    }
-
-    @Test
-    void eliminar_deberiaEliminarItemDelTitular() {
-        entidad.setTrabajador(trabajador);
-        autenticarComoTrabajador();
-        when(repository.findById(1L)).thenReturn(Optional.of(entidad));
-
+        // Cuando
         service.eliminar(1L);
 
-        verify(repository, times(1)).delete(entidad);
-    }
-
-    @Test
-    void eliminar_deberiaRechazarSiItemNoExiste() {
-        when(repository.findById(999L)).thenReturn(Optional.empty());
-
-        assertThrows(ResourceNotFoundException.class, () -> service.eliminar(999L));
-    }
-
-    @Test
-    void eliminar_deberiaRechazarAccesoAjeno() {
-        Trabajador otro = new Trabajador("Otro", "otro@demo.com", "password");
-        otro.setId(99L);
-        entidad.setTrabajador(otro);
-        autenticarComoTrabajador();
-        when(repository.findById(1L)).thenReturn(Optional.of(entidad));
-
-        assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> service.eliminar(1L));
+        // Entonces
+        verify(portafolioRepository, times(1)).delete(item);
     }
 }

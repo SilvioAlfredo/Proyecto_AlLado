@@ -50,16 +50,10 @@ class OportunidadControllerContractTest {
     private TokenRevocadoRepository tokenRevocadoRepository;
 
     @Test
-    void listadoPublicoSinToken() throws Exception {
-        OportunidadLaboralDTO dto = new OportunidadLaboralDTO();
-        dto.setId(1L);
-        dto.setTitulo("Albañil");
-        when(service.listarOportunidades(anyString(), any(PageRequest.class)))
-                .thenReturn(new PageImpl<>(List.of(dto)));
-
+    void listadoSinTokenRequiereAutenticacion() throws Exception {
+        // AL-SEC: las oportunidades ya no son publicas; sin sesion el anonimo recibe 401.
         mockMvc.perform(get("/oportunidades"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].titulo").value("Albañil"));
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -107,15 +101,12 @@ class OportunidadControllerContractTest {
     }
 
     @Test
-    void filtrarPublicoSinTokenDevuelveLista() throws Exception {
-        // La home pública del frontend llama a POST /oportunidades/filtrar sin JWT
-        when(service.listarConFiltros(any(FiltrosOportunidadesDTO.class), any(Pageable.class))).thenReturn(Page.empty());
-
+    void filtrarSinTokenRequiereAutenticacion() throws Exception {
+        // AL-SEC: filtrar exige sesion (solo TRABAJADOR/ADMIN); el anonimo recibe 401.
         mockMvc.perform(post("/oportunidades/filtrar")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

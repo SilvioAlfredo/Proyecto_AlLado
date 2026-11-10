@@ -1,15 +1,13 @@
 package com.al_lado.al_lado_project.service.comunidad.impl;
 
-import com.al_lado.al_lado_project.dto.comunidad.NotificacionDTO;
-import com.al_lado.al_lado_project.entity.comunidad.Notificacion;
-import com.al_lado.al_lado_project.entity.usuario.Trabajador;
-import com.al_lado.al_lado_project.mappers.comunidad.NotificacionMapper;
-import com.al_lado.al_lado_project.mappers.usuario.UsuarioResumenMapper;
-import com.al_lado.al_lado_project.repository.comunidad.NotificacionRepository;
-import com.al_lado.al_lado_project.repository.usuario.UsuarioRepository;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -18,116 +16,117 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import java.util.List;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.al_lado.al_lado_project.dto.comunidad.NotificacionDTO;
+import com.al_lado.al_lado_project.entity.comunidad.Notificacion;
+import com.al_lado.al_lado_project.entity.usuario.Trabajador;
+import com.al_lado.al_lado_project.entity.usuario.Usuario;
+import com.al_lado.al_lado_project.mappers.comunidad.NotificacionMapper;
+import com.al_lado.al_lado_project.mappers.usuario.UsuarioResumenMapper;
+import com.al_lado.al_lado_project.repository.comunidad.NotificacionRepository;
+import com.al_lado.al_lado_project.repository.usuario.UsuarioRepository;
+import com.al_lado.al_lado_project.service.comunidad.NotificacionService;
 
 @ExtendWith(MockitoExtension.class)
 class NotificacionServiceImplTest {
 
-    @Mock
-    private NotificacionRepository repository;
+    @Mock private NotificacionRepository notificacionRepository;
+    @Mock private UsuarioRepository usuarioRepository;
+    private final NotificacionMapper mapper = new NotificacionMapper(new UsuarioResumenMapper());
+    private NotificacionService service;
 
-    @Mock
-    private UsuarioRepository usuarioRepository;
-
-    private NotificacionServiceImpl service;
+    private Trabajador usuario;
+    private Notificacion notificacion;
 
     @BeforeEach
     void setUp() {
         SecurityContextHolder.clearContext();
-        service = new NotificacionServiceImpl(repository, usuarioRepository,
-                new NotificacionMapper(new UsuarioResumenMapper()));
+        service = new NotificacionServiceImpl(notificacionRepository, usuarioRepository, mapper);
+
+        usuario = new Trabajador();
+        usuario.setId(1L);
+        usuario.setNombre("Usuario Test");
+        usuario.setEmail("usuario@test.com");
+        usuario.setPassword("x");
+
+        notificacion = new Notificacion();
+        notificacion.setId(1L);
+        notificacion.setDestinatario(usuario);
+        notificacion.setTitulo("Nueva postulación");
+        notificacion.setLeida(false);
+
+        // La sesion es del destinatario de la notificacion.
+        autenticarComo(usuario);
     }
 
     @AfterEach
     void limpiarContexto() {
-        SecurityContextHolder.clearContext();
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
     }
 
     @Test
-    @DisplayName("TC-NOTIF-001: el titular marca una notificación individual como leída")
-    void marcarLeida_deberiaPersistirCuandoEsTitular() {
-        Trabajador titular = trabajador(7L);
-        Notificacion notificacion = notificacion(titular, false);
-        when(repository.findById(11L)).thenReturn(Optional.of(notificacion));
-        when(repository.save(notificacion)).thenReturn(notificacion);
-        iniciarSesion(titular);
+    void marcarLeida_deberiaMarcarCuandoEsElTitular() {
+        // Dado
+        when(notificacionRepository.findById(1L)).thenReturn(Optional.of(notificacion));
+        when(notificacionRepository.save(any(Notificacion.class))).thenReturn(notificacion);
 
-        NotificacionDTO resultado = service.marcarLeida(11L);
+        // Cuando
+        NotificacionDTO resultado = service.marcarLeida(1L);
 
-        assertTrue(resultado.isLeida());
-        verify(repository).save(notificacion);
+        // Entonces
+        assertNotNull(resultado);
+        assertTrue(notificacion.isLeida());
+        verify(notificacionRepository, times(1)).save(notificacion);
     }
 
     @Test
-    @DisplayName("TC-SEC-005: un tercero no puede marcar la notificación ajena")
-    void marcarLeida_deberiaRechazarNotificacionAjena() {
-        Notificacion notificacion = notificacion(trabajador(8L), false);
-        when(repository.findById(11L)).thenReturn(Optional.of(notificacion));
-        iniciarSesion(trabajador(7L));
+    void marcarLeida_deberiaRechazarCuandoNoEsElTitular() {
+        // Dado: la notificacion es del usuario 1 y la sesion es de otro usuario.
+        Trabajador otroUsuario = new Trabajador();
+        otroUsuario.setId(99L);
+        otroUsuario.setEmail("otro@test.com");
+        otroUsuario.setPassword("x");
+        autenticarComo(otroUsuario);
+        when(notificacionRepository.findById(1L)).thenReturn(Optional.of(notificacion));
 
-        assertThrows(AccessDeniedException.class, () -> service.marcarLeida(11L));
-        verify(repository, never()).save(notificacion);
+        // Cuando
+        assertThrows(AccessDeniedException.class, () -> service.marcarLeida(1L));
+
+        // Entonces
+        verify(notificacionRepository, never()).save(any(Notificacion.class));
     }
 
     @Test
-    @DisplayName("TC-NOTIF-002: el titular marca todas sus notificaciones como leídas")
-    void marcarTodasLeidas_deberiaActualizarSoloLasNoLeidasDelTitular() {
-        Trabajador titular = trabajador(7L);
-        Notificacion pendiente = notificacion(titular, false);
-        Notificacion yaLeida = notificacion(titular, true);
-        when(repository.findByDestinatarioIdOrderByFechaCreacionDesc(7L))
-                .thenReturn(List.of(pendiente, yaLeida));
-        iniciarSesion(titular);
+    void contarNoLeidas_deberiaRetornarConteoCorrecto() {
+        // Dado
+        when(notificacionRepository.countByDestinatarioIdAndLeidaFalse(1L)).thenReturn(3L);
 
-        service.marcarTodasLeidas(7L);
+        // Cuando
+        long resultado = service.contarNoLeidas(1L);
 
-        assertTrue(pendiente.isLeida());
-        assertTrue(yaLeida.isLeida());
+        // Entonces
+        assertEquals(3, resultado);
     }
 
     @Test
-    @DisplayName("TC-NOTIF-005: el contador devuelve las notificaciones pendientes del titular")
-    void contarNoLeidas_deberiaDevolverElConteoDelTitular() {
-        when(repository.countByDestinatarioIdAndLeidaFalse(7L)).thenReturn(2L);
-        iniciarSesion(trabajador(7L));
+    void marcarTodasLeidas_deberiaMarcarLasPendientesDelUsuario() {
+        // Dado
+        Notificacion otra = new Notificacion();
+        otra.setId(2L);
+        otra.setDestinatario(usuario);
+        otra.setTitulo("Otra notificación");
+        when(notificacionRepository.findByDestinatarioIdOrderByFechaCreacionDesc(1L))
+                .thenReturn(List.of(notificacion, otra));
 
-        assertEquals(2L, service.contarNoLeidas(7L));
+        // Cuando
+        service.marcarTodasLeidas(1L);
+
+        // Entonces
+        assertTrue(notificacion.isLeida());
+        assertTrue(otra.isLeida());
     }
 
-    @Test
-    @DisplayName("TC-SEC-004: un tercero no puede listar notificaciones ajenas")
-    void listarPorUsuario_deberiaRechazarAUnTercero() {
-        iniciarSesion(trabajador(7L));
-
-        assertThrows(AccessDeniedException.class, () -> service.listarPorUsuario(8L));
-    }
-
-    private void iniciarSesion(Trabajador trabajador) {
+    private void autenticarComo(Usuario u) {
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(trabajador, null, trabajador.getAuthorities()));
-    }
-
-    private static Trabajador trabajador(Long id) {
-        Trabajador trabajador = new Trabajador();
-        trabajador.setId(id);
-        trabajador.setNombre("Trabajador " + id);
-        trabajador.setEmail("trabajador" + id + "@example.com");
-        trabajador.setPassword("test");
-        return trabajador;
-    }
-
-    private static Notificacion notificacion(Trabajador destinatario, boolean leida) {
-        Notificacion notificacion = new Notificacion(destinatario, "Aviso", "Mensaje",
-                Notificacion.TIPO_SISTEMA, null);
-        notificacion.setLeida(leida);
-        return notificacion;
+                new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
     }
 }

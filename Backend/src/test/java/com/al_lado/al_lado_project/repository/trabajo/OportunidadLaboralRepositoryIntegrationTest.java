@@ -61,8 +61,12 @@ class OportunidadLaboralRepositoryIntegrationTest {
 
         List<OportunidadLaboral> resultado = repository.findByActivaTrue();
 
-        assertThat(resultado).hasSize(1);
-        assertThat(resultado.get(0).getTitulo()).isEqualTo("Oferta Activa");
+        // La base QA trae ofertas de seed: se valida el contrato del método
+        // (solo devuelve activas) en lugar de un conteo exacto.
+        assertThat(resultado).allMatch(OportunidadLaboral::isActiva);
+        assertThat(resultado).extracting(OportunidadLaboral::getTitulo)
+                .contains("Oferta Activa")
+                .doesNotContain("Oferta Cerrada");
     }
 
     @Test

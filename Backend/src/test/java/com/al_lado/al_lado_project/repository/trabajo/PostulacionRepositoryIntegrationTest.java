@@ -118,6 +118,9 @@ class PostulacionRepositoryIntegrationTest {
 
     @Test
     void promedioRemuneracionPositiva_deberiaCalcularPromedio() {
+        // La base QA trae postulaciones de seed: se limpia la tabla para un
+        // promedio determinista (@DataJpaTest revierte todo al final del test).
+        repository.deleteAll();
         Postulacion p1 = new Postulacion("P1", "M1", trabajador, oportunidad, 10000.0);
         Postulacion p2 = new Postulacion("P2", "M2", trabajador, oportunidad, 20000.0);
         repository.save(p1);
