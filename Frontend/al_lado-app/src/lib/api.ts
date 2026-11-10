@@ -51,7 +51,8 @@ api.interceptors.response.use(
             // 401 (token expirado/inválido): la sesión ya no sirve, se borra
             // completa y se vuelve al login para no mostrar datos de la cuenta
             // anterior (AL-FE-007 / MEJ-008)
-            if (status === 401 && !esPeticionDeAuth && !enPantallaDeAcceso) {
+            const tieneToken = Boolean(localStorage.getItem('auth_token'));
+            if (status === 401 && tieneToken && !esPeticionDeAuth && !enPantallaDeAcceso) {
                 ['auth_token', 'user_email', 'user_roles', 'user_id', 'user_nombre'].forEach((key) =>
                     localStorage.removeItem(key)
                 );
