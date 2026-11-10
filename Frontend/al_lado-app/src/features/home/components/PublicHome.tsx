@@ -119,7 +119,7 @@ export function PublicHome() {
   const [limit, setLimit] = useState(6);
   const query = useQuery({
     queryKey: ['public-oportunidades'],
-    queryFn: () => oportunidadesService.listarConFiltros(),
+    queryFn: () => oportunidadesService.listarPublicas(),
     staleTime: 60000,
     retry: 1,
   });

@@ -137,6 +137,11 @@ public interface OportunidadLaboralService {
      * @return página de ofertas activas que cumplan todos los criterios indicados
      */
     Page<OportunidadLaboralDTO> listarConFiltros(FiltrosOportunidadesDTO filtros, Pageable pageable);
+    /**
+     * Lista las oportunidades públicas activas,
+     * sin exponer información privada.
+     */
+    Page<OportunidadLaboralDTO> listarPublicas(FiltrosOportunidadesDTO filtros, Pageable pageable);
 
     /**
      * Busca ofertas cuyas etiquetas coincidan con las especialidades del trabajador.

@@ -166,6 +166,20 @@ public class OportunidadLaboralController {
         return ResponseEntity.ok(PaginaDTO.from(resultado));
     }
 
+    @PostMapping("/publicas/filtrar")
+    public ResponseEntity<PaginaDTO<OportunidadLaboralDTO>> listarPublicas(
+            @Valid @RequestBody FiltrosOportunidadesDTO filtros,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<OportunidadLaboralDTO> resultado =
+                service.listarPublicas(filtros, pageable);
+
+        return ResponseEntity.ok(PaginaDTO.from(resultado));
+    }
+
     @PreAuthorize("hasRole('TRABAJADOR')")
     @GetMapping("/propuestas-pro")
     public ResponseEntity<List<OportunidadLaboralDTO>> propuestasPro(

@@ -419,6 +419,34 @@ public class OportunidadLaboralServiceImpl implements OportunidadLaboralService 
                 pageable
         ).map(this::proyectar);
     }
+    @Override
+    @Transactional(readOnly = true)
+    public Page<OportunidadLaboralDTO> listarPublicas(
+            FiltrosOportunidadesDTO filtros,
+            Pageable pageable) {
+
+        String filtro = filtros != null ? filtros.getFiltro() : null;
+        String modalidad = filtros != null ? filtros.getModalidad() : null;
+        List<String> etiquetas = filtros != null && filtros.getEtiquetas() != null
+                ? filtros.getEtiquetas() : null;
+        boolean soloDestacadas = filtros != null
+                && Boolean.TRUE.equals(filtros.getSoloDestacadas());
+        String ubicacion = filtros != null ? filtros.getUbicacion() : null;
+        String sector = filtros != null ? filtros.getSector() : null;
+
+        return repository.findAll(
+                specBusqueda(
+                        filtro,
+                        modalidad,
+                        etiquetas,
+                        soloDestacadas,
+                        ubicacion,
+                        sector
+                ).and((root, query, cb) ->
+                        cb.isTrue(root.get("activa"))),
+                pageable
+        ).map(mapper::toDTOPublic);
+    }
 
     @Override
     @Transactional(readOnly = true)

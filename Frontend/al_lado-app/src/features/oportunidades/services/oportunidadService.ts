@@ -69,6 +69,24 @@ export const oportunidadesService = {
     return data;
   },
 
+  async listarPublicas(
+  filtros?: FiltrosOportunidades,
+  page = 0,
+  size = 10
+): Promise<PaginaDTO<OportunidadLaboralDTO>> {
+  const params = new URLSearchParams({
+    page: String(page),
+    size: String(size),
+  });
+
+  const { data } = await api.post<PaginaDTO<OportunidadLaboralDTO>>(
+    `/oportunidades/publicas/filtrar?${params.toString()}`,
+    filtros || {}
+  );
+
+  return data;
+},
+
   async propuestasPro(trabajadorId: number): Promise<OportunidadLaboralDTO[]> {
     const { data } = await api.get<OportunidadLaboralDTO[]>(
       `/oportunidades/propuestas-pro?trabajadorId=${trabajadorId}`

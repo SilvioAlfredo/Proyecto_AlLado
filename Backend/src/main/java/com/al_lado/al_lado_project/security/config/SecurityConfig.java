@@ -63,6 +63,7 @@ public class SecurityConfig {
                         // Las oportunidades NO son públicas: solo Trabajador y ADMIN
                         // pueden verlas. Un Empleador autenticado no debe acceder.
                         .requestMatchers(HttpMethod.GET, "/comunicados/**", "/publicidades/**", "/foro/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/oportunidades/publicas/filtrar").permitAll()
                         .requestMatchers(HttpMethod.GET, "/oportunidades/**").hasAnyRole("TRABAJADOR", "ADMIN")
 
                         // 3b. Búsqueda y catálogos que el frontend consume sin JWT
