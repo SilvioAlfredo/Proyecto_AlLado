@@ -1,3 +1,4 @@
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import api from '@/lib/api';
 import { suscripcionesService, donacionesService } from './aportesService';
@@ -33,7 +34,13 @@ describe('suscripcionesService', () => {
   });
 
   it('porUsuario obtiene la suscripción de un usuario', async () => {
-    getApi.get.mockResolvedValue({ data: { id: 1, nivel: 'BASICO', activa: true } });
+    getApi.get.mockResolvedValue({
+      data: {
+        id: 1,
+        nivel: 'BASICO',
+        usuario: { id: 7, nombre: 'Ana', email: 'ana@mail.com' },
+      },
+    });
 
     const suscripcion = await suscripcionesService.porUsuario(7);
 
@@ -88,7 +95,14 @@ describe('donacionesService', () => {
   });
 
   it('porUsuario obtiene las donaciones de un usuario', async () => {
-    getApi.get.mockResolvedValue({ data: [{ id: 1, monto: 15000 }] });
+    getApi.get.mockResolvedValue({
+      data: {
+        content: [{ id: 1, monto: 15000 }],
+        page: 0,
+        totalPages: 1,
+        totalElements: 1,
+      },
+    });
 
     const donaciones = await donacionesService.porUsuario(7);
 

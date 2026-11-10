@@ -56,10 +56,11 @@ export const donacionesService = {
     return data;
   },
   async porUsuario(usuarioId: number, page = 0): Promise<DonacionDTO[]> {
-    const { data } = await api.get<DonacionDTO[]>(`/donaciones/usuario/${usuarioId}`, {
-      params: { page, size: 10 },
-    });
-    return data;
+    const { data } = await api.get<{ content: DonacionDTO[] }>(
+      `/donaciones/usuario/${usuarioId}`,
+      { params: { page, size: 10 } },
+    );
+    return data.content;
   },
   async obtenerPorId(id: number): Promise<DonacionDTO> {
     const { data } = await api.get<DonacionDTO>(`/donaciones/${id}`);
