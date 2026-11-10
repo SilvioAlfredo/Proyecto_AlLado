@@ -162,14 +162,12 @@ export default function OportunidadesPage() {
                     </div>
                   </div>
 
-                  <Link href={`/trabajador/oportunidades/${op.id}`}>
-                    <Button
-                      variant="outline"
-                      className="w-full text-allado-yellow hover:text-allado-yellow hover:bg-allado-yellow/10 border-allado-yellow/30 text-xs"
-                    >
-                      Ver detalle y postularme
-                      <ChevronRight className="w-3.5 h-3.5 ml-1" />
-                    </Button>
+                  <Link
+                    href={`/trabajador/oportunidades/${op.id}`}
+                    className="flex min-h-10 w-full items-center justify-center rounded-md border border-allado-yellow/30 px-4 py-2 text-xs font-medium text-allado-yellow transition-colors hover:bg-allado-yellow/10"
+                  >
+                    Ver detalle y postularme
+                    <ChevronRight className="ml-1 h-3.5 w-3.5" aria-hidden="true" />
                   </Link>
                 </div>
               </div>

@@ -115,7 +115,7 @@ export function Note({ children, tone = 'info' }: { children: React.ReactNode; t
 
 export function Empty({ mensaje }: { mensaje: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-[#3a3a3f] p-10 text-center text-sm text-zinc-500">
+    <div className="rounded-2xl border border-dashed border-[#3a3a3f] p-10 text-center text-sm text-zinc-400">
       {mensaje}
     </div>
   );

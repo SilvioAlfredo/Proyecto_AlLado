@@ -113,13 +113,13 @@ export function Navbar() {
               </Link>
               <Link
                 href={getDashboardLink()}
-                aria-label="Mi panel"
+                aria-label={`${user.email?.split('@')[0]?.slice(0, 2)?.toUpperCase() || 'U'} - Mi panel`}
                 title="Mi panel"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ffc107] text-sm font-black text-black transition hover:opacity-90"
               >
                 {user.email?.split('@')[0]?.slice(0, 2)?.toUpperCase() || 'U'}
               </Link>
-              <span className="hidden md:inline text-sm text-zinc-500">{user.email}</span>
+              <span className="hidden md:inline text-sm text-zinc-400">{user.email}</span>
             </>
           ) : (
             <>

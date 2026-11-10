@@ -50,12 +50,29 @@ export function CambiarPasswordForm() {
         </div>
       )}
       <div>
-        <label className="mb-2 block text-sm font-medium text-zinc-300">Contraseña actual</label>
-        <Input type="password" required value={actual} onChange={(e) => setActual(e.target.value)} />
+        <label
+          htmlFor="password-actual"
+          className="mb-2 block text-sm font-medium text-zinc-300"
+        >
+          Contraseña actual
+        </label>
+        <Input
+          id="password-actual"
+          type="password"
+          required
+          value={actual}
+          onChange={(e) => setActual(e.target.value)}
+        />
       </div>
       <div>
-        <label className="mb-2 block text-sm font-medium text-zinc-300">Nueva contraseña</label>
+        <label
+          htmlFor="password-nueva"
+          className="mb-2 block text-sm font-medium text-zinc-300"
+        >
+          Nueva contraseña
+        </label>
         <Input
+          id="password-nueva"
           type="password"
           required
           minLength={8}
