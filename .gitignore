@@ -40,3 +40,7 @@ __pycache__/
 # Frontend al_lado-app (Next.js) - artefactos de construccion (no versionar)
 Frontend/al_lado-app/tsconfig.tsbuildinfo
 Frontend/al_lado-app/results/
+
+# Playwright - Auditoría de accesibilidad
+/Testing/Accesibilidad/reporte-accesibilidad/
+/Testing/Accesibilidad/resultados-accesibilidad/
