@@ -24,6 +24,8 @@
 | E2E web (Selenium + axe) | 32 en código | último runtime 22/10/2026 | 30 resultados: 28 PASS, 2 SKIP; `TC-NOTIF-003` y `TC-ACC-001` compilan, pero no se han ejecutado |
 | Postman API | 41 requests / 31 casos API+BD | 29/10/2026 | ejecución manual registrada: 29 PASS, 2 FAIL; colección y environment versionados; sin reporte Newman |
 
+> **Suite E2E oficial (Sprint 4):** `Testing/e2e-playwright/` — Playwright Test + TypeScript + POM, **7/7 casos en verde** (10/11/2026), con reporte HTML, capturas y trazabilidad en `results/`. La carpeta `Frontend/al_lado-app/e2e/` queda como legado sin mantenimiento.
+
 **Informe consolidado actual:** 351 casos, 347 PASS, 2 FAIL, 0 ERROR y 2 SKIP
 (29/10/2026). La planilla contiene los mismos IDs y estados. Los FAIL/SKIP están
 ligados a defectos abiertos. La aprobación es 347/349 (99,4 %) de los ejecutados;

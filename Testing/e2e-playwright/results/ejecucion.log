@@ -1,0 +1,16 @@
+npm notice run al-lado-e2e-playwright@1.0.0 npx
+npm notice run playwright test
+
+Running 7 tests using 1 worker
+
+(node:26376) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 [chromium] › tests\flow-01-registro-login.spec.ts:8:7 › Flujo crítico 1 — Autenticación › TC-PW-FLOW-01: Registro → Login → Dashboard → Logout (1.3s)
+  ok 2 [chromium] › tests\flow-02-publicar-postular-seleccionar.spec.ts:13:7 › Flujo crítico 2 — Publicar, postular y seleccionar › TC-PW-FLOW-02: Publicar → Postular → Seleccionar (3.5s)
+  ok 3 [chromium] › tests\flow-03-valorar-historial.spec.ts:10:7 › Flujo crítico 3 — Valorar y actualizar el historial › TC-PW-FLOW-03: Valorar → Historial actualiza (1.8s)
+  ok 4 [chromium] › tests\flow-04-retirar-postulacion.spec.ts:9:7 › Flujo de borrado — Retirar postulación › TC-PW-FLOW-04: Retirar postulación → estado RETIRADA (1.3s)
+  ok 5 [chromium] › tests\p1-casos-complementarios.spec.ts:8:7 › Casos E2E complementarios › TC-E2E-LOGIN-01: Login → dashboard → logout con cuenta sembrada (956ms)
+  ok 6 [chromium] › tests\p1-casos-complementarios.spec.ts:23:7 › Casos E2E complementarios › TC-E2E-PROT-01: rutas protegidas y separación de roles (839ms)
+  ok 7 [chromium] › tests\p1-casos-complementarios.spec.ts:42:7 › Casos E2E complementarios › TC-E2E-ADMIN-01: acceso de administración y métricas (1.5s)
+
+  7 passed (12.1s)
