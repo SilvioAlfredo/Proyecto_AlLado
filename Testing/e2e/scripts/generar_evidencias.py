@@ -25,18 +25,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import evidencias_util as ev  # noqa: E402
 
 API = os.environ.get("E2E_API_URL", "http://localhost:8081")
-AL_LADO = "/home/Alfredo/Documentos/AlLado/AlLado"
+AL_LADO = os.getcwd()
 # La planilla vive en el repositorio (artefacto versionado). La copia de
 # Descargas se usa solo como respaldo si el repo no la tiene.
 PLANILLA_REPO = f"{AL_LADO}/Testing/Planilla de Test Cases v2(2).xlsx"
-PLANILLA_DESCARGAS = "/home/Alfredo/Descargas/AlLado - Planilla de Test Cases v2(2).xlsx"
+PLANILLA_DESCARGAS = os.path.expanduser("~/Downloads/AlLado - Planilla de Test Cases v2(2).xlsx")
 PLANILLA = PLANILLA_REPO if os.path.isfile(PLANILLA_REPO) else PLANILLA_DESCARGAS
 
 SUFIXO = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
 
 CUENTAS = {
-    "trabajador": ("trabajador@demo.com", "Clave123!"),
-    "empleador": ("empleador@demo.com", "Clave123!"),
+    "trabajador": ("trabajador_qa@demo.com", "Clave123!"),
+    "empleador": ("empleador_qa@demo.com", "Clave123!"),
     "admin": ("admin@allado.com", "Clave123!"),
 }
 
@@ -188,7 +188,7 @@ def crear_oportunidad(titulo):
         "rangoSalarial": "80000-120000",
         "activa": True,
         "destacada": False,
-        "autor": {"id": 2, "nombre": "Demo Empleador", "email": "empleador@demo.com"},
+        "autor": {"id": 2, "nombre": "Demo Empleador", "email": "empleador_qa@demo.com"},
     }
     peticion, estado, texto = llamar("POST", "/oportunidades", cuerpo, "empleador")
     try:
@@ -297,7 +297,7 @@ def casos_api():
              "contenido": "Tarea creada para la evidencia del plan de pruebas.",
              "ubicacion": "Centro", "modalidad": "PRESENCIAL",
              "rangoSalarial": "25000-30000", "activa": True, "destacada": False,
-             "autor": {"id": 2, "nombre": "Demo Empleador", "email": "empleador@demo.com"}},
+             "autor": {"id": 2, "nombre": "Demo Empleador", "email": "empleador_qa@demo.com"}},
             "empleador", "se espera HTTP 201")
 
     agregar("TC-PUB-002", "Rechazo de creacion de oportunidad con rol de trabajador",
@@ -305,7 +305,7 @@ def casos_api():
             {"titulo": "Oportunidad con rol trabajador", "contenido": "No permitido.",
              "ubicacion": "Centro", "modalidad": "PRESENCIAL", "rangoSalarial": "10000",
              "activa": True, "destacada": False,
-             "autor": {"id": id_trab, "nombre": "Demo Trabajador", "email": "trabajador@demo.com"}},
+             "autor": {"id": id_trab, "nombre": "Demo Trabajador", "email": "trabajador_qa@demo.com"}},
             "trabajador", "se espera HTTP 403")
 
     agregar("TC-PUB-003", "Listado general de oportunidades laborales",
@@ -328,7 +328,7 @@ def casos_api():
              "contenido": "Oportunidad actualizada por la evidencia del plan de pruebas.",
              "ubicacion": "Centro", "modalidad": "PRESENCIAL",
              "rangoSalarial": "32000-40000", "activa": True, "destacada": False,
-             "autor": {"id": 2, "nombre": "Demo Empleador", "email": "empleador@demo.com"}},
+             "autor": {"id": 2, "nombre": "Demo Empleador", "email": "empleador_qa@demo.com"}},
             "empleador", f"oportunidad propia {id_pub007}; se espera HTTP 200")
 
     agregar("TC-DB-001", "Rechazo de payload incompleto en creacion de postulacion",
@@ -343,12 +343,12 @@ def casos_api():
              "ubicacion": "Centro", "modalidad": "PRESENCIAL", "rangoSalarial": "10000",
              "activa": True, "destacada": False,
              "etiquetas": [{"id": 99999, "nombre": "Inexistente"}],
-             "autor": {"id": 2, "nombre": "Demo Empleador", "email": "empleador@demo.com"}},
+             "autor": {"id": 2, "nombre": "Demo Empleador", "email": "empleador_qa@demo.com"}},
             "empleador", "referencia a etiqueta ID 99999 inexistente")
 
     agregar("TC-DB-003", "Validacion de constraint UNIQUE en correo de usuario",
             "POST", "/auth/register",
-            {"nombre": "Usuario Duplicado", "email": "empleador@demo.com",
+            {"nombre": "Usuario Duplicado", "email": "empleador_qa@demo.com",
              "password": "Clave123!", "telefono": "3571123456", "rol": "EMPLEADOR"},
             None, "email ya registrado")
 
@@ -356,7 +356,7 @@ def casos_api():
             "POST", "/oportunidades",
             {"titulo": "", "contenido": "", "ubicacion": "", "modalidad": "",
              "rangoSalarial": "", "activa": True, "destacada": False,
-             "autor": {"id": 2, "nombre": "Demo Empleador", "email": "empleador@demo.com"}},
+             "autor": {"id": 2, "nombre": "Demo Empleador", "email": "empleador_qa@demo.com"}},
             "empleador", "titulo y contenido vacios")
 
     # =====================================================================
@@ -396,7 +396,7 @@ def casos_api():
             "La respuesta con una cuenta inexistente debe ser identica a la de una existente",
             preparacion=("Preparacion: recuperacion con una cuenta existente",
                          "POST", "/auth/password/forgot",
-                         {"email": "empleador@demo.com"}, None),
+                         {"email": "empleador_qa@demo.com"}, None),
             trazabilidad="RF-01 / HU-04 CA-02 (AL-SEC-005)",
             tecnica="Negativa", tipo="Seguridad",
             precondiciones="Sin sesion. Se comparan las dos respuestas.",
@@ -600,6 +600,10 @@ def casos_db_dinamicos():
 # Render de la evidencia
 # ---------------------------------------------------------------------------
 def clase_estado(estado):
+    try:
+        estado = int(estado)
+    except (ValueError, TypeError):
+        return "mal"
     if estado == 0:
         return "mal"
     if 200 <= estado < 300:
@@ -681,7 +685,12 @@ def estado_pasillo(caso, codigo_http):
         esperado = definicion.get("codigo_esperado")
     if esperado is None:
         return str(codigo_http)
-    return "PASS" if int(codigo_http) == int(esperado) else "FAIL"
+    if str(codigo_http).upper() in ("PASS", "FAIL", "ERROR"):
+        return str(codigo_http).upper()
+    try:
+        return "PASS" if int(codigo_http) == int(esperado) else "FAIL"
+    except (ValueError, TypeError):
+        return "PASS" if str(codigo_http).strip() == str(esperado).strip() else "FAIL"
 
 
 def generar_api():

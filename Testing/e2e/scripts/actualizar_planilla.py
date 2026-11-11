@@ -37,8 +37,8 @@ def catalogo_api():
     except (OSError, KeyError, ValueError):
         return {}
 
-RAIZ = "/home/Alfredo/Documentos/AlLado/AlLado"
-DESTINO_INFORME = "/home/Alfredo/Documentos/AlLado/plan_de_pruebas"
+RAIZ = os.getcwd()
+DESTINO_INFORME = os.path.join(os.getcwd(), "plan_de_pruebas")
 PLANILLA_REPO = f"{RAIZ}/Testing/Planilla de Test Cases v2(2).xlsx"
 PLANILLA_DESCARGAS = "/home/Alfredo/Descargas/AlLado - Planilla de Test Cases v2(2).xlsx"
 INFORME_XML = f"{DESTINO_INFORME}/AlLado - Informe de Resultados de Pruebas.xml"

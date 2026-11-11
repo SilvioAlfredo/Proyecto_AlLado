@@ -30,13 +30,13 @@ from reportlab.lib.units import mm
 from reportlab.platypus import (BaseDocTemplate, Frame, PageBreak, PageTemplate,
                                 Paragraph, Spacer, Table, TableStyle)
 
-AL_LADO = "/home/Alfredo/Documentos/AlLado/AlLado"
+AL_LADO = os.getcwd()
 # La planilla vive en el repositorio (artefacto versionado). La copia de
 # Descargas se usa solo como respaldo si el repo no la tiene.
 PLANILLA_REPO = f"{AL_LADO}/Testing/Planilla de Test Cases v2(2).xlsx"
 PLANILLA_DESCARGAS = "/home/Alfredo/Descargas/AlLado - Planilla de Test Cases v2(2).xlsx"
 PLANILLA = PLANILLA_REPO if os.path.isfile(PLANILLA_REPO) else PLANILLA_DESCARGAS
-DESTINO_DIR = "/home/Alfredo/Documentos/AlLado/plan_de_pruebas"
+DESTINO_DIR = os.path.join(os.getcwd(), "plan_de_pruebas")
 ORIGEN_EVIDENCIAS = f"{AL_LADO}/Testing/e2e/target/e2e-evidencias"
 CARPETA_EVIDENCIAS = "evidencias"
 

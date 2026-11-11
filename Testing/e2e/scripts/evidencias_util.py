@@ -13,7 +13,7 @@ CHROME_BINARY = os.environ.get(
 CHROMEDRIVER = os.environ.get(
     "E2E_CHROMEDRIVER", "/home/Alfredo/.local/chrome/chromedriver-linux64/chromedriver")
 
-DESTINO = "/home/Alfredo/Documentos/AlLado/plan_de_pruebas/evidencias"
+DESTINO = os.path.join(os.getcwd(), "plan_de_pruebas", "evidencias")
 
 # --- Plantilla visual comun -------------------------------------------------
 ESTILO = """
