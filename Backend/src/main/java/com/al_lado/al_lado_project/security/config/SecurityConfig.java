@@ -62,9 +62,15 @@ public class SecurityConfig {
                         // 3. Endpoints públicos de lectura (catálogos/foro)
                         // Las oportunidades NO son públicas: solo Trabajador y ADMIN
                         // pueden verlas. Un Empleador autenticado no debe acceder.
-                        .requestMatchers(HttpMethod.GET, "/comunicados/**", "/publicidades/**", "/foro/**").permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/oportunidades/**",
+                                "/comunicados/**",
+                                "/publicidades/**",
+                                "/foro/**"
+                        ).permitAll()
+
                         .requestMatchers(HttpMethod.POST, "/oportunidades/publicas/filtrar").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/oportunidades/**").hasAnyRole("TRABAJADOR", "ADMIN")
 
                         // 3b. Búsqueda y catálogos que el frontend consume sin JWT
                         // (home pública usa POST /oportunidades/filtrar; los GET son
