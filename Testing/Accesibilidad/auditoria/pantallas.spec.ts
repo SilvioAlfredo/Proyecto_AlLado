@@ -7,6 +7,7 @@ import path from 'node:path';
 const root = process.cwd();
 const app = path.resolve(root, '../../Frontend/al_lado-app/src/app');
 const roles = ['trabajador', 'empleador', 'admin'];
+const redirectAliases = new Set(['/empleador/oportunidades']);
 
 function files(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
@@ -53,6 +54,7 @@ const catalog = files(app)
       file: path.relative(path.resolve(root, '../..'), file),
     };
   })
+  .filter(item => !redirectAliases.has(item.route))
   .sort((a, b) => a.route.localeCompare(b.route));
 
 for (const item of catalog) {
@@ -295,3 +297,22 @@ for (const item of catalog) {
     });
   });
 }
+
+const empleadorState = path.join(root, '.auth', 'empleador.json');
+const empleadorAuthenticated = fs.existsSync(empleadorState);
+
+test.describe('alias de oportunidades', () => {
+  test.use({
+    storageState: empleadorAuthenticated ? empleadorState : undefined,
+  });
+
+  test('el alias de oportunidades redirige a solicitudes', async ({ page }) => {
+    test.skip(
+      !empleadorAuthenticated,
+      'Falta sesión empleador: node auditar.mjs sesion empleador'
+    );
+
+    await page.goto('/empleador/oportunidades', { waitUntil: 'load' });
+    await expect(page).toHaveURL(/\/empleador\/solicitudes\/?$/);
+  });
+});
