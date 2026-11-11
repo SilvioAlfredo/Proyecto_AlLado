@@ -37,3 +37,14 @@ __pycache__/
 Frontend/al_lado-app/node_modules/
 Frontend/al_lado-app/.next/
 Frontend/al_lado-app/tsconfig.tsbuildinfo
+
+# Temporales y caches de QA
+*.bak
+*.patch
+.hgignore*
+__pycache__/
+AlLadoNuevo/
+FrontPrueba/
+mini-app-android/
+Frontend/frontend-web/
+reporte_api_newman.*
