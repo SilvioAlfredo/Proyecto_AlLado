@@ -38,7 +38,7 @@ export default function ForoPage() {
           <div key={post.id} className="border border-[#2e2e33] rounded-2xl p-5 bg-[#1a1a1c] space-y-3">
             <h3 className="font-bold text-lg text-white">{post.titulo}</h3>
             <p className="text-zinc-400 text-sm">{post.contenido}</p>
-            <div className="text-xs text-zinc-500">
+            <div className="text-xs text-zinc-400">
               Publicado por: {post.autor?.nombre || 'Anónimo'}
             </div>
           </div>

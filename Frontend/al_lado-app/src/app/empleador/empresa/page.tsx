@@ -160,7 +160,7 @@ export default function Page() {
               </p>
               <Note>
                 El perfil empresarial requiere un plan PRO activo.{' '}
-                <Link href="/empleador/plan" className="text-[#ffc107]">
+                <Link href="/empleador/plan" className="text-[#ffc107] underline underline-offset-2">
                   Ver mi plan →
                 </Link>
               </Note>

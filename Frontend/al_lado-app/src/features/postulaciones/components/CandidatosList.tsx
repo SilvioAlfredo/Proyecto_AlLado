@@ -54,13 +54,13 @@ export function CandidatosList({
 
           <div className="mt-4 grid grid-cols-2 gap-3">
             <div className="rounded-xl bg-[#0b0b0c] border border-[#2e2e33] p-3">
-              <p className="text-[11px] tracking-wide text-zinc-500">PRESUPUESTO</p>
+              <p className="text-[11px] tracking-wide text-zinc-400">PRESUPUESTO</p>
               <p className="font-extrabold text-white">
                 $ {Number(p.remuneracionPretendida || 0).toLocaleString('es-AR')}
               </p>
             </div>
             <div className="rounded-xl bg-[#0b0b0c] border border-[#2e2e33] p-3">
-              <p className="text-[11px] tracking-wide text-zinc-500">ESTADO</p>
+              <p className="text-[11px] tracking-wide text-zinc-400">ESTADO</p>
               <p className="font-bold text-[#ffc107]">{p.estado}</p>
             </div>
           </div>

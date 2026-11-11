@@ -53,7 +53,7 @@ export function Field({
           {error}
         </p>
       )}
-      {hint && <p id={`${id}-hint`} className="text-xs text-zinc-500">{hint}</p>}
+      {hint && <p id={`${id}-hint`} className="text-xs text-zinc-400">{hint}</p>}
     </div>
   );
 }

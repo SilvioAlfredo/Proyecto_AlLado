@@ -45,11 +45,25 @@ export function StatCard({
           : 'border-[#2e2e33] bg-[#1a1a1c]'
       )}
     >
-      <p className={cn('text-[11px] font-bold uppercase tracking-wide', highlight ? 'text-[#ffc107]' : 'text-zinc-500')}>
+      <p className={cn(
+        'text-[11px] font-bold uppercase tracking-wide',
+        highlight ? 'text-[#ffc107]' : 'text-zinc-400'
+      )}>
         {label}
       </p>
-      <p className={cn('mt-1 text-2xl font-extrabold', highlight ? 'text-white' : 'text-white')}>{value}</p>
-      {hint && <p className={cn('mt-1 text-xs', highlight ? 'text-zinc-300' : 'text-zinc-500')}>{hint}</p>}
+
+      <p className="mt-1 text-2xl font-extrabold text-white">
+        {value}
+      </p>
+
+      {hint && (
+        <p className={cn(
+          'mt-1 text-xs',
+          highlight ? 'text-zinc-300' : 'text-zinc-400'
+        )}>
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

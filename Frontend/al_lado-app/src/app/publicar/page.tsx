@@ -70,7 +70,7 @@ export default function PublicarPage() {
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="font-bold text-white">📝 ¿Qué necesitás?</label>
-              <span className="text-xs text-zinc-500">{descripcion.length}/500</span>
+              <span className="text-xs text-zinc-400">{descripcion.length}/500</span>
             </div>
             <textarea
               required
@@ -84,7 +84,7 @@ export default function PublicarPage() {
           </div>
 
           <div>
-            <label className="mb-2 block font-bold text-white">🔧 Especialidad</label>
+            <label htmlFor="publicar-especialidad" className="mb-2 block font-bold text-white">🔧 Especialidad</label>
             {etiquetas.isError ? (
               <div
                 role="alert"
@@ -106,6 +106,7 @@ export default function PublicarPage() {
             ) : (
               <>
                 <select
+                  id="publicar-especialidad"
                   required
                   value={especialidad}
                   onChange={(e) => setEspecialidad(e.target.value)}
@@ -156,8 +157,9 @@ export default function PublicarPage() {
               </button>
             </div>
             <div>
-              <label className="mb-2 block font-bold text-white">Modalidad / Presupuesto</label>
+              <label htmlFor="publicar-modalidad" className="mb-2 block font-bold text-white">Modalidad / Presupuesto</label>
               <select
+                id="publicar-modalidad"
                 value={modalidad}
                 onChange={(e) => setModalidad(e.target.value)}
                 className="w-full rounded-full border border-[#3a3a3f] bg-[#26262a] px-4 py-3 text-sm text-white"
@@ -178,7 +180,7 @@ export default function PublicarPage() {
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="font-bold text-white">📎 Fotos (opcional)</label>
-              <span className="text-xs text-zinc-500">0/5</span>
+              <span className="text-xs text-zinc-400">0/5</span>
             </div>
             <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-[#3a3a3f] p-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-zinc-400">Agregá fotos del problema (opcional). Esto ayuda a recibir mejores propuestas.</p>
@@ -210,9 +212,9 @@ export default function PublicarPage() {
         <aside className="h-fit space-y-4 rounded-2xl border border-[#2e2e33] bg-[#1a1a1c] p-6 lg:sticky lg:top-20">
           <h3 className="font-bold text-white">Resumen</h3>
           <dl className="space-y-2 text-sm">
-            <div className="flex justify-between"><dt className="text-zinc-500">Especialidad</dt><dd className="font-semibold text-[#ffc107]">{especialidad || 'Sin definir'}</dd></div>
-            <div className="flex justify-between"><dt className="text-zinc-500">Ubicación</dt><dd className="text-white">{ubicacion || 'Sin definir'}</dd></div>
-            <div className="flex justify-between"><dt className="text-zinc-500">Modalidad</dt><dd className="text-white">{modalidad}</dd></div>
+            <div className="flex justify-between"><dt className="text-zinc-400">Especialidad</dt><dd className="font-semibold text-[#ffc107]">{especialidad || 'Sin definir'}</dd></div>
+            <div className="flex justify-between"><dt className="text-zinc-400">Ubicación</dt><dd className="text-white">{ubicacion || 'Sin definir'}</dd></div>
+            <div className="flex justify-between"><dt className="text-zinc-400">Modalidad</dt><dd className="text-white">{modalidad}</dd></div>
           </dl>
           <div className="rounded-xl bg-[#0b0b0c] p-3 text-xs text-zinc-400">
             La publicación ayuda a que profesionales relevantes reciban tu pedido con contexto claro.

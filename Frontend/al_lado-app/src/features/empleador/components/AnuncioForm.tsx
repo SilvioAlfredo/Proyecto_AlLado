@@ -160,7 +160,7 @@ export function AnuncioForm({ initial }: { initial?: PublicidadDTO }) {
             <p className="whitespace-pre-wrap break-words text-sm text-zinc-400">
               {form.contenido || 'La descripción de tu negocio se verá acá.'}
             </p>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-400">
               {fecha(form.fechaInicio)} — {fecha(form.fechaFin)}
             </p>
             <p className="text-xs text-[#ffc107]">
@@ -169,7 +169,7 @@ export function AnuncioForm({ initial }: { initial?: PublicidadDTO }) {
           </section>
           <Note>
             La publicación de anuncios requiere un plan PRO activo.{' '}
-            <Link className="text-[#ffc107]" href="/empleador/plan">
+            <Link className="text-[#ffc107] underline underline-offset-2" href="/empleador/plan">
               Ver mi plan →
             </Link>
           </Note>

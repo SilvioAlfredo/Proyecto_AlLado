@@ -189,7 +189,7 @@ export function RegisterForm({
           </button>
           <span
             id="register-password-help"
-            className="block text-xs font-normal text-zinc-500 mt-1"
+            className="block text-xs font-normal text-zinc-400 mt-1"
           >
             Usá al menos 8 caracteres.
           </span>

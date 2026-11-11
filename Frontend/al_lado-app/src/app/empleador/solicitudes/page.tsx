@@ -98,7 +98,7 @@ export default function MisSolicitudesPage() {
                   {o.activa ? 'Activa' : 'Cerrada'}
                 </Badge>
               </div>
-              <p className="mt-2 text-xs text-zinc-500">
+              <p className="mt-2 text-xs text-zinc-400">
                 {o.etiquetas?.map((e) => e.nombre).join(' · ')} · {fecha(o.fechaCreacion)}{' '}
                 · {o.ubicacion}
               </p>

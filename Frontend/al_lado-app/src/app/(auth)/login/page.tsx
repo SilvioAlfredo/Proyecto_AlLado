@@ -70,7 +70,7 @@ export default function LoginPage() {
         </p>
         <Link
           href="/acceso-admin"
-          className="mt-6 flex items-center justify-center gap-1 text-xs text-zinc-500 hover:text-zinc-300"
+          className="mt-6 flex items-center justify-center gap-1 text-xs text-zinc-400 hover:text-zinc-300"
         >
           Acceso de administración
           <ArrowUpRight size={13} />

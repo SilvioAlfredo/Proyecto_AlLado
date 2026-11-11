@@ -58,7 +58,7 @@ export default function ReenviarVerificacionPage() {
           {estado === 'cargando' ? 'Enviando...' : 'Enviar enlace de verificación'}
         </Button>
 
-        <p className="text-sm text-zinc-500 text-center">
+        <p className="text-sm text-zinc-400 text-center">
           ¿Ya tenés el enlace?{' '}
           <Link href="/login" className="font-medium text-[#ffc107] hover:underline">
             Iniciá sesión
