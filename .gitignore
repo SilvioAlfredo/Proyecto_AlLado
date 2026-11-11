@@ -1,6 +1,12 @@
 # Ignorar la carpeta de compilación de Maven
 target/
 
+# Ignorar artefactos generados en cualquier módulo
+node_modules/
+.next/
+*.class
+*.map
+
 # Ignorar archivos de configuración del IDE (IntelliJ, Eclipse, VS Code)
 .idea/
 *.iml
@@ -48,3 +54,7 @@ FrontPrueba/
 mini-app-android/
 Frontend/frontend-web/
 reporte_api_newman.*
+
+# Reportes generados de accesibilidad (se regeneran)
+/Testing/Accesibilidad/reporte-accesibilidad/
+/Testing/Accesibilidad/resultados-accesibilidad/
