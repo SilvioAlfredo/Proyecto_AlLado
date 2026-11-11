@@ -1,0 +1,26 @@
+<testsuites id="" name="" tests="7" failures="0" skipped="0" errors="0" time="12.065687999999998">
+<testsuite name="flow-01-registro-login.spec.ts" timestamp="2026-11-11T02:23:11.014Z" hostname="chromium" tests="1" failures="0" skipped="0" time="1.31" errors="0">
+<testcase name="Flujo crítico 1 — Autenticación › TC-PW-FLOW-01: Registro → Login → Dashboard → Logout" classname="flow-01-registro-login.spec.ts" time="1.31">
+</testcase>
+</testsuite>
+<testsuite name="flow-02-publicar-postular-seleccionar.spec.ts" timestamp="2026-11-11T02:23:11.014Z" hostname="chromium" tests="1" failures="0" skipped="0" time="3.49" errors="0">
+<testcase name="Flujo crítico 2 — Publicar, postular y seleccionar › TC-PW-FLOW-02: Publicar → Postular → Seleccionar" classname="flow-02-publicar-postular-seleccionar.spec.ts" time="3.49">
+</testcase>
+</testsuite>
+<testsuite name="flow-03-valorar-historial.spec.ts" timestamp="2026-11-11T02:23:11.014Z" hostname="chromium" tests="1" failures="0" skipped="0" time="1.825" errors="0">
+<testcase name="Flujo crítico 3 — Valorar y actualizar el historial › TC-PW-FLOW-03: Valorar → Historial actualiza" classname="flow-03-valorar-historial.spec.ts" time="1.825">
+</testcase>
+</testsuite>
+<testsuite name="flow-04-retirar-postulacion.spec.ts" timestamp="2026-11-11T02:23:11.014Z" hostname="chromium" tests="1" failures="0" skipped="0" time="1.348" errors="0">
+<testcase name="Flujo de borrado — Retirar postulación › TC-PW-FLOW-04: Retirar postulación → estado RETIRADA" classname="flow-04-retirar-postulacion.spec.ts" time="1.348">
+</testcase>
+</testsuite>
+<testsuite name="p1-casos-complementarios.spec.ts" timestamp="2026-11-11T02:23:11.014Z" hostname="chromium" tests="3" failures="0" skipped="0" time="3.317" errors="0">
+<testcase name="Casos E2E complementarios › TC-E2E-LOGIN-01: Login → dashboard → logout con cuenta sembrada" classname="p1-casos-complementarios.spec.ts" time="0.956">
+</testcase>
+<testcase name="Casos E2E complementarios › TC-E2E-PROT-01: rutas protegidas y separación de roles" classname="p1-casos-complementarios.spec.ts" time="0.839">
+</testcase>
+<testcase name="Casos E2E complementarios › TC-E2E-ADMIN-01: acceso de administración y métricas" classname="p1-casos-complementarios.spec.ts" time="1.522">
+</testcase>
+</testsuite>
+</testsuites>

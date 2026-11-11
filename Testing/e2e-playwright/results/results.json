@@ -1,0 +1,457 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Julio\\Proyecto_AlLado\\Testing\\e2e-playwright\\node_modules\\@playwright\\test\\cli.js",
+      "test"
+    ],
+    "configFile": "C:\\Users\\Julio\\Proyecto_AlLado\\Testing\\e2e-playwright\\playwright.config.ts",
+    "rootDir": "C:/Users/Julio/Proyecto_AlLado/Testing/e2e-playwright/tests",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Julio/Proyecto_AlLado/Testing/e2e-playwright/results/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "C:/Users/Julio/Proyecto_AlLado/Testing/e2e-playwright/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\Users\\Julio\\Proyecto_AlLado\\Testing\\e2e-playwright\\results\\test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "chromium",
+        "testDir": "C:\\Users\\Julio\\Proyecto_AlLado\\Testing\\e2e-playwright\\tests",
+        "snapshotDir": "C:\\Users\\Julio\\Proyecto_AlLado\\Testing\\e2e-playwright\\tests",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 90000,
+        "use": {
+          "baseURL": "http://localhost:3001",
+          "locale": "es-AR",
+          "timezoneId": "America/Argentina/Buenos_Aires",
+          "trace": "retain-on-failure",
+          "screenshot": "only-on-failure",
+          "video": "retain-on-failure",
+          "actionTimeout": 15000,
+          "navigationTimeout": 30000,
+          "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.4 Safari/537.36",
+          "viewport": {
+            "width": 1440,
+            "height": 900
+          },
+          "screen": {
+            "width": 1920,
+            "height": 1080
+          },
+          "deviceScaleFactor": 1,
+          "isMobile": false,
+          "hasTouch": false,
+          "defaultBrowserType": "chromium"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "outputFolder": "results/html-report",
+          "open": "never"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "results/junit.xml"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "results/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "flow-01-registro-login.spec.ts",
+      "file": "flow-01-registro-login.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Flujo crítico 1 — Autenticación",
+          "file": "flow-01-registro-login.spec.ts",
+          "line": 7,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC-PW-FLOW-01: Registro → Login → Dashboard → Logout",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1310,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-11T02:23:11.394Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "f52f75d16486331faf6d-787cffd6564ec27a95ae",
+              "file": "flow-01-registro-login.spec.ts",
+              "line": 8,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flow-02-publicar-postular-seleccionar.spec.ts",
+      "file": "flow-02-publicar-postular-seleccionar.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Flujo crítico 2 — Publicar, postular y seleccionar",
+          "file": "flow-02-publicar-postular-seleccionar.spec.ts",
+          "line": 12,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC-PW-FLOW-02: Publicar → Postular → Seleccionar",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3490,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-11T02:23:12.819Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "a8ca78d7448fdd558f49-6a4e441ed692ffa41ef6",
+              "file": "flow-02-publicar-postular-seleccionar.spec.ts",
+              "line": 13,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flow-03-valorar-historial.spec.ts",
+      "file": "flow-03-valorar-historial.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Flujo crítico 3 — Valorar y actualizar el historial",
+          "file": "flow-03-valorar-historial.spec.ts",
+          "line": 9,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC-PW-FLOW-03: Valorar → Historial actualiza",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1825,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-11T02:23:16.327Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ba02682ee96f8c87039e-76f77fcc912e37352e0a",
+              "file": "flow-03-valorar-historial.spec.ts",
+              "line": 10,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flow-04-retirar-postulacion.spec.ts",
+      "file": "flow-04-retirar-postulacion.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Flujo de borrado — Retirar postulación",
+          "file": "flow-04-retirar-postulacion.spec.ts",
+          "line": 8,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC-PW-FLOW-04: Retirar postulación → estado RETIRADA",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1348,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-11T02:23:18.167Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "ee025bcd5029de43790c-0ae7807601c2ca4ecdee",
+              "file": "flow-04-retirar-postulacion.spec.ts",
+              "line": 9,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "p1-casos-complementarios.spec.ts",
+      "file": "p1-casos-complementarios.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Casos E2E complementarios",
+          "file": "p1-casos-complementarios.spec.ts",
+          "line": 7,
+          "column": 6,
+          "specs": [
+            {
+              "title": "TC-E2E-LOGIN-01: Login → dashboard → logout con cuenta sembrada",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 956,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-11T02:23:19.529Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4070653e41f0bd87dbce-dcf6da15e7d60fd49daf",
+              "file": "p1-casos-complementarios.spec.ts",
+              "line": 8,
+              "column": 7
+            },
+            {
+              "title": "TC-E2E-PROT-01: rutas protegidas y separación de roles",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 839,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-11T02:23:20.495Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4070653e41f0bd87dbce-4509439f5b2906c859e0",
+              "file": "p1-casos-complementarios.spec.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "TC-E2E-ADMIN-01: acceso de administración y métricas",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1522,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-11-11T02:23:21.345Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "4070653e41f0bd87dbce-e2bcb063a24b15787511",
+              "file": "p1-casos-complementarios.spec.ts",
+              "line": 42,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-11T02:23:10.949Z",
+    "duration": 12065.687999999998,
+    "expected": 7,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
