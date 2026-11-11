@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.HashSet;
-import java.time.LocalTime;
 import java.util.Set;
 
 @Entity
@@ -26,21 +25,6 @@ public class OportunidadLaboral extends PostBase {
 
     @Column(name = "rango_salarial", length = 100)
     private String rangoSalarial;
-
-    @Column(name = "latitud")
-    private Double latitud;
-
-    @Column(name = "longitud")
-    private Double longitud;
-
-    @Column(name = "dia_semana_requerido", length = 20)
-    private String diaSemanaRequerido;
-
-    @Column(name = "hora_inicio_requerida")
-    private LocalTime horaInicioRequerida;
-
-    @Column(name = "hora_fin_requerida")
-    private LocalTime horaFinRequerida;
 
     @Column(nullable = false)
     private boolean activa = true;

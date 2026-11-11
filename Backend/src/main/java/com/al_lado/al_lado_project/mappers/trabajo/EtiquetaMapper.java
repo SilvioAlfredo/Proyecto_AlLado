@@ -18,10 +18,7 @@ public class EtiquetaMapper {
     public Etiqueta toEntity(EtiquetaDTO dto) {
         if (dto == null) return null;
         Etiqueta entity = new Etiqueta();
-        // MEJ-003 / AL-SEC-008: el ID que manda el cliente no se copia en un alta.
-        // Sólo la base de datos asigna IDs, de modo que ninguna petición puede
-        // apuntar el alta a un registro existente y sobrescribirlo.
-        entity.setId(null);
+        entity.setId(dto.getId());
         entity.setNombre(dto.getNombre());
         return entity;
     }

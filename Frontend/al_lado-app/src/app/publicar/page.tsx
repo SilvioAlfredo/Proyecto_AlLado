@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { oportunidadesService } from '@/features/oportunidades/services/oportunidadService';
-import { obtenerRefSesion } from '@/lib/usuarioRef';
+import { emailSesion, obtenerRefPorEmail } from '@/lib/usuarioRef';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
@@ -31,7 +31,8 @@ export default function PublicarPage() {
     setLoading(true);
     setError(null);
     try {
-      const autor = obtenerRefSesion();
+      const email = emailSesion();
+      const autor = email ? await obtenerRefPorEmail(email) : null;
       if (!autor?.id) throw new Error('No se encontró tu usuario. Iniciá sesión de nuevo.');
       const titulo = descripcion.split('\n')[0]?.slice(0, 80) || `Solicitud de ${especialidad}`;
       await oportunidadesService.crear({

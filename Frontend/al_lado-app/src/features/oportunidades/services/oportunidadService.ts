@@ -7,13 +7,6 @@ export interface FiltrosOportunidades {
   etiquetas?: string[];
 }
 
-// AL-SEC-006: el contacto del empleador no viene en la oferta pública
-export interface ContactoEmpleadorDTO {
-  nombre: string;
-  email: string;
-  telefono?: string | null;
-}
-
 export const oportunidadesService = {
   async obtenerTodas(): Promise<OportunidadLaboralDTO[]> {
     const { data } = await api.get<OportunidadLaboralDTO[]>('/oportunidades');
@@ -22,13 +15,6 @@ export const oportunidadesService = {
 
   async obtenerPorId(id: number): Promise<OportunidadLaboralDTO> {
     const { data } = await api.get<OportunidadLaboralDTO>(`/oportunidades/${id}`);
-    return data;
-  },
-
-  // AL-SEC-006: proyección por audiencia; solo el titular, ADMIN o quien se
-  // postuló puede ver el contacto del empleador de la oferta
-  async contacto(id: number): Promise<ContactoEmpleadorDTO> {
-    const { data } = await api.get<ContactoEmpleadorDTO>(`/oportunidades/${id}/contacto`);
     return data;
   },
 

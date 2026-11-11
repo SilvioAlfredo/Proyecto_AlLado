@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Screen, Brand, Title, AppCard, AppInput, AppButton, Note, Empty } from '../../../src/components/ui';
-import { perfilService } from '../../../src/api/services';
+import { perfilService, resolveIdByEmail } from '../../../src/api/services';
 import { errMsg } from '../../../src/api/client';
 import type { Horario } from '../../../src/types';
 import { useAuth } from '../../../src/auth/AuthContext';
@@ -11,7 +11,7 @@ import { colors } from '../../../src/theme';
 const DIAS = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO', 'DOMINGO'];
 
 export default function Disponibilidad() {
-  const { userId } = useAuth();
+  const { email, userId } = useAuth();
   const [tid, setTid] = useState<number | null>(userId);
   const [items, setItems] = useState<Horario[]>([]);
   const [dia, setDia] = useState('LUNES');
@@ -26,11 +26,11 @@ export default function Disponibilidad() {
 
   useFocusEffect(useCallback(() => {
     (async () => {
-      const id = userId;
+      const id = userId ?? (await resolveIdByEmail(email, 'TRABAJADOR'));
       setTid(id);
       if (id) await load(id);
     })();
-  }, [userId]));
+  }, [email, userId]));
 
   const agregar = async () => {
     setError('');

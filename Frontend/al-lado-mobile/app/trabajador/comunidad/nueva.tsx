@@ -2,21 +2,21 @@ import React, { useState } from 'react';
 import { Text, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Brand, Title, AppInput, AppButton, Note } from '../../../src/components/ui';
-import { comunidadService } from '../../../src/api/services';
+import { comunidadService, resolveIdByEmail } from '../../../src/api/services';
 import { errMsg } from '../../../src/api/client';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function NuevaPublicacion() {
-  const { userId } = useAuth();
+  const { email, userId } = useAuth();
   const [titulo, setTitulo] = useState('');
   const [contenido, setContenido] = useState('');
   const [error, setError] = useState('');
   const onSubmit = async () => {
     setError('');
     try {
-      if (userId == null) throw new Error('No hay sesión activa.');
-      await comunidadService.publicar({ titulo: titulo.trim(), contenido: contenido.trim(), autor: { id: userId } });
+      const autorId = userId ?? (await resolveIdByEmail(email));
+      await comunidadService.publicar({ titulo: titulo.trim(), contenido: contenido.trim(), autor: { id: autorId } });
       router.back();
     } catch (e) { setError(errMsg(e)); }
   };

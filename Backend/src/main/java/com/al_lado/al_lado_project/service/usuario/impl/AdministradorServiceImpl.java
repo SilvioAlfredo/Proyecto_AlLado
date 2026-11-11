@@ -22,8 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.LocalDate;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +44,6 @@ public class AdministradorServiceImpl implements AdministradorService {
     private final PostulacionRepository postulacionRepository;
     private final TrabajadorRepository trabajadorRepository;
     private final OportunidadLaboralRepository oportunidadLaboralRepository;
-    private final Clock clock;
 
     @Override
     @Transactional(readOnly = true)
@@ -120,7 +117,7 @@ public class AdministradorServiceImpl implements AdministradorService {
         BigDecimal totalDonaciones = sumDonaciones != null ? sumDonaciones : BigDecimal.ZERO;
 
         final BigDecimal PRECIO_PLAN_PRO = new BigDecimal("15000");
-        BigDecimal totalSuscripciones = BigDecimal.valueOf(suscripcionRepository.countProVigentes(LocalDate.now(clock)))
+        BigDecimal totalSuscripciones = BigDecimal.valueOf(suscripcionRepository.countActivasPro())
                 .multiply(PRECIO_PLAN_PRO);
 
         BigDecimal totalIngresos = totalDonaciones.add(totalSuscripciones);

@@ -41,8 +41,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.Clock;
-import com.al_lado.al_lado_project.service.usuario.SuscripcionVigencia;
 
 /**
  * Consultas paginadas y filtros del panel administrativo.
@@ -74,7 +72,6 @@ public class AdminGestionService {
     private final DonacionMapper donacionMapper;
     private final SuscripcionRepository suscripciones;
     private final SuscripcionMapper suscripcionMapper;
-    private final Clock clock;
 
     private final PublicidadRepository publicidades;
     private final PublicidadMapper publicidadMapper;
@@ -90,7 +87,7 @@ public class AdminGestionService {
     public Page<PublicidadDTO> publicidades(String filtro, String estado, Pageable pageable) {
         Specification<Publicidad> spec = (root, query, cb) -> {
             var condition = cb.conjunction();
-            var hoy = java.time.LocalDate.now(clock);
+            var hoy = java.time.LocalDate.now();
             if ("VIGENTES".equals(estado)) condition = cb.and(condition, cb.isTrue(root.get("activa")), cb.lessThanOrEqualTo(root.get("fechaInicio"), hoy), cb.greaterThanOrEqualTo(root.get("fechaFin"), hoy));
             if ("INACTIVAS".equals(estado)) condition = cb.and(condition, cb.isFalse(root.get("activa")));
             if ("VENCIDAS".equals(estado)) condition = cb.and(condition, cb.lessThan(root.get("fechaFin"), hoy));
@@ -221,15 +218,15 @@ public class AdminGestionService {
     /**
      * Suscripciones por usuario con texto libre sobre nombre/email. Estado
      * {@code ACTIVAS} / {@code INACTIVAS} usando el mismo criterio de vigencia que
-     * criterio de vigencia: {@code activa}, inicio menor o igual a hoy, y fechaFin
+     * {@code SuscripcionService.esProVigente}: {@code activa} y {@code fechaFin}
      * nula o mayor o igual a hoy (<b>inclusivo</b>). No filtra por nivel PRO.
      */
     public Page<SuscripcionDTO> suscripciones(String filtro, String estado, Pageable pageable) {
         Specification<Suscripcion> spec = (root, query, cb) -> {
             var condition = cb.conjunction();
             // Mismo criterio de vigencia que SuscripcionService.esProVigente.
-            var hoy = java.time.LocalDate.now(clock);
-            var vigente = SuscripcionVigencia.predicadoVigente(root, cb, hoy);
+            var vigente = cb.and(cb.isTrue(root.get("activa")), cb.or(cb.isNull(root.get("fechaFin")),
+                cb.greaterThanOrEqualTo(root.get("fechaFin"), java.time.LocalDate.now())));
             if ("ACTIVAS".equals(estado)) condition = cb.and(condition, vigente);
             if ("INACTIVAS".equals(estado)) condition = cb.and(condition, cb.not(vigente));
             if (filtro != null && !filtro.isBlank()) {

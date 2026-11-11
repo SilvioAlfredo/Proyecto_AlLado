@@ -31,10 +31,8 @@ public class EmpleadorServiceImpl implements EmpleadorService {
     @Override
     @Transactional(readOnly = true)
     public List<EmpleadorDTO> obtenerTodos() {
-        // AL-SEC-006: ficha completa sólo para el titular o ADMIN; el resto recibe
-        // la proyección pública (sin email ni teléfono).
         return repository.findAll().stream()
-                .map(this::proyectar)
+                .map(mapper::toDTO)
                 .collect(Collectors.toList());
     }
 
@@ -43,17 +41,7 @@ public class EmpleadorServiceImpl implements EmpleadorService {
     public EmpleadorDTO obtenerPorId(Long id) {
         Empleador empleador = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Empleador no encontrado con ID: " + id));
-        return proyectar(empleador);
-    }
-
-    /**
-     * Elige la proyección según la audiencia (AL-SEC-006).
-     */
-    private EmpleadorDTO proyectar(Empleador empleador) {
-        if (empleador == null) return null;
-        return SecurityUtils.canViewPrivateDataOf(empleador.getId())
-                ? mapper.toDTO(empleador)
-                : mapper.toDTOPublic(empleador);
+        return mapper.toDTO(empleador);
     }
 
     @Override

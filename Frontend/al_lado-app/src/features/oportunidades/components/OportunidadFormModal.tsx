@@ -5,7 +5,7 @@ import { Dialog } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { oportunidadesService } from '@/features/oportunidades/services/oportunidadService';
-import { obtenerRefSesion } from '@/lib/usuarioRef';
+import { emailSesion, obtenerRefPorEmail } from '@/lib/usuarioRef';
 
 interface OportunidadFormModalProps {
   isOpen: boolean;
@@ -28,7 +28,8 @@ export function OportunidadFormModal({ isOpen, onClose, onSuccess }: Oportunidad
     setLoading(true);
     setError(null);
     try {
-      const autor = obtenerRefSesion();
+      const email = emailSesion();
+      const autor = email ? await obtenerRefPorEmail(email) : null;
       if (!autor?.id) throw new Error('No se encontró tu usuario. Iniciá sesión de nuevo.');
       await oportunidadesService.crear({
         titulo,

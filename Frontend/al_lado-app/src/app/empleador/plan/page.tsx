@@ -23,7 +23,7 @@ export default function PlanPage() {
     },
   });
   const sub = query.data;
-  const pro = sub?.nivel === 'PRO' && subscriptionState(sub) === 'Activa y vigente';
+  const pro = sub?.nivel === 'PRO' && subscriptionState(sub) === 'Activa';
   return (
     <div className="space-y-6">
       <PageHeader

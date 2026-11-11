@@ -2,24 +2,24 @@ import React, { useCallback, useState } from 'react';
 import { Text, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Screen, Brand, Title, AppButton, Note } from '../../../src/components/ui';
-import { perfilService } from '../../../src/api/services';
+import { perfilService, resolveIdByEmail } from '../../../src/api/services';
 import { useAuth } from '../../../src/auth/AuthContext';
 import { colors } from '../../../src/theme';
 
 export default function Preferencias() {
-  const { userId } = useAuth();
+  const { email, userId } = useAuth();
   const [tid, setTid] = useState<number | null>(userId);
   const [pref, setPref] = useState<{ email: boolean; push: boolean; nuevasOfertas: boolean; nuevasPostulaciones: boolean }>({ email: true, push: false, nuevasOfertas: true, nuevasPostulaciones: false });
 
   useFocusEffect(useCallback(() => {
     (async () => {
-      const id = userId;
+      const id = userId ?? (await resolveIdByEmail(email, 'TRABAJADOR'));
       setTid(id);
       if (!id) return;
       const p = await perfilService.preferencias(id).catch(() => null);
       if (p) setPref({ ...pref, ...(p as Partial<typeof pref>) });
     })();
-  }, [userId]));
+  }, [email, userId]));
 
   const row = (k: keyof typeof pref, label: string) => (
     <View style={styles.row}>
