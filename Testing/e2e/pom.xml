@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.al_lado</groupId>
+	<artifactId>al_lado_e2e</artifactId>
+	<version>1.0.0</version>
+	<packaging>jar</packaging>
+
+	<name>al_lado_e2e</name>
+	<description>Suite E2E de AlLado con Selenium 4 y JUnit 5 (TC-G / TC-L / TC-M)</description>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<!-- El backend compila con release 21; el módulo E2E usa el mismo toolchain. -->
+		<maven.compiler.release>21</maven.compiler.release>
+		<selenium.version>4.49.0</selenium.version>
+		<junit.version>5.13.4</junit.version>
+		<assertj.version>3.27.7</assertj.version>
+		<!-- Surefire corren cada clase en su propia JVM para aislar el estado del navegador. -->
+		<surefire.version>3.5.6</surefire.version>
+	</properties>
+
+	<dependencies>
+		<!-- Selenium 4: incluye Selenium Manager, que resuelve el driver
+		     (geckodriver/chromedriver) automáticamente, sin binarios en el repo. -->
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-java</artifactId>
+			<version>${selenium.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<version>${assertj.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Cliente HTTP para consultar la API desde la suite: permite verificar el
+		     estado real del backend (no solo lo que muestra la pantalla) y localizar
+		     datos que la UI no lista, como las oportunidades cerradas. -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.18.2</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>${surefire.version}</version>
+				<configuration>
+					<!-- Cada test corre en una JVM nueva: el WebDriver no se comparte
+					     entre clases y las evidencias quedan aisladas. -->
+					<forkCount>1</forkCount>
+					<reuseForks>false</reuseForks>
+					<trimStackTrace>false</trimStackTrace>
+					<!-- Falla la suite si algún test queda sin resultado verificable. -->
+					<failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+					<includes>
+						<include>**/*Test.java</include>
+						<include>**/*IT.java</include>
+					</includes>
+					<argLine>-Dfile.encoding=UTF-8 -Djava.awt.headless=true</argLine>
+				</configuration>
+			</plugin>
+
+			<!-- Genera el informe HTML de ejecución en target/surefire-reports/site,
+			     que es la evidencia de la planilla de pruebas (columna "Evidencia"). -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-report-plugin</artifactId>
+				<version>3.5.6</version>
+				<configuration>
+					<outputDirectory>${project.build.directory}/surefire-reports</outputDirectory>
+					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+					<staticName>index.html</staticName>
+				</configuration>
+				<executions>
+					<execution>
+						<id>report-html</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report-only</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

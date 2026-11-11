@@ -1,9 +1,5 @@
-# Ignorar artefactos generados en cualquier módulo
+# Ignorar la carpeta de compilación de Maven
 target/
-node_modules/
-.next/
-*.class
-*.map
 
 # Ignorar archivos de configuración del IDE (IntelliJ, Eclipse, VS Code)
 .idea/
@@ -38,9 +34,17 @@ __pycache__/
 *.pyc
 
 # Frontend al_lado-app (Next.js) - artefactos de construccion (no versionar)
+Frontend/al_lado-app/node_modules/
+Frontend/al_lado-app/.next/
 Frontend/al_lado-app/tsconfig.tsbuildinfo
-Frontend/al_lado-app/results/
 
-# Playwright - Auditoría de accesibilidad
-/Testing/Accesibilidad/reporte-accesibilidad/
-/Testing/Accesibilidad/resultados-accesibilidad/
+# Temporales y caches de QA
+*.bak
+*.patch
+.hgignore*
+__pycache__/
+AlLadoNuevo/
+FrontPrueba/
+mini-app-android/
+Frontend/frontend-web/
+reporte_api_newman.*
